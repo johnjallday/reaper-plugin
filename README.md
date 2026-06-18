@@ -49,6 +49,13 @@ go build -o bin/reaper-mcp ./cmd/reaper-mcp
 {"operation":"add","script":"normalize_selected_items","script_type":"lua","content":"-- lua code"}
 ```
 
+## Skills
+
+Ready-made agent skills that drive this server live in [`skills/`](skills/) — start with
+[`reaper-session-setup`](skills/reaper-session-setup/SKILL.md) ("set up a session, name and
+arm my tracks"). The same `SKILL.md` works across Ori, Claude, and Codex; see
+[`skills/README.md`](skills/README.md) for install instructions.
+
 ## Codex MCP Example
 
 Use your Codex MCP server config to run this command over stdio:
