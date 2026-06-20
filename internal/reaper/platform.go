@@ -53,7 +53,7 @@ func isReaperRunning() (bool, error) {
 
 func isReaperProcessName(name string) bool {
 	lower := strings.ToLower(name)
-	if strings.Contains(lower, "reaper-mcp") {
+	if strings.Contains(lower, "reaper-plugin") {
 		return false
 	}
 	switch lower {

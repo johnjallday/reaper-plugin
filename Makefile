@@ -1,7 +1,7 @@
 .PHONY: build test fmt tidy
 
 build:
-	go build -o bin/reaper-mcp ./cmd/reaper-mcp
+	go build -o bin/reaper-plugin ./cmd/reaper-plugin
 
 test:
 	go test ./...

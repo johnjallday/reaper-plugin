@@ -1,0 +1,16 @@
+{
+  "name": "reaper-plugin",
+  "version": "0.1.0",
+  "description": "Control REAPER from your AI agent — manage ReaScripts, tracks, sessions, status, and Web Remote — via the ori-reaper MCP tool, with ready-to-use skills.",
+  "author": "johnjallday",
+  "homepage": "https://github.com/johnjallday/reaper-plugin",
+  "repository": "https://github.com/johnjallday/reaper-plugin",
+  "keywords": ["audio", "daw", "reaper", "music", "reascript"],
+  "mcpServers": {
+    "ori-reaper": {
+      "command": "${CLAUDE_PLUGIN_ROOT}/bin/reaper-plugin",
+      "args": [],
+      "env": {}
+    }
+  }
+}

@@ -1,6 +1,9 @@
-# reaper-mcp
+# reaper-plugin
 
-MCP stdio server that exposes REAPER operations through a single tool named `ori-reaper`.
+An Ori / Claude / Codex **plugin** that packages an MCP stdio server exposing REAPER
+operations through a single tool named `ori-reaper`, together with ready-to-use skills.
+The MCP server is registered as `ori-reaper`; the plugin manifest lives in
+[`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 
 ## Features
 
@@ -23,14 +26,14 @@ The tool accepts operation-style payloads compatible with your existing `ori-rea
 ## Build
 
 ```bash
-cd /path/to/ori/mcp/reaper-mcp
-go build -o bin/reaper-mcp ./cmd/reaper-mcp
+cd /path/to/ori/plugins/reaper-plugin
+go build -o bin/reaper-plugin ./cmd/reaper-plugin
 ```
 
 ## Run (stdio)
 
 ```bash
-./bin/reaper-mcp
+./bin/reaper-plugin
 ```
 
 ## Environment Variables
@@ -60,12 +63,12 @@ arm my tracks"). The same `SKILL.md` works across Ori, Claude, and Codex; see
 
 Use your Codex MCP server config to run this command over stdio:
 
-- command: `${REPO_ROOT}/mcp/reaper-mcp/bin/reaper-mcp`
+- command: `${REPO_ROOT}/plugins/reaper-plugin/bin/reaper-plugin`
 - args: `[]`
 
 ## Claude MCP Example
 
 Use your Claude MCP server config to run this command over stdio:
 
-- command: `${REPO_ROOT}/mcp/reaper-mcp/bin/reaper-mcp`
+- command: `${REPO_ROOT}/plugins/reaper-plugin/bin/reaper-plugin`
 - args: `[]`

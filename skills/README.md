@@ -1,10 +1,10 @@
 # Skills
 
-Tool-agnostic agent skills for driving REAPER through the `reaper-mcp` server. A skill is a
+Tool-agnostic agent skills for driving REAPER through the `reaper-plugin` MCP server (tool name `ori-reaper`). A skill is a
 `SKILL.md` file (YAML frontmatter + markdown instructions) that teaches an AI agent *how* to use
 the MCP for a specific workflow. The MCP gives the agent hands; the skill is the playbook.
 
-Because `reaper-mcp` is a standard MCP server, the same `SKILL.md` works across **Ori**,
+Because `reaper-plugin` is a standard MCP server, the same `SKILL.md` works across **Ori**,
 **Claude** (Code / Desktop), and **Codex** — the instructions are identical and the frontmatter is
 compatible (tool-specific fields such as `required_mcp_servers` are ignored by tools that don't
 use them).
@@ -19,7 +19,7 @@ use them).
 
 - REAPER running with the **Web Remote** interface enabled
   (Preferences → Control/OSC/web → add "Web browser interface").
-- The `reaper-mcp` server registered in your AI tool (see the repo [README](../README.md)).
+- The `ori-reaper` MCP server (from the `reaper-plugin` bundle) registered in your AI tool (see the repo [README](../README.md)).
 
 ## Install
 
@@ -42,5 +42,5 @@ cp -R skills/reaper-session-setup ~/.claude/skills/
 cp -R skills/reaper-session-setup ~/.codex/skills/
 ```
 
-> Make sure the `reaper-mcp` server is configured in the same tool, and REAPER is running, before
+> Make sure the `ori-reaper` server is configured in the same tool, and REAPER is running, before
 > you invoke a skill.

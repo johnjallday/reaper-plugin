@@ -1,4 +1,4 @@
-module github.com/johnjallday/reaper-mcp
+module github.com/johnjallday/reaper-plugin
 
 go 1.22
 

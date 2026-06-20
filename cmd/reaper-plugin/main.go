@@ -9,13 +9,13 @@ import (
 	"os"
 	"strings"
 
-	"github.com/johnjallday/reaper-mcp/internal/mcpio"
-	"github.com/johnjallday/reaper-mcp/internal/reaper"
+	"github.com/johnjallday/reaper-plugin/internal/mcpio"
+	"github.com/johnjallday/reaper-plugin/internal/reaper"
 )
 
 const (
 	protocolVersion = "2024-11-05"
-	serverName      = "reaper-mcp"
+	serverName      = "ori-reaper"
 	serverVersion   = "0.1.0"
 	toolName        = "ori-reaper"
 )
