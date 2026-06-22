@@ -1,200 +1,220 @@
+// Command reaper-plugin is a small CLI helper for the reaper-plugin skills.
+//
+// The plugin drives a running REAPER over its Web Remote HTTP interface using
+// plain shell (curl) and file operations — no MCP server. This binary exists
+// only for the bits that are fiddly to do in shell: editing reaper-kb.ini to
+// register ReaScripts (so they get Web Remote command IDs) and pruning stale
+// entries. The remaining filesystem/Web Remote operations are also exposed for
+// convenience, but the skills generally use shell directly.
 package main
 
 import (
-	"bufio"
-	"encoding/json"
-	"errors"
+	"flag"
 	"fmt"
 	"io"
 	"os"
+	"sort"
 	"strings"
 
-	"github.com/johnjallday/reaper-plugin/internal/mcpio"
 	"github.com/johnjallday/reaper-plugin/internal/reaper"
 )
 
-const (
-	protocolVersion = "2024-11-05"
-	serverName      = "ori-reaper"
-	serverVersion   = "0.1.0"
-	toolName        = "ori-reaper"
-)
+const version = "0.2.0"
+
+// command maps a user-facing subcommand to a reaper.Manager operation.
+type command struct {
+	op      string
+	summary string
+	// needsScript indicates the subcommand requires --script.
+	needsScript bool
+}
+
+var commands = map[string]command{
+	// Primary purpose: ReaScript registration helpers (fiddly in shell).
+	"register-script": {op: "register_script", summary: "Register a ReaScript in reaper-kb.ini so it gets a Web Remote command ID", needsScript: true},
+	"register-all":    {op: "register_all_scripts", summary: "Register every ReaScript found in the Scripts directory"},
+	"clean-scripts":   {op: "clean_scripts", summary: "Remove reaper-kb.ini entries whose script files no longer exist"},
+
+	// Convenience read/file operations (skills usually do these in shell).
+	"list":    {op: "list", summary: "List ReaScripts in the Scripts directory"},
+	"status":  {op: "get_status", summary: "Report whether REAPER is running"},
+	"tracks":  {op: "get_tracks", summary: "Print the current project's tracks (via Web Remote)"},
+	"port":    {op: "get_web_remote_port", summary: "Print the Web Remote port (from reaper.ini)"},
+	"context": {op: "get_context", summary: "Print the open project name/path"},
+	"add":     {op: "add", summary: "Write a ReaScript file (requires --script, --content; --type)", needsScript: true},
+	"delete":  {op: "delete", summary: "Delete a ReaScript file (requires --script)", needsScript: true},
+}
 
 func main() {
+	os.Exit(run(os.Args[1:]))
+}
+
+func run(args []string) int {
+	if len(args) == 0 {
+		usage(os.Stderr)
+		return 2
+	}
+	switch args[0] {
+	case "-h", "--help", "help":
+		usage(os.Stdout)
+		return 0
+	case "-v", "--version", "version":
+		fmt.Println(version)
+		return 0
+	case "install-runner":
+		return runInstallRunner()
+	case "runner-id":
+		return runRunnerID()
+	case "exec":
+		return runExec(args[1:])
+	}
+
+	name := args[0]
+	cmd, ok := commands[name]
+	if !ok {
+		fmt.Fprintf(os.Stderr, "unknown command: %s\n\n", name)
+		usage(os.Stderr)
+		return 2
+	}
+
+	fs := flag.NewFlagSet(name, flag.ContinueOnError)
+	script := fs.String("script", "", "script name (with or without extension)")
+	content := fs.String("content", "", "script source (for add)")
+	scriptType := fs.String("type", "", "script type: lua|eel|py (for add)")
+	filename := fs.String("filename", "", "optional full filename")
+	if err := fs.Parse(args[1:]); err != nil {
+		return 2
+	}
+
+	if cmd.needsScript && strings.TrimSpace(*script) == "" {
+		fmt.Fprintf(os.Stderr, "%s requires --script\n", name)
+		return 2
+	}
+
 	manager := reaper.NewManagerFromEnv()
-	reader := bufio.NewReader(os.Stdin)
-	writer := bufio.NewWriter(os.Stdout)
-
-	for {
-		raw, framing, err := mcpio.ReadMessage(reader)
-		if err != nil {
-			if errors.Is(err, io.EOF) {
-				return
-			}
-			logErr(fmt.Errorf("read message: %w", err))
-			continue
-		}
-
-		var req mcpio.Request
-		if err := json.Unmarshal(raw, &req); err != nil {
-			logErr(fmt.Errorf("parse request: %w", err))
-			_ = writeRPCError(writer, framing, nil, mcpio.ParseError, "invalid JSON")
-			continue
-		}
-
-		if strings.TrimSpace(req.Method) == "" {
-			_ = writeRPCError(writer, framing, req.ID, mcpio.InvalidRequest, "missing method")
-			continue
-		}
-
-		if req.ID == nil {
-			// Notification path.
-			continue
-		}
-
-		switch req.Method {
-		case mcpio.MethodInitialize:
-			result := mcpio.InitializeResult{
-				ProtocolVersion: protocolVersion,
-				Capabilities: mcpio.ServerCapabilities{
-					Tools: &mcpio.ToolsCapability{ListChanged: false},
-				},
-				ServerInfo: mcpio.Implementation{Name: serverName, Version: serverVersion},
-			}
-			_ = writeRPCResult(writer, framing, req.ID, result)
-
-		case mcpio.MethodToolsList:
-			result := mcpio.ToolsListResult{Tools: []mcpio.Tool{reaperToolDefinition()}}
-			_ = writeRPCResult(writer, framing, req.ID, result)
-
-		case mcpio.MethodToolsCall:
-			var params mcpio.ToolCallParams
-			if len(req.Params) > 0 {
-				if err := json.Unmarshal(req.Params, &params); err != nil {
-					_ = writeRPCError(writer, framing, req.ID, mcpio.InvalidParams, "invalid tools/call params")
-					continue
-				}
-			}
-
-			if strings.TrimSpace(params.Name) != toolName {
-				toolResult := mcpio.ToolCallResult{
-					IsError: true,
-					Content: []mcpio.ContentItem{{Type: "text", Text: fmt.Sprintf("unknown tool: %s", params.Name)}},
-				}
-				_ = writeRPCResult(writer, framing, req.ID, toolResult)
-				continue
-			}
-
-			var opParams reaper.Params
-			if len(params.Arguments) > 0 {
-				payload, _ := json.Marshal(params.Arguments)
-				if err := json.Unmarshal(payload, &opParams); err != nil {
-					toolResult := mcpio.ToolCallResult{
-						IsError: true,
-						Content: []mcpio.ContentItem{{Type: "text", Text: fmt.Sprintf("invalid arguments: %v", err)}},
-					}
-					_ = writeRPCResult(writer, framing, req.ID, toolResult)
-					continue
-				}
-			}
-
-			text, err := manager.Execute(opParams)
-			if err != nil {
-				toolResult := mcpio.ToolCallResult{
-					IsError: true,
-					Content: []mcpio.ContentItem{{Type: "text", Text: err.Error()}},
-				}
-				_ = writeRPCResult(writer, framing, req.ID, toolResult)
-				continue
-			}
-
-			toolResult := mcpio.ToolCallResult{
-				Content: []mcpio.ContentItem{{Type: "text", Text: text}},
-			}
-			_ = writeRPCResult(writer, framing, req.ID, toolResult)
-
-		case mcpio.MethodPing:
-			_ = writeRPCResult(writer, framing, req.ID, map[string]any{})
-
-		default:
-			_ = writeRPCError(writer, framing, req.ID, mcpio.MethodNotFound, fmt.Sprintf("unknown method: %s", req.Method))
-		}
-	}
-}
-
-func reaperToolDefinition() mcpio.Tool {
-	return mcpio.Tool{
-		Name:        toolName,
-		Description: "Manage REAPER ReaScripts, status, project context, and tracks using operation-based arguments.",
-		InputSchema: map[string]any{
-			"type": "object",
-			"properties": map[string]any{
-				"operation": map[string]any{
-					"type":        "string",
-					"description": "Operation to perform",
-					"enum": []string{
-						"list",
-						"run",
-						"add",
-						"delete",
-						"list_available_scripts",
-						"download_script",
-						"register_script",
-						"register_all_scripts",
-						"clean_scripts",
-						"get_context",
-						"get_status",
-						"get_web_remote_port",
-						"get_tracks",
-					},
-				},
-				"script": map[string]any{
-					"type":        "string",
-					"description": "Script name (with or without extension)",
-				},
-				"content": map[string]any{
-					"type":        "string",
-					"description": "Script source code for add operation",
-				},
-				"script_type": map[string]any{
-					"type":        "string",
-					"description": "Script type for add operation",
-					"enum":        []string{"lua", "eel", "py"},
-				},
-				"filename": map[string]any{
-					"type":        "string",
-					"description": "Optional full filename",
-				},
-			},
-			"required": []string{"operation"},
-		},
-	}
-}
-
-func writeRPCResult(writer *bufio.Writer, framing mcpio.FramingMode, id any, result any) error {
-	raw, err := json.Marshal(result)
+	out, err := manager.Execute(reaper.Params{
+		Operation:  cmd.op,
+		Script:     *script,
+		Content:    *content,
+		ScriptType: *scriptType,
+		Filename:   *filename,
+	})
 	if err != nil {
-		return err
+		fmt.Fprintln(os.Stderr, err.Error())
+		return 1
 	}
-	resp := mcpio.Response{JSONRPC: mcpio.JSONRPCVersion, ID: id, Result: raw}
-	if err := mcpio.WriteMessage(writer, resp, framing); err != nil {
-		return err
-	}
-	return writer.Flush()
+	fmt.Println(out)
+	return 0
 }
 
-func writeRPCError(writer *bufio.Writer, framing mcpio.FramingMode, id any, code int, message string) error {
-	resp := mcpio.Response{
-		JSONRPC: mcpio.JSONRPCVersion,
-		ID:      id,
-		Error:   &mcpio.RPCError{Code: code, Message: message},
+// runInstallRunner performs the one-time runner install + registration.
+func runInstallRunner() int {
+	out, err := reaper.NewManagerFromEnv().InstallRunner()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err.Error())
+		return 1
 	}
-	if err := mcpio.WriteMessage(writer, resp, framing); err != nil {
-		return err
-	}
-	return writer.Flush()
+	fmt.Println(out)
+	return 0
 }
 
-func logErr(err error) {
-	_, _ = fmt.Fprintf(os.Stderr, "[%s] %v\n", serverName, err)
+// runRunnerID prints the runner's Web Remote command ID (once it has been seeded).
+func runRunnerID() int {
+	id, err := reaper.NewManagerFromEnv().ReadRunnerID()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err.Error())
+		return 1
+	}
+	fmt.Println(id)
+	return 0
+}
+
+// runExec writes Lua to the inbox and triggers the runner so REAPER runs it live.
+// Source is --content "<lua>" or --file <path> ("-" reads stdin).
+func runExec(args []string) int {
+	fs := flag.NewFlagSet("exec", flag.ContinueOnError)
+	content := fs.String("content", "", "Lua source to run")
+	file := fs.String("file", "", "path to a Lua file to run (\"-\" for stdin)")
+	if err := fs.Parse(args); err != nil {
+		return 2
+	}
+
+	lua := *content
+	if *file != "" {
+		data, err := readSource(*file)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err.Error())
+			return 1
+		}
+		lua = data
+	}
+	if strings.TrimSpace(lua) == "" {
+		fmt.Fprintln(os.Stderr, "exec requires --content or --file")
+		return 2
+	}
+
+	out, err := reaper.NewManagerFromEnv().Exec(lua)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err.Error())
+		return 1
+	}
+	fmt.Println(out)
+	return 0
+}
+
+func readSource(path string) (string, error) {
+	if path == "-" {
+		data, err := io.ReadAll(os.Stdin)
+		if err != nil {
+			return "", fmt.Errorf("read stdin: %w", err)
+		}
+		return string(data), nil
+	}
+	data, err := os.ReadFile(path) //nolint:gosec // CLI helper reads a user-specified script file by design
+	if err != nil {
+		return "", fmt.Errorf("read %s: %w", path, err)
+	}
+	return string(data), nil
+}
+
+func usage(w *os.File) {
+	fmt.Fprintf(w, `reaper-plugin %s — helper CLI for the reaper-plugin skills
+
+The skills drive REAPER over its Web Remote HTTP interface with plain shell
+(curl) and file operations. This binary is an optional helper, mainly for
+registering ReaScripts in reaper-kb.ini (which is fiddly to do in shell).
+
+Usage:
+  reaper-plugin <command> [flags]
+
+Runner commands (drive REAPER live; see `+"`install-runner`"+` first):
+  install-runner   One-time: install + register the runner action in REAPER
+  exec             Run Lua in REAPER now (--content "<lua>" or --file <path>|-)
+  runner-id        Print the runner's Web Remote command ID (once seeded)
+
+Commands:
+`, version)
+
+	names := make([]string, 0, len(commands))
+	for n := range commands {
+		names = append(names, n)
+	}
+	sort.Strings(names)
+	for _, n := range names {
+		fmt.Fprintf(w, "  %-16s %s\n", n, commands[n].summary)
+	}
+
+	fmt.Fprintf(w, `
+Flags:
+  --script NAME     script name (with or without extension)
+  --content STR     script source (for add / exec)
+  --file PATH       Lua file to run (for exec; "-" reads stdin)
+  --type lua|eel|py script type (for add)
+  --filename NAME   optional full filename
+
+Environment:
+  REAPER_SCRIPTS_DIR       override the Scripts directory
+  REAPER_WEB_REMOTE_PORT   override the Web Remote port (else auto-detected)
+  REAPER_MARKETPLACE_URL   marketplace URL shown by marketplace operations
+`)
 }
