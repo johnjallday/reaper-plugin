@@ -5,39 +5,40 @@ description: Set up a REAPER session — insert, name, color, and record-arm tra
 
 # REAPER session setup (shell + Web Remote, no MCP)
 
-You set up REAPER sessions by writing a ReaScript and driving REAPER over its
-**Web Remote** HTTP interface with your **shell** — no MCP tool. The
-[`reaper-web-remote`](../reaper-web-remote/SKILL.md) skill covers the Web Remote
-basics (port discovery, transport/track reads, running command IDs); read it
-first. This skill is the session-building playbook on top of it.
-
-REAPER is controlled with ReaScript: you compose a small Lua script and run it
-live through the plugin's **runner** (`reaper-plugin exec`), which executes your
-Lua inside REAPER without touching the Scripts dir or restarting REAPER.
+You set up REAPER sessions by writing a ReaScript and running it live through the
+plugin's **runner** — all with your shell (curl + a file write), no MCP tool and no
+binary. Read [`reaper-web-remote`](../reaper-web-remote/SKILL.md) first; it covers
+port discovery, transport/track reads, and the runner mechanism. This skill is the
+session-building playbook on top of it.
 
 ## Before you act
 
-1. Discover `$PORT` (see reaper-web-remote step 1) and confirm REAPER is reachable:
+1. Discover `$PORT` (reaper-web-remote step 1) and confirm REAPER is reachable:
    `curl -s -m 5 "http://127.0.0.1:$PORT/_/TRANSPORT"`. If it fails, stop and ask
-   the user to launch REAPER with the Web Remote interface enabled — you cannot
-   control it otherwise.
-2. Confirm the runner is set up: `${CLAUDE_PLUGIN_ROOT}/bin/reaper-plugin runner-id`.
-   If it errors, do the one-time setup in reaper-web-remote step 5
-   (`install-runner` → restart REAPER → trigger the runner once), then continue.
+   the user to launch REAPER with the Web Remote interface enabled.
+2. Confirm the runner is set up: check that `~/.ori-reaper/runner.id` exists
+   (`cat ~/.ori-reaper/runner.id`). If it's missing, follow reaper-web-remote
+   step 5 ("If runner.id does not exist") — ask the user to do the one-time setup;
+   do not try to install it yourself.
 3. Read the current session: `curl -s -m 5 "http://127.0.0.1:$PORT/_/TRACK"`. If
    tracks already exist, confirm with the user before adding to or replacing them,
    so you don't clobber existing work.
 
 ## Building a session
 
-1. Work out the track layout from the request: count, names, colors, and which
-   tracks to record-arm. If anything is unspecified, propose a sensible default
-   and confirm.
+1. Work out the layout from the request: count, names, colors, and which tracks to
+   record-arm. If anything is unspecified, propose a sensible default and confirm.
 2. Compose a Lua ReaScript that builds it (template below). The runner already
    wraps execution in an Undo block, so you don't need your own.
-3. Run it live: write the Lua to a workspace file and
-   `${CLAUDE_PLUGIN_ROOT}/bin/reaper-plugin exec --file session.lua`
-   (or pipe it: `... exec --file -`). `exec` reports `ok` or `error: …`.
+3. Run it live — write the Lua to the inbox and trigger the runner:
+
+        mkdir -p ~/.ori-reaper
+        cat > ~/.ori-reaper/inbox.lua <<'LUA'
+        -- your Lua here (see template)
+        LUA
+        curl -s -m 5 "http://127.0.0.1:$PORT/_/$(cat ~/.ori-reaper/runner.id)"
+        cat ~/.ori-reaper/last_status.txt      # expect "ok"
+
 4. Re-read tracks (`curl .../_/TRACK`) to verify, then summarize exactly what you
    created.
 
@@ -52,28 +53,47 @@ local tracks = {
 }
 
 -- The runner already wraps this in an Undo block and refreshes the arrange view.
+-- Insert at the end so existing tracks are left untouched:
+local base = reaper.CountTracks(0)
 for i, t in ipairs(tracks) do
-  reaper.InsertTrackAtIndex(i - 1, true)
-  local tr = reaper.GetTrack(0, i - 1)
+  local idx = base + (i - 1)
+  reaper.InsertTrackAtIndex(idx, true)
+  local tr = reaper.GetTrack(0, idx)
   reaper.GetSetMediaTrackInfo_String(tr, "P_NAME", t.name, true)
   reaper.SetTrackColor(tr, reaper.ColorToNative(t.color[1], t.color[2], t.color[3]))
   reaper.SetMediaTrackInfo_Value(tr, "I_RECARM", t.arm and 1 or 0)
 end
 ```
 
-## Alternative: a fresh project file (no running REAPER needed)
+## Setting tempo / saving the project (into the workspace)
 
-If the user wants a brand-new project rather than editing the open one, you can
-write a minimal `.RPP` project file directly in the workspace with the tracks
-predefined, then ask the user to open it (or open it via a registered "open
-project" ReaScript). This avoids the registration/restart step entirely but
-creates a new project instead of modifying the current one.
+Tempo and saving are not Web Remote actions — run them through the runner. **Save
+the project into the workspace, not into `~/Music` or your home directory.** Your
+shell's current working directory *is* the workspace's files folder, so resolve it
+and bake the absolute path into the inbox. (The runner runs inside REAPER, a
+separate process, so it cannot see your shell's cwd — you must pass an absolute
+path.)
+
+    WS_DIR="$(pwd)"                       # the workspace files folder
+    mkdir -p ~/.ori-reaper
+    cat > ~/.ori-reaper/inbox.lua <<LUA
+    reaper.SetCurrentBPM(0, 113, true)
+    reaper.Main_SaveProjectEx(0, "$WS_DIR/House Test.RPP", 0)
+    LUA
+    curl -s -m 5 "http://127.0.0.1:$PORT/_/$(cat ~/.ori-reaper/runner.id)"
+    cat ~/.ori-reaper/last_status.txt
+
+The heredoc is **unquoted** (`<<LUA`, not `<<'LUA'`) so the shell expands `$WS_DIR`
+into the Lua before the runner reads it; the Lua has no other `$` of its own. Name
+the file from the request (e.g. the project name + `.RPP`).
 
 ## Guardrails
 
 - Never run a script that deletes tracks or items without explicit confirmation.
-- Prefer additive operations, and always use Undo blocks so the user can revert
-  cleanly.
-- Do not launch or quit REAPER and do not use app automation — only Web Remote,
-  the helper CLI, and files.
-- Report what you changed: track names, count, and arm state.
+- Prefer additive operations; the runner's Undo block lets the user revert cleanly.
+- **Save projects, renders, and exports into the workspace files folder (your
+  current working directory), never into `~/Music` or the home directory — that is
+  how they show up in the workspace.**
+- Do not launch or quit REAPER and do not use app automation — only Web Remote +
+  the runner inbox.
+- Report what you changed: track names, count, arm state, tempo, and the saved path.
