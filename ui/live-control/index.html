@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>REAPER Live Control</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <main class="console" aria-labelledby="title">
+      <header class="hero">
+        <div>
+          <p class="eyebrow">REAPER · plugin workspace surface</p>
+          <h1 id="title">Live Control</h1>
+          <p data-project>Waiting for the authenticated host…</p>
+        </div>
+        <span class="status" data-status aria-live="polite">Connecting</span>
+      </header>
+
+      <section class="transport" aria-label="Transport controls">
+        <button type="button" data-action="1007">Play</button>
+        <button type="button" data-action="1008">Pause</button>
+        <button type="button" data-action="1016">Stop</button>
+        <button type="button" class="danger" data-action="1013">Record</button>
+        <output data-action-result aria-live="polite">No action run.</output>
+      </section>
+
+      <section class="facts" aria-label="Current project facts">
+        <article><span>Tempo</span><strong data-tempo>—</strong></article>
+        <article><span>Position</span><strong data-position>—</strong></article>
+        <article>
+          <span>Tracks</span><strong data-track-count>—</strong>
+        </article>
+        <article><span>Runner</span><strong data-runner>—</strong></article>
+      </section>
+
+      <section class="panel" aria-labelledby="tracks-title">
+        <div class="panel-heading">
+          <div>
+            <p class="eyebrow">Live snapshot</p>
+            <h2 id="tracks-title">Tracks</h2>
+          </div>
+          <button type="button" class="quiet" data-refresh>Refresh</button>
+        </div>
+        <div class="track-list" data-tracks>
+          <p class="empty">No live track state yet.</p>
+        </div>
+      </section>
+
+      <section class="panel" aria-labelledby="actions-title">
+        <div class="panel-heading">
+          <div>
+            <p class="eyebrow">Curated + registered + custom</p>
+            <h2 id="actions-title">Action catalog</h2>
+          </div>
+        </div>
+        <div class="action-grid" data-actions>
+          <p class="empty">Loading actions…</p>
+        </div>
+        <form class="raw-form" data-raw-form>
+          <label for="raw-command"
+            >Raw command ID <span>advanced · always confirmed</span></label
+          >
+          <div>
+            <input
+              id="raw-command"
+              name="command"
+              maxlength="100"
+              placeholder="40026 or _RS…"
+            /><button>Run</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="split">
+        <section class="panel" aria-labelledby="scripts-title">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">Global library</p>
+              <h2 id="scripts-title">Custom scripts</h2>
+            </div>
+          </div>
+          <div data-scripts><p class="empty">No scripts loaded.</p></div>
+          <form class="script-form" data-script-form>
+            <label for="script-filename">New disposable script filename</label>
+            <input
+              id="script-filename"
+              name="filename"
+              maxlength="120"
+              placeholder="ori-demo.lua"
+              required
+            />
+            <label for="script-name">Display name</label>
+            <input
+              id="script-name"
+              name="name"
+              maxlength="120"
+              placeholder="Ori demo"
+              required
+            />
+            <label for="script-code">Lua source</label>
+            <textarea
+              id="script-code"
+              name="code"
+              rows="5"
+              spellcheck="false"
+              required
+            ></textarea>
+            <button type="submit">Review & save</button>
+            <output data-script-result aria-live="polite"
+              >No script saved.</output
+            >
+          </form>
+        </section>
+        <section class="panel" aria-labelledby="draft-title">
+          <p class="eyebrow">Review before run</p>
+          <h2 id="draft-title">Lua draft</h2>
+          <label for="draft-code">Draft source</label>
+          <textarea
+            id="draft-code"
+            rows="8"
+            spellcheck="false"
+            placeholder="reaper.ShowConsoleMsg('Hello')"
+          ></textarea>
+          <div class="draft-actions">
+            <button type="button" class="quiet" data-validate>Validate</button>
+            <button type="button" data-run-draft>Review & run</button>
+          </div>
+          <output data-draft-result aria-live="polite"
+            >No draft checked.</output
+          >
+        </section>
+      </section>
+
+      <footer>
+        <button type="button" class="quiet" data-ask>Ask Ori</button>
+        <button type="button" class="quiet" data-setup>Open Setup</button>
+        <button type="button" class="quiet" data-close>Close</button>
+      </footer>
+    </main>
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>

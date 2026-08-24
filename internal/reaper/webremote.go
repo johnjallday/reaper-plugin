@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-type Track struct {
+type CLITrack struct {
 	Index  int     `json:"index"`
 	Name   string  `json:"name"`
 	Volume float64 `json:"volume_db"`
@@ -47,7 +47,7 @@ func getWebRemoteConfig() (*webRemoteConfig, error) {
 	if err != nil {
 		return nil, err
 	}
-	file, err := os.Open(ini)
+	file, err := os.Open(ini) // #nosec G304 -- fixed current-user REAPER configuration path
 	if err != nil {
 		return nil, fmt.Errorf("open reaper.ini: %w", err)
 	}
@@ -91,7 +91,7 @@ func getWebRemoteConfig() (*webRemoteConfig, error) {
 	return nil, fmt.Errorf("web remote config not found in reaper.ini")
 }
 
-func (m *Manager) GetTracks() ([]Track, error) {
+func (m *Manager) GetTracks() ([]CLITrack, error) {
 	port := m.ResolveWebRemotePort()
 	url := fmt.Sprintf("http://localhost:%d/_/TRACK", port)
 
@@ -110,12 +110,12 @@ func (m *Manager) GetTracks() ([]Track, error) {
 	if err != nil {
 		return nil, fmt.Errorf("read web remote response: %w", err)
 	}
-	return parseTracks(string(body)), nil
+	return parseCLITracks(string(body)), nil
 }
 
-func parseTracks(data string) []Track {
+func parseCLITracks(data string) []CLITrack {
 	lines := strings.Split(strings.TrimSpace(data), "\n")
-	tracks := make([]Track, 0, len(lines))
+	tracks := make([]CLITrack, 0, len(lines))
 
 	for _, line := range lines {
 		line = strings.TrimSpace(line)
@@ -127,7 +127,7 @@ func parseTracks(data string) []Track {
 			continue
 		}
 
-		track := Track{}
+		track := CLITrack{}
 		if idx, err := strconv.Atoi(fields[1]); err == nil {
 			track.Index = idx
 		}
@@ -152,7 +152,7 @@ func parseTracks(data string) []Track {
 	return tracks
 }
 
-func FormatTracksTable(tracks []Track) string {
+func FormatTracksTable(tracks []CLITrack) string {
 	if len(tracks) == 0 {
 		return "No tracks found in REAPER project"
 	}

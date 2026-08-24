@@ -68,13 +68,13 @@ func (m *Manager) AddScript(scriptName, content, scriptType string) (string, err
 		return "", err
 	}
 
-	if err := os.MkdirAll(filepath.Dir(p), 0o755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(p), 0o750); err != nil {
 		return "", fmt.Errorf("create scripts dir: %w", err)
 	}
 	if _, err := os.Stat(p); err == nil {
 		return "", fmt.Errorf("script already exists: %s", filepath.Base(p))
 	}
-	if err := os.WriteFile(p, []byte(content), 0o644); err != nil {
+	if err := os.WriteFile(p, []byte(content), 0o600); err != nil {
 		return "", fmt.Errorf("write script: %w", err)
 	}
 	return fmt.Sprintf("Successfully added REAPER script: %s", filepath.Base(p)), nil
@@ -120,7 +120,7 @@ func (m *Manager) RegisterScript(script string) (string, error) {
 		return "", err
 	}
 
-	file, err := os.Open(kbPath)
+	file, err := os.Open(kbPath) // #nosec G304 -- fixed current-user REAPER keyboard configuration path
 	if err != nil {
 		return "", fmt.Errorf("open reaper-kb.ini: %w", err)
 	}
@@ -160,7 +160,7 @@ func (m *Manager) RegisterScript(script string) (string, error) {
 		lines = append(lines, "", "[Main]", entry)
 	}
 
-	if err := os.WriteFile(kbPath, []byte(strings.Join(lines, "\n")), 0o644); err != nil {
+	if err := os.WriteFile(kbPath, []byte(strings.Join(lines, "\n")), 0o600); err != nil {
 		return "", fmt.Errorf("write reaper-kb.ini: %w", err)
 	}
 	return fmt.Sprintf("Successfully registered script '%s' in REAPER keyboard shortcuts", scriptDisplay), nil
@@ -204,7 +204,7 @@ func (m *Manager) CleanScripts() (string, error) {
 		return "", err
 	}
 
-	file, err := os.Open(kbPath)
+	file, err := os.Open(kbPath) // #nosec G304 -- fixed current-user REAPER keyboard configuration path
 	if err != nil {
 		return "", fmt.Errorf("open reaper-kb.ini: %w", err)
 	}
@@ -236,7 +236,7 @@ func (m *Manager) CleanScripts() (string, error) {
 		return "No missing scripts found in reaper-kb.ini. All script paths are valid.", nil
 	}
 
-	if err := os.WriteFile(kbPath, []byte(strings.Join(lines, "\n")), 0o644); err != nil {
+	if err := os.WriteFile(kbPath, []byte(strings.Join(lines, "\n")), 0o600); err != nil {
 		return "", fmt.Errorf("write reaper-kb.ini: %w", err)
 	}
 	return fmt.Sprintf("Cleaned %d missing script(s) from reaper-kb.ini", removed), nil

@@ -67,6 +67,8 @@ func run(args []string) int {
 		return runRunnerID()
 	case "exec":
 		return runExec(args[1:])
+	case "serve":
+		return runService()
 	}
 
 	name := args[0]
@@ -170,7 +172,7 @@ func readSource(path string) (string, error) {
 		}
 		return string(data), nil
 	}
-	data, err := os.ReadFile(path) //nolint:gosec // CLI helper reads a user-specified script file by design
+	data, err := os.ReadFile(path) // #nosec G304 -- CLI helper explicitly reads the human-selected script source
 	if err != nil {
 		return "", fmt.Errorf("read %s: %w", path, err)
 	}
@@ -186,6 +188,9 @@ registering ReaScripts in reaper-kb.ini (which is fiddly to do in shell).
 
 Usage:
   reaper-plugin <command> [flags]
+
+Service command (used by Ori's private Workspace Surface broker):
+  serve            Run the long-lived MCP stdio Plugin Service
 
 Runner commands (drive REAPER live; see `+"`install-runner`"+` first):
   install-runner   One-time: install + register the runner action in REAPER

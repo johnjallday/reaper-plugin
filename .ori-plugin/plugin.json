@@ -1,0 +1,1043 @@
+{
+  "schema_version": 1,
+  "name": "reaper-plugin",
+  "version": "0.3.0",
+  "protocol": {
+    "min": 1,
+    "max": 1
+  },
+  "capabilities": [
+    {
+      "id": "reaper-live-control",
+      "version": 1,
+      "display": {
+        "name": "REAPER Live Control",
+        "description": "Control and inspect the authoritative REAPER project through a verified local provider."
+      },
+      "service_id": "reaper-service",
+      "surfaces": [
+        {
+          "id": "live-control",
+          "label": "REAPER Live Control",
+          "description": "Open live transport, tracks, actions, scripts, and draft review.",
+          "icon": {
+            "kind": "host",
+            "value": "waveform"
+          },
+          "placement": "map_modal",
+          "entry_asset": "ui/live-control/index.html",
+          "modal": {
+            "width": 1100,
+            "height": 760
+          },
+          "status_operation": "status.read",
+          "operations": [
+            "status.read",
+            "state.read",
+            "actions.list",
+            "actions.run_safe",
+            "actions.run_confirmed",
+            "actions.run_raw_confirmed",
+            "scripts.list",
+            "scripts.read",
+            "scripts.create",
+            "scripts.update",
+            "scripts.delete",
+            "draft.validate",
+            "draft.run",
+            "results.read"
+          ],
+          "polling": {
+            "map_seconds": 5,
+            "open_seconds": 1
+          },
+          "host_intents": {
+            "ask_ori": {
+              "required_capabilities": ["reaper_live_control"]
+            },
+            "open_setup": {
+              "provider_id": "reaper-runtime"
+            },
+            "confirmation": true,
+            "state": true,
+            "close": true
+          }
+        }
+      ],
+      "runtime_provider": {
+        "id": "reaper-runtime",
+        "requirement_key": "reaper_live_control",
+        "operations": {
+          "prerequisites": "runtime.prerequisites",
+          "readiness": "runtime.readiness",
+          "live_status": "runtime.live_status",
+          "verify": "runtime.verify",
+          "repair": "runtime.repair"
+        },
+        "scopes": ["loopback_reaper", "reaper_runner_exchange"]
+      },
+      "agent_operations": [
+        "state.read",
+        "actions.list",
+        "actions.run_safe",
+        "actions.run_confirmed",
+        "scripts.list",
+        "scripts.read",
+        "draft.validate",
+        "draft.run",
+        "results.read"
+      ]
+    }
+  ],
+  "services": [
+    {
+      "id": "reaper-service",
+      "transport": "mcp_stdio",
+      "protocol_version": 1,
+      "entrypoint": {
+        "artifact_id": "reaper-plugin-darwin-arm64",
+        "args": ["serve"]
+      },
+      "artifacts": [
+        {
+          "id": "reaper-plugin-darwin-arm64",
+          "os": "darwin",
+          "arch": "arm64",
+          "source": {
+            "kind": "bundled",
+            "path": "artifacts/reaper-plugin-darwin-arm64"
+          },
+          "sha256": "ce4d35c02f8a80c30b77c481beaf6d6d63cca8f30af10f31cfb098ff7dfe9cdf",
+          "size": 8323698
+        }
+      ],
+      "operations": [
+        {
+          "id": "service.version",
+          "input_schema": {
+            "type": "object",
+            "properties": {},
+            "required": [],
+            "additionalProperties": false
+          },
+          "output_schema": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "maxLength": 120
+              },
+              "version": {
+                "type": "string",
+                "maxLength": 64
+              },
+              "protocol_version": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 1
+              },
+              "healthy": {
+                "type": "boolean"
+              }
+            },
+            "required": ["name", "version", "protocol_version", "healthy"],
+            "additionalProperties": false
+          },
+          "max_output_bytes": 65536,
+          "timeout_class": "fast",
+          "policy": "read_only",
+          "scopes": []
+        },
+        {
+          "id": "status.read",
+          "input_schema": {
+            "type": "object",
+            "properties": {},
+            "required": [],
+            "additionalProperties": false
+          },
+          "output_schema": {
+            "type": "object",
+            "properties": {
+              "state": {
+                "type": "string",
+                "maxLength": 32,
+                "enum": [
+                  "checking",
+                  "ready",
+                  "attention",
+                  "degraded",
+                  "unavailable",
+                  "disabled"
+                ]
+              },
+              "value": {
+                "type": "string",
+                "maxLength": 160
+              },
+              "description": {
+                "type": "string",
+                "maxLength": 500
+              },
+              "checked_at": {
+                "type": "string",
+                "maxLength": 64
+              }
+            },
+            "required": ["state", "value", "description", "checked_at"],
+            "additionalProperties": false
+          },
+          "max_output_bytes": 65536,
+          "timeout_class": "fast",
+          "policy": "read_only",
+          "scopes": []
+        },
+        {
+          "id": "runtime.prerequisites",
+          "input_schema": {
+            "type": "object",
+            "properties": {},
+            "required": [],
+            "additionalProperties": false
+          },
+          "output_schema": {
+            "type": "object",
+            "properties": {
+              "ready": {
+                "type": "boolean"
+              },
+              "summary": {
+                "type": "string",
+                "maxLength": 500
+              }
+            },
+            "required": ["ready", "summary"],
+            "additionalProperties": false
+          },
+          "max_output_bytes": 65536,
+          "timeout_class": "fast",
+          "policy": "read_only",
+          "scopes": []
+        },
+        {
+          "id": "runtime.readiness",
+          "input_schema": {
+            "type": "object",
+            "properties": {},
+            "required": [],
+            "additionalProperties": false
+          },
+          "output_schema": {
+            "type": "object",
+            "properties": {
+              "ready": {
+                "type": "boolean"
+              },
+              "summary": {
+                "type": "string",
+                "maxLength": 500
+              }
+            },
+            "required": ["ready", "summary"],
+            "additionalProperties": false
+          },
+          "max_output_bytes": 65536,
+          "timeout_class": "fast",
+          "policy": "read_only",
+          "scopes": []
+        },
+        {
+          "id": "runtime.live_status",
+          "input_schema": {
+            "type": "object",
+            "properties": {},
+            "required": [],
+            "additionalProperties": false
+          },
+          "output_schema": {
+            "type": "object",
+            "properties": {
+              "available": {
+                "type": "boolean"
+              },
+              "summary": {
+                "type": "string",
+                "maxLength": 500
+              }
+            },
+            "required": ["available", "summary"],
+            "additionalProperties": false
+          },
+          "max_output_bytes": 65536,
+          "timeout_class": "fast",
+          "policy": "read_only",
+          "scopes": []
+        },
+        {
+          "id": "runtime.verify",
+          "input_schema": {
+            "type": "object",
+            "properties": {},
+            "required": [],
+            "additionalProperties": false
+          },
+          "output_schema": {
+            "type": "object",
+            "properties": {
+              "verified": {
+                "type": "boolean"
+              },
+              "summary": {
+                "type": "string",
+                "maxLength": 500
+              }
+            },
+            "required": ["verified", "summary"],
+            "additionalProperties": false
+          },
+          "max_output_bytes": 65536,
+          "timeout_class": "normal",
+          "policy": "confirmation_required",
+          "scopes": []
+        },
+        {
+          "id": "runtime.repair",
+          "input_schema": {
+            "type": "object",
+            "properties": {},
+            "required": [],
+            "additionalProperties": false
+          },
+          "output_schema": {
+            "type": "object",
+            "properties": {
+              "repaired": {
+                "type": "boolean"
+              },
+              "summary": {
+                "type": "string",
+                "maxLength": 500
+              }
+            },
+            "required": ["repaired", "summary"],
+            "additionalProperties": false
+          },
+          "max_output_bytes": 65536,
+          "timeout_class": "normal",
+          "policy": "confirmation_required",
+          "scopes": []
+        },
+        {
+          "id": "state.read",
+          "input_schema": {
+            "type": "object",
+            "properties": {},
+            "required": [],
+            "additionalProperties": false
+          },
+          "output_schema": {
+            "type": "object",
+            "properties": {
+              "applies": {
+                "type": "boolean"
+              },
+              "connected": {
+                "type": "boolean"
+              },
+              "reason": {
+                "type": "string",
+                "maxLength": 64
+              },
+              "project": {
+                "type": "string",
+                "maxLength": 500
+              },
+              "tempo": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1000
+              },
+              "time_signature": {
+                "type": "string",
+                "maxLength": 32
+              },
+              "play_state": {
+                "type": "string",
+                "maxLength": 32
+              },
+              "position": {
+                "type": "string",
+                "maxLength": 64
+              },
+              "track_count": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 100000
+              },
+              "tracks": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "index": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 100000
+                    },
+                    "name": {
+                      "type": "string",
+                      "maxLength": 500
+                    },
+                    "muted": {
+                      "type": "boolean"
+                    },
+                    "soloed": {
+                      "type": "boolean"
+                    },
+                    "armed": {
+                      "type": "boolean"
+                    },
+                    "color": {
+                      "type": "integer"
+                    },
+                    "folder_depth": {
+                      "type": "integer",
+                      "minimum": -128,
+                      "maximum": 128
+                    },
+                    "peak_left_db": {
+                      "type": "number"
+                    },
+                    "peak_right_db": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "index",
+                    "name",
+                    "muted",
+                    "soloed",
+                    "armed",
+                    "color",
+                    "folder_depth",
+                    "peak_left_db",
+                    "peak_right_db"
+                  ],
+                  "additionalProperties": false
+                },
+                "maxItems": 256
+              },
+              "folder_depth_available": {
+                "type": "boolean"
+              },
+              "checked_at": {
+                "type": "string",
+                "maxLength": 64
+              },
+              "track_editing_available": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "applies",
+              "connected",
+              "project",
+              "tempo",
+              "time_signature",
+              "play_state",
+              "position",
+              "track_count",
+              "tracks",
+              "folder_depth_available",
+              "checked_at",
+              "track_editing_available"
+            ],
+            "additionalProperties": false
+          },
+          "max_output_bytes": 262144,
+          "timeout_class": "fast",
+          "policy": "read_only",
+          "scopes": []
+        },
+        {
+          "id": "actions.list",
+          "input_schema": {
+            "type": "object",
+            "properties": {},
+            "required": [],
+            "additionalProperties": false
+          },
+          "output_schema": {
+            "type": "object",
+            "properties": {
+              "actions": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "maxLength": 120
+                    },
+                    "label": {
+                      "type": "string",
+                      "maxLength": 500
+                    },
+                    "description": {
+                      "type": "string",
+                      "maxLength": 500
+                    },
+                    "source": {
+                      "type": "string",
+                      "maxLength": 32
+                    },
+                    "mutates": {
+                      "type": "boolean"
+                    },
+                    "needs_confirmation": {
+                      "type": "boolean"
+                    },
+                    "tier": {
+                      "type": "string",
+                      "maxLength": 32
+                    },
+                    "undo_summary": {
+                      "type": "string",
+                      "maxLength": 500
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "label",
+                    "description",
+                    "source",
+                    "mutates",
+                    "needs_confirmation"
+                  ],
+                  "additionalProperties": false
+                },
+                "maxItems": 256
+              }
+            },
+            "required": ["actions"],
+            "additionalProperties": false
+          },
+          "max_output_bytes": 262144,
+          "timeout_class": "fast",
+          "policy": "read_only",
+          "scopes": []
+        },
+        {
+          "id": "actions.run_safe",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "action_id": {
+                "type": "string",
+                "maxLength": 120
+              }
+            },
+            "required": ["action_id"],
+            "additionalProperties": false
+          },
+          "output_schema": {
+            "type": "object",
+            "properties": {
+              "outcome": {
+                "type": "string",
+                "maxLength": 32
+              },
+              "summary": {
+                "type": "string",
+                "maxLength": 1000
+              }
+            },
+            "required": ["outcome", "summary"],
+            "additionalProperties": false
+          },
+          "max_output_bytes": 65536,
+          "timeout_class": "normal",
+          "policy": "reversible",
+          "scopes": []
+        },
+        {
+          "id": "actions.run_confirmed",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "action_id": {
+                "type": "string",
+                "maxLength": 120
+              }
+            },
+            "required": ["action_id"],
+            "additionalProperties": false
+          },
+          "output_schema": {
+            "type": "object",
+            "properties": {
+              "outcome": {
+                "type": "string",
+                "maxLength": 32
+              },
+              "summary": {
+                "type": "string",
+                "maxLength": 1000
+              }
+            },
+            "required": ["outcome", "summary"],
+            "additionalProperties": false
+          },
+          "max_output_bytes": 65536,
+          "timeout_class": "normal",
+          "policy": "confirmation_required",
+          "scopes": []
+        },
+        {
+          "id": "actions.run_raw_confirmed",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "action_id": {
+                "type": "string",
+                "maxLength": 120
+              }
+            },
+            "required": ["action_id"],
+            "additionalProperties": false
+          },
+          "output_schema": {
+            "type": "object",
+            "properties": {
+              "outcome": {
+                "type": "string",
+                "maxLength": 32
+              },
+              "summary": {
+                "type": "string",
+                "maxLength": 1000
+              }
+            },
+            "required": ["outcome", "summary"],
+            "additionalProperties": false
+          },
+          "max_output_bytes": 65536,
+          "timeout_class": "normal",
+          "policy": "confirmation_required",
+          "scopes": []
+        },
+        {
+          "id": "scripts.list",
+          "input_schema": {
+            "type": "object",
+            "properties": {},
+            "required": [],
+            "additionalProperties": false
+          },
+          "output_schema": {
+            "type": "object",
+            "properties": {
+              "scripts": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "maxLength": 128
+                    },
+                    "filename": {
+                      "type": "string",
+                      "maxLength": 120
+                    },
+                    "name": {
+                      "type": "string",
+                      "maxLength": 500
+                    },
+                    "description": {
+                      "type": "string",
+                      "maxLength": 500
+                    },
+                    "needs_confirmation": {
+                      "type": "boolean"
+                    },
+                    "metadata_valid": {
+                      "type": "boolean"
+                    },
+                    "code": {
+                      "type": "string",
+                      "maxLength": 32768
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "filename",
+                    "name",
+                    "description",
+                    "needs_confirmation",
+                    "metadata_valid"
+                  ],
+                  "additionalProperties": false
+                },
+                "maxItems": 256
+              }
+            },
+            "required": ["scripts"],
+            "additionalProperties": false
+          },
+          "max_output_bytes": 262144,
+          "timeout_class": "fast",
+          "policy": "read_only",
+          "scopes": []
+        },
+        {
+          "id": "scripts.read",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "maxLength": 128
+              }
+            },
+            "required": ["id"],
+            "additionalProperties": false
+          },
+          "output_schema": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "maxLength": 128
+              },
+              "filename": {
+                "type": "string",
+                "maxLength": 120
+              },
+              "name": {
+                "type": "string",
+                "maxLength": 500
+              },
+              "description": {
+                "type": "string",
+                "maxLength": 500
+              },
+              "needs_confirmation": {
+                "type": "boolean"
+              },
+              "metadata_valid": {
+                "type": "boolean"
+              },
+              "code": {
+                "type": "string",
+                "maxLength": 32768
+              }
+            },
+            "required": [
+              "id",
+              "filename",
+              "name",
+              "description",
+              "needs_confirmation",
+              "metadata_valid"
+            ],
+            "additionalProperties": false
+          },
+          "max_output_bytes": 65536,
+          "timeout_class": "fast",
+          "policy": "read_only",
+          "scopes": []
+        },
+        {
+          "id": "scripts.create",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "maxLength": 128
+              },
+              "filename": {
+                "type": "string",
+                "maxLength": 120
+              },
+              "name": {
+                "type": "string",
+                "maxLength": 500
+              },
+              "description": {
+                "type": "string",
+                "maxLength": 500
+              },
+              "needs_confirmation": {
+                "type": "boolean"
+              },
+              "code": {
+                "type": "string",
+                "maxLength": 32768
+              }
+            },
+            "required": ["name", "needs_confirmation", "code"],
+            "additionalProperties": false
+          },
+          "output_schema": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "maxLength": 128
+              },
+              "filename": {
+                "type": "string",
+                "maxLength": 120
+              },
+              "name": {
+                "type": "string",
+                "maxLength": 500
+              },
+              "description": {
+                "type": "string",
+                "maxLength": 500
+              },
+              "needs_confirmation": {
+                "type": "boolean"
+              },
+              "metadata_valid": {
+                "type": "boolean"
+              },
+              "code": {
+                "type": "string",
+                "maxLength": 32768
+              }
+            },
+            "required": [
+              "id",
+              "filename",
+              "name",
+              "description",
+              "needs_confirmation",
+              "metadata_valid"
+            ],
+            "additionalProperties": false
+          },
+          "max_output_bytes": 65536,
+          "timeout_class": "normal",
+          "policy": "confirmation_required",
+          "scopes": []
+        },
+        {
+          "id": "scripts.update",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "maxLength": 128
+              },
+              "filename": {
+                "type": "string",
+                "maxLength": 120
+              },
+              "name": {
+                "type": "string",
+                "maxLength": 500
+              },
+              "description": {
+                "type": "string",
+                "maxLength": 500
+              },
+              "needs_confirmation": {
+                "type": "boolean"
+              },
+              "code": {
+                "type": "string",
+                "maxLength": 32768
+              }
+            },
+            "required": ["name", "needs_confirmation", "code"],
+            "additionalProperties": false
+          },
+          "output_schema": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "maxLength": 128
+              },
+              "filename": {
+                "type": "string",
+                "maxLength": 120
+              },
+              "name": {
+                "type": "string",
+                "maxLength": 500
+              },
+              "description": {
+                "type": "string",
+                "maxLength": 500
+              },
+              "needs_confirmation": {
+                "type": "boolean"
+              },
+              "metadata_valid": {
+                "type": "boolean"
+              },
+              "code": {
+                "type": "string",
+                "maxLength": 32768
+              }
+            },
+            "required": [
+              "id",
+              "filename",
+              "name",
+              "description",
+              "needs_confirmation",
+              "metadata_valid"
+            ],
+            "additionalProperties": false
+          },
+          "max_output_bytes": 65536,
+          "timeout_class": "normal",
+          "policy": "confirmation_required",
+          "scopes": []
+        },
+        {
+          "id": "scripts.delete",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "maxLength": 128
+              }
+            },
+            "required": ["id"],
+            "additionalProperties": false
+          },
+          "output_schema": {
+            "type": "object",
+            "properties": {
+              "outcome": {
+                "type": "string",
+                "maxLength": 32
+              },
+              "summary": {
+                "type": "string",
+                "maxLength": 1000
+              }
+            },
+            "required": ["outcome", "summary"],
+            "additionalProperties": false
+          },
+          "max_output_bytes": 65536,
+          "timeout_class": "normal",
+          "policy": "confirmation_required",
+          "scopes": []
+        },
+        {
+          "id": "draft.validate",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string",
+                "maxLength": 32768
+              }
+            },
+            "required": ["code"],
+            "additionalProperties": false
+          },
+          "output_schema": {
+            "type": "object",
+            "properties": {
+              "valid": {
+                "type": "boolean"
+              },
+              "summary": {
+                "type": "string",
+                "maxLength": 500
+              }
+            },
+            "required": ["valid", "summary"],
+            "additionalProperties": false
+          },
+          "max_output_bytes": 65536,
+          "timeout_class": "fast",
+          "policy": "read_only",
+          "scopes": []
+        },
+        {
+          "id": "draft.run",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string",
+                "maxLength": 32768
+              }
+            },
+            "required": ["code"],
+            "additionalProperties": false
+          },
+          "output_schema": {
+            "type": "object",
+            "properties": {
+              "outcome": {
+                "type": "string",
+                "maxLength": 32
+              },
+              "summary": {
+                "type": "string",
+                "maxLength": 1000
+              }
+            },
+            "required": ["outcome", "summary"],
+            "additionalProperties": false
+          },
+          "max_output_bytes": 65536,
+          "timeout_class": "long",
+          "policy": "confirmation_required",
+          "scopes": []
+        },
+        {
+          "id": "results.read",
+          "input_schema": {
+            "type": "object",
+            "properties": {},
+            "required": [],
+            "additionalProperties": false
+          },
+          "output_schema": {
+            "type": "object",
+            "properties": {
+              "outcome": {
+                "type": "string",
+                "maxLength": 32
+              },
+              "summary": {
+                "type": "string",
+                "maxLength": 1000
+              }
+            },
+            "required": ["outcome", "summary"],
+            "additionalProperties": false
+          },
+          "max_output_bytes": 65536,
+          "timeout_class": "fast",
+          "policy": "read_only",
+          "scopes": []
+        }
+      ]
+    }
+  ],
+  "blueprints": [
+    {
+      "id": "reaper-song",
+      "version": 1,
+      "manifest": "blueprints/reaper-song/template.json",
+      "skeleton": "blueprints/reaper-song/project",
+      "capabilities": ["reaper-live-control"]
+    }
+  ]
+}

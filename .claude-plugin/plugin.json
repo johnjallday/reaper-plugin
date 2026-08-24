@@ -1,7 +1,7 @@
 {
   "name": "reaper-plugin",
-  "version": "0.2.1",
-  "description": "Control REAPER from your AI agent over its Web Remote HTTP interface using plain shell — manage ReaScripts, tracks, sessions, and status. Ships ready-to-use skills and an optional helper CLI; no MCP server required.",
+  "version": "0.3.0",
+  "description": "Plugin-backed REAPER live control with a sandboxed Ori workspace surface, private MCP stdio service, skills, and helper CLI.",
   "author": "johnjallday",
   "homepage": "https://github.com/johnjallday/reaper-plugin",
   "repository": "https://github.com/johnjallday/reaper-plugin",
