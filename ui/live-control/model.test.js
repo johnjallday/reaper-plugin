@@ -6,6 +6,7 @@ import {
   meaningfulStateKey,
   normalizePinnedState,
   optimisticTrackPatch,
+  planEditLabel,
   promptChips,
   reorderPins,
 } from "./model.js";
@@ -68,22 +69,23 @@ test("folder rows bound indentation and refuse parent moves while flat tracks re
     [
       [0, true, false],
       [1, false, true],
-      [0, false, true],
+      [1, false, true],
       [0, false, true],
     ],
   );
   assert.equal(folderRows([{ folder_depth: 1 }], false)[0].moveAllowed, false);
 });
 
-test("prompt chips are ordered capped and absent only when no condition applies", () => {
-  assert.deepEqual(
+test("prompt chips are contextual ordered and capped", () => {
+  assert.match(
     promptChips({
       connected: true,
+      project: "Song",
       track_count: 1,
       track_editing_available: true,
       tracks: [{ name: "Drums" }],
-    }),
-    [],
+    })[0],
+    /safe next step/i,
   );
   const chips = promptChips({
     connected: false,
@@ -94,6 +96,47 @@ test("prompt chips are ordered capped and absent only when no condition applies"
   assert.equal(chips.length, 4);
   assert.match(chips[0], /restore/i);
   assert.match(chips[2], /unnamed/i);
+  assert.match(
+    promptChips({
+      connected: true,
+      track_count: 2,
+      track_editing_available: true,
+      project: "Song",
+      tracks: [{ name: "Drums" }, { name: "" }],
+    })[0],
+    /named and unnamed/i,
+  );
+  assert.match(
+    promptChips({
+      connected: true,
+      track_count: 1,
+      track_editing_available: true,
+      project: "Song",
+      tracks: [{ name: "Drums" }],
+    })[0],
+    /safe next step/i,
+  );
+});
+
+test("plan cards expose guarded old and proposed new values", () => {
+  assert.equal(
+    planEditLabel({
+      operation: "rename",
+      index: 2,
+      expected_name: "Bass",
+      new_name: "Low End",
+    }),
+    "rename · track 2 · Bass → Low End",
+  );
+  assert.match(
+    planEditLabel({
+      operation: "mute",
+      index: 3,
+      expected_name: "Vox",
+      new_bool: true,
+    }),
+    /Vox → on/,
+  );
 });
 
 test("pins distinguish missing from explicit empty and reorder without changing the set", () => {

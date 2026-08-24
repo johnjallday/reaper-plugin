@@ -137,6 +137,12 @@ func (e TrackEdit) Inverse(prior string) TrackEdit {
 	switch e.Kind {
 	case TrackEditColor:
 		priorColor, _ := strconv.ParseInt(strings.TrimSpace(prior), 10, 64)
+		// GetMediaTrackInfo_Value may return the native 24-bit custom color
+		// without the API's set-value flag. Reapply that trusted receipt value as
+		// a custom color so the inverse remains valid and visually exact.
+		if priorColor != 0 && priorColor&trackCustomColorFlag == 0 {
+			priorColor |= trackCustomColorFlag
+		}
 		return TrackEdit{Kind: TrackEditColor, Index: e.Index, ExpectedName: e.ExpectedName, NewColor: priorColor}
 	case TrackEditMute, TrackEditSolo, TrackEditArm:
 		return TrackEdit{

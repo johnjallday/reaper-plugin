@@ -442,7 +442,17 @@ func (s *Service) RunTrackEdit(ctx context.Context, host HostContext, input Trac
 		return TrackEditResult{}, errors.New("track edit execution failed")
 	}
 	if !receipt.Applied {
-		return TrackEditResult{Outcome: receipt.Refusal, Summary: "REAPER changed before the edit. Nothing was applied."}, nil
+		state, stateErr := s.readState(ctx, host)
+		if stateErr != nil {
+			return TrackEditResult{}, errors.New("track edit result is unavailable")
+		}
+		s.mu.Lock()
+		_, undoAvailable := s.undos[host.WorkspaceID]
+		s.mu.Unlock()
+		return TrackEditResult{
+			Outcome: receipt.Refusal, Summary: "REAPER changed before the edit. Nothing was applied.",
+			State: state, UndoAvailable: undoAvailable,
+		}, nil
 	}
 	s.mu.Lock()
 	if s.undos == nil {

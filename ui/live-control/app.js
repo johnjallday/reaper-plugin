@@ -1,7 +1,10 @@
 import { createWorkspaceSurfaceSDK } from "./workspace-surface-sdk.js";
 import {
   actionOperation,
+  folderRows,
+  meaningfulStateKey,
   normalizePinnedState,
+  planEditLabel,
   promptChips as derivePromptChips,
   reorderPins,
 } from "./model.js";
@@ -10,6 +13,7 @@ const sdk = createWorkspaceSurfaceSDK();
 const nodes = {
   status: document.querySelector("[data-status]"),
   promptChips: document.querySelector("[data-prompt-chips]"),
+  askInput: document.querySelector("[data-ask-input]"),
   project: document.querySelector("[data-project]"),
   tempo: document.querySelector("[data-tempo]"),
   position: document.querySelector("[data-position]"),
@@ -42,6 +46,11 @@ let pinRevision = "0";
 const defaultPins = ["40026", "40001", "40364"];
 let currentPlan = null;
 let currentProposal = null;
+let lastStateKey = "";
+let draggingTrack = false;
+let planKey = "";
+let proposalKey = "";
+let draggingPinID = "";
 
 function text(node, value) {
   if (node) node.textContent = String(value ?? "");
@@ -64,7 +73,11 @@ function renderPromptChips(state) {
     button.type = "button";
     button.className = "quiet";
     button.textContent = prompt;
-    button.addEventListener("click", () => void sdk.askOri(prompt));
+    button.addEventListener("click", () => {
+      if (!nodes.askInput) return;
+      nodes.askInput.value = prompt;
+      nodes.askInput.focus();
+    });
     nodes.promptChips.append(button);
   });
 }
@@ -112,21 +125,48 @@ function trackEditButton(label, operation, value, pressed = false) {
   return button;
 }
 
-function renderTracks(tracks = []) {
-  if (!nodes.tracks) return;
+function trackColorSelect(track) {
+  const select = document.createElement("select");
+  select.className = "track-color-select";
+  select.dataset.trackOperation = "color";
+  select.setAttribute(
+    "aria-label",
+    `Color ${track.name || `track ${track.index}`}`,
+  );
+  for (const [label, color] of [
+    ["No color", 0],
+    ["Blue", 0x01f08a44],
+    ["Green", 0x0144cc88],
+    ["Gold", 0x0144ccff],
+    ["Rose", 0x01cc66aa],
+  ]) {
+    const option = document.createElement("option");
+    option.value = String(color);
+    option.textContent = label;
+    option.selected = track.color === color;
+    select.append(option);
+  }
+  return select;
+}
+
+function renderTracks(tracks = [], depthAvailable = false) {
+  if (!nodes.tracks || draggingTrack) return;
   nodes.tracks.replaceChildren();
   if (!tracks.length) {
     empty(nodes.tracks, "No tracks in the current project.");
     return;
   }
-  tracks.forEach((track) => {
+  folderRows(tracks, depthAvailable).forEach((track) => {
     const row = document.createElement("article");
     row.className = "track";
     row.dataset.trackIndex = String(track.index);
     row.dataset.trackName = track.name || "";
-    row.style.setProperty(
-      "--folder-depth",
-      String(Math.max(0, Math.min(8, track.folder_depth || 0))),
+    row.dataset.moveAllowed = String(track.moveAllowed);
+    row.draggable = track.moveAllowed;
+    row.style.setProperty("--folder-depth", String(track.level));
+    row.setAttribute(
+      "aria-label",
+      `${track.name || `Track ${track.index}`}, folder depth ${track.level}`,
     );
     const number = document.createElement("span");
     number.textContent = String(track.index);
@@ -135,31 +175,33 @@ function renderTracks(tracks = []) {
     const name = document.createElement("strong");
     name.textContent = track.name || `Track ${track.index}`;
     const state = document.createElement("small");
-    state.textContent =
-      track.folder_depth > 0
-        ? "Folder parent"
+    state.textContent = !depthAvailable
+      ? "Folder depth unavailable · moving disabled"
+      : track.folderParent
+        ? `Folder parent · depth ${track.level}`
         : track.folder_depth < 0
-          ? "Folder close"
-          : "Track";
+          ? `Folder close · depth ${track.level}`
+          : `Track · depth ${track.level}`;
     identity.append(name, state);
     const controls = document.createElement("div");
     controls.className = "track-controls";
     controls.append(
       trackEditButton("Rename", "rename", ""),
-      trackEditButton("Color", "color", track.color ? 0 : 28519936),
+      trackColorSelect(track),
       trackEditButton("M", "mute", !track.muted, track.muted),
       trackEditButton("S", "solo", !track.soloed, track.soloed),
       trackEditButton("R", "arm", !track.armed, track.armed),
       trackEditButton("↑", "move", Math.max(1, track.index - 1)),
       trackEditButton("↓", "move", Math.min(tracks.length, track.index + 1)),
     );
-    if (track.folder_depth > 0) {
+    if (!track.moveAllowed) {
       controls
         .querySelectorAll('[data-track-operation="move"]')
         .forEach((button) => {
           button.disabled = true;
-          button.title =
-            "Folder parents move as a group and are read-only in this version.";
+          button.title = track.folderParent
+            ? "Folder parents move as a group and are read-only in this version."
+            : "Folder depth is unavailable, so moving is disabled.";
         });
     }
     row.append(number, identity, controls);
@@ -186,8 +228,12 @@ async function refreshState() {
     text(nodes.position, state.position || "—");
     text(nodes.trackCount, state.track_count ?? 0);
     text(nodes.runner, state.track_editing_available ? "Ready" : "Read only");
-    renderTracks(state.tracks);
-    renderPromptChips(state);
+    const stateKey = meaningfulStateKey(state);
+    if (stateKey !== lastStateKey) {
+      lastStateKey = stateKey;
+      renderTracks(state.tracks, state.folder_depth_available);
+      renderPromptChips(state);
+    }
     await loadPlan();
     await loadProposal();
   } catch (error) {
@@ -223,7 +269,13 @@ function renderProposal(result) {
   currentProposal = result?.proposal || null;
   if (!nodes.proposalPanel) return;
   nodes.proposalPanel.hidden = !currentProposal;
-  if (!currentProposal) return;
+  const nextKey = JSON.stringify(currentProposal);
+  if (!currentProposal) {
+    proposalKey = "";
+    return;
+  }
+  if (nextKey === proposalKey) return;
+  proposalKey = nextKey;
   text(nodes.proposalName, currentProposal.name);
   text(
     nodes.proposalDescription,
@@ -247,11 +299,17 @@ function renderPlan(result) {
   currentPlan = result?.plan || null;
   if (!nodes.planPanel) return;
   nodes.planPanel.hidden = !currentPlan;
+  const nextKey = JSON.stringify(currentPlan);
+  if (!currentPlan) {
+    planKey = "";
+    return;
+  }
+  if (nextKey === planKey) return;
+  planKey = nextKey;
   nodes.planEdits?.replaceChildren();
-  if (!currentPlan) return;
   currentPlan.edits.forEach((edit) => {
     const row = document.createElement("p");
-    row.textContent = `${edit.operation} · track ${edit.index} · ${edit.expected_name || "unnamed"}`;
+    row.textContent = planEditLabel(edit);
     nodes.planEdits.append(row);
   });
   text(nodes.planResult, result.summary);
@@ -279,6 +337,8 @@ function renderPinnedActions() {
   available.forEach((action, index) => {
     const item = document.createElement("article");
     item.className = "pinned-action";
+    item.draggable = true;
+    item.dataset.pinnedAction = action.id;
     const run = document.createElement("button");
     run.type = "button";
     run.textContent = action.label;
@@ -312,6 +372,32 @@ function renderPinnedActions() {
     nodes.pinned.append(item);
   });
 }
+
+nodes.pinned?.addEventListener("dragstart", (event) => {
+  const item = event.target.closest("[data-pinned-action]");
+  if (!item) return;
+  draggingPinID = item.dataset.pinnedAction;
+  event.dataTransfer.effectAllowed = "move";
+  event.dataTransfer.setData("text/plain", draggingPinID);
+});
+nodes.pinned?.addEventListener("dragover", (event) => {
+  if (event.target.closest("[data-pinned-action]")) event.preventDefault();
+});
+nodes.pinned?.addEventListener("drop", (event) => {
+  event.preventDefault();
+  const target = event.target.closest("[data-pinned-action]")?.dataset.pinnedAction;
+  const source = event.dataTransfer.getData("text/plain") || draggingPinID;
+  draggingPinID = "";
+  const from = pinnedIDs.indexOf(source);
+  const to = pinnedIDs.indexOf(target);
+  if (from < 0 || to < 0 || from === to) return;
+  const next = [...pinnedIDs];
+  next.splice(to, 0, next.splice(from, 1)[0]);
+  void savePins(next);
+});
+nodes.pinned?.addEventListener("dragend", () => {
+  draggingPinID = "";
+});
 
 async function loadPins() {
   try {
@@ -475,12 +561,87 @@ sdk.on("invalidated", () => {
 document
   .querySelector("[data-refresh]")
   ?.addEventListener("click", () => void refreshState());
+nodes.tracks?.addEventListener("dragstart", (event) => {
+  const row = event.target.closest("[data-track-index]");
+  if (!row || row.dataset.moveAllowed !== "true") {
+    event.preventDefault();
+    return;
+  }
+  draggingTrack = true;
+  event.dataTransfer.effectAllowed = "move";
+  event.dataTransfer.setData(
+    "text/plain",
+    JSON.stringify({
+      index: Number(row.dataset.trackIndex),
+      name: row.dataset.trackName || "",
+    }),
+  );
+});
+nodes.tracks?.addEventListener("dragover", (event) => {
+  if (event.target.closest("[data-track-index]")) event.preventDefault();
+});
+nodes.tracks?.addEventListener("drop", async (event) => {
+  event.preventDefault();
+  const target = event.target.closest("[data-track-index]");
+  try {
+    const source = JSON.parse(event.dataTransfer.getData("text/plain"));
+    const newIndex = Number(target?.dataset.trackIndex);
+    if (!target || !source.index || source.index === newIndex) return;
+    text(nodes.actionResult, "Moving track…");
+    const result = await sdk.invoke("tracks.edit", {
+      edit: {
+        operation: "move",
+        index: source.index,
+        expected_name: source.name,
+        new_index: newIndex,
+      },
+    });
+    text(nodes.actionResult, result.summary || "Track moved.");
+  } catch (error) {
+    text(nodes.actionResult, `${error.code || "failed"} · ${error.message}`);
+  } finally {
+    draggingTrack = false;
+    lastStateKey = "";
+    await refreshState();
+  }
+});
+nodes.tracks?.addEventListener("dragend", () => {
+  draggingTrack = false;
+  void refreshState();
+});
+nodes.tracks?.addEventListener("change", async (event) => {
+  const select = event.target.closest('select[data-track-operation="color"]');
+  const row = select?.closest("[data-track-index]");
+  if (!select || !row) return;
+  text(nodes.actionResult, "Applying color…");
+  try {
+    const result = await sdk.invoke("tracks.edit", {
+      edit: {
+        operation: "color",
+        index: Number(row.dataset.trackIndex),
+        expected_name: row.dataset.trackName || "",
+        new_color: Number(select.value),
+      },
+    });
+    text(nodes.actionResult, result.summary || "Track color applied.");
+    lastStateKey = "";
+    renderTracks(
+      result.state?.tracks || [],
+      Boolean(result.state?.folder_depth_available),
+    );
+  } catch (error) {
+    text(nodes.actionResult, `${error.code || "failed"} · ${error.message}`);
+    lastStateKey = "";
+    await refreshState();
+  }
+});
 document
   .querySelector("[data-tracks]")
   ?.addEventListener("click", async (event) => {
     const button = event.target.closest("[data-track-operation]");
     const row = button?.closest("[data-track-index]");
-    if (!button || !row || button.disabled) return;
+    if (!button || button.tagName !== "BUTTON" || !row || button.disabled)
+      return;
     const operation = button.dataset.trackOperation;
     const edit = {
       operation,
@@ -504,7 +665,11 @@ document
     try {
       const result = await sdk.invoke("tracks.edit", { edit });
       text(nodes.actionResult, result.summary || "Track edit applied.");
-      renderTracks(result.state?.tracks || []);
+      lastStateKey = "";
+      renderTracks(
+        result.state?.tracks || [],
+        Boolean(result.state?.folder_depth_available),
+      );
       await sdk.statusChanged();
     } catch (error) {
       text(nodes.actionResult, `${error.code || "failed"} · ${error.message}`);
@@ -518,7 +683,11 @@ document
     try {
       const result = await sdk.invoke("tracks.undo", {});
       text(nodes.actionResult, result.summary);
-      renderTracks(result.state?.tracks || []);
+      lastStateKey = "";
+      renderTracks(
+        result.state?.tracks || [],
+        Boolean(result.state?.folder_depth_available),
+      );
     } catch (error) {
       text(nodes.actionResult, `${error.code || "failed"} · ${error.message}`);
     }
@@ -690,18 +859,31 @@ document
     }
   });
 document
-  .querySelector("[data-ask]")
-  ?.addEventListener(
-    "click",
-    () =>
-      void sdk.askOri(
-        "Help me understand the current REAPER project and safe next action.",
-      ),
-  );
+  .querySelector("[data-ask-form]")
+  ?.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const context = String(
+      new FormData(event.currentTarget).get("context") || "",
+    ).trim();
+    if (!context) return;
+    void sdk.askOri(context.slice(0, 1000));
+  });
+document.querySelector("[data-ask]")?.addEventListener("click", () => {
+  if (!nodes.askInput) return;
+  if (!nodes.askInput.value)
+    nodes.askInput.value =
+      "Help me understand the current REAPER project and safe next action.";
+  nodes.askInput.focus();
+});
 document
   .querySelector("[data-setup]")
   ?.addEventListener("click", () => void sdk.openSetup());
 document
   .querySelector("[data-close]")
   ?.addEventListener("click", () => void sdk.close());
+window.addEventListener("keydown", (event) => {
+  if (event.key !== "Escape" || !draggingPinID) return;
+  draggingPinID = "";
+  renderPinnedActions();
+});
 window.addEventListener("pagehide", () => clearInterval(pollTimer));

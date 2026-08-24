@@ -106,6 +106,23 @@ button.danger {
   min-height: 34px;
   font-size: 0.75rem;
 }
+.ask-composer {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0.6rem 0 1rem;
+}
+.ask-composer label {
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+.ask-composer div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.5rem;
+}
+.ask-composer input {
+  min-width: 0;
+}
 .transport {
   display: flex;
   flex-wrap: wrap;
@@ -188,6 +205,12 @@ button.danger {
   border-radius: 7px;
   background: #0d1013;
 }
+.track[draggable="true"] {
+  cursor: grab;
+}
+.track[draggable="true"]:active {
+  cursor: grabbing;
+}
 .track-identity {
   padding-left: calc(var(--folder-depth, 0) * 0.9rem);
 }
@@ -201,10 +224,18 @@ button.danger {
   flex-wrap: wrap;
   gap: 0.3rem;
 }
-.track-control {
+.track-control,
+.track-color-select {
   min-width: 36px;
   min-height: 34px;
   padding: 0.25rem 0.45rem;
+}
+.track-color-select {
+  max-width: 6rem;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  color: var(--ink);
+  background: #161b20;
 }
 .track-control[aria-pressed="true"] {
   border-color: var(--signal);

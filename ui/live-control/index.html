@@ -22,6 +22,20 @@
         aria-label="Suggested questions"
         data-prompt-chips
       ></nav>
+      <form class="ask-composer" data-ask-form>
+        <label for="ask-context">Ask Ori about this project</label>
+        <div>
+          <input
+            id="ask-context"
+            data-ask-input
+            name="context"
+            maxlength="1000"
+            autocomplete="off"
+            placeholder="Choose a suggestion or enter a question"
+          />
+          <button type="submit">Ask Ori</button>
+        </div>
+      </form>
 
       <section class="transport" aria-label="Transport controls">
         <button type="button" data-action="1007">Play</button>

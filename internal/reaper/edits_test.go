@@ -194,6 +194,10 @@ func TestColorInverseParsesThePriorIntegerGuardedOnTheSameName(t *testing.T) {
 	if inverse.Kind != TrackEditColor || inverse.Index != 1 || inverse.ExpectedName != "Kick" || inverse.NewColor != 0 {
 		t.Fatalf("inverse = %+v", inverse)
 	}
+	inverse = forward.Inverse("12599296")
+	if inverse.NewColor != trackCustomColorFlag|12599296 || inverse.Validate() != nil {
+		t.Fatalf("native-color inverse = %+v", inverse)
+	}
 }
 
 func TestMoveEditValidatesTargetPosition(t *testing.T) {
