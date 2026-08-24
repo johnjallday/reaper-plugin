@@ -132,7 +132,7 @@
             "kind": "bundled",
             "path": "artifacts/reaper-plugin-darwin-arm64"
           },
-          "sha256": "a1bb85487c03b9a552e0fb6482359f4862bc0d24d3f1f8e8bfc9aac46c03afdd",
+          "sha256": "6e131375f13ce6af39d2114b98ce1b95d4a02082a784a0b7fa890737b446925e",
           "size": 8476786
         }
       ],
