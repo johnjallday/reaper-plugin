@@ -89,10 +89,7 @@
           "verify": "runtime.verify",
           "repair": "runtime.repair"
         },
-        "scopes": [
-          "loopback_reaper",
-          "reaper_runner_exchange"
-        ]
+        "scopes": []
       },
       "agent_operations": [
         "state.read",

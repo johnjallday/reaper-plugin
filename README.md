@@ -58,8 +58,12 @@ config tree. The runner wraps every run in an Undo block.
 
 ## Ori Workspace Surface development
 
-The first supported service artifact is **macOS arm64**. Build it reproducibly,
-update the bundled artifact digest/size in the Ori manifest, and run both suites:
+The first supported service artifact is **macOS arm64**. Version **0.3.0** uses
+Workspace Surface protocol v1 and requires an Ori build that implements that
+protocol. The current release-candidate artifact is 8,476,786 bytes with
+SHA-256 `a1bb85487c03b9a552e0fb6482359f4862bc0d24d3f1f8e8bfc9aac46c03afdd`.
+Build it reproducibly, update the bundled artifact digest/size in the Ori
+manifest, and run both suites:
 
 ```bash
 make artifact-local
@@ -74,6 +78,13 @@ or `POST /api/plugins/install`, review the complete trust disclosure, confirm,
 and enable. The service starts lazily only when an attached workspace asks for
 status/setup/an operation. Other platforms remain explicitly unsupported and
 must not launch the artifact.
+
+Ori workspaces created from the retired compiled Reaper Song template are
+**not migrated**. Installing this plugin never imports legacy pins, grants,
+setup history, template provenance, tasks, or project metadata. Create a new
+workspace from the plugin-contributed Reaper Song blueprint for the supported
+full-parity path. A manual capability attachment is fresh plugin state, not a
+migration.
 
 For a sandboxed disposable Ori demo that should use the real user's REAPER
 configuration, launch Ori with `REAPER_PLUGIN_HOME=/absolute/user/home`; this is

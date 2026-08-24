@@ -385,7 +385,8 @@ nodes.pinned?.addEventListener("dragover", (event) => {
 });
 nodes.pinned?.addEventListener("drop", (event) => {
   event.preventDefault();
-  const target = event.target.closest("[data-pinned-action]")?.dataset.pinnedAction;
+  const target = event.target.closest("[data-pinned-action]")?.dataset
+    .pinnedAction;
   const source = event.dataTransfer.getData("text/plain") || draggingPinID;
   draggingPinID = "";
   const from = pinnedIDs.indexOf(source);
