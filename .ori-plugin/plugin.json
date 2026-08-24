@@ -45,7 +45,20 @@
             "scripts.delete",
             "draft.validate",
             "draft.run",
-            "results.read"
+            "results.read",
+            "plans.propose",
+            "plans.read",
+            "plans.apply",
+            "plans.cancel",
+            "tracks.edit",
+            "tracks.undo",
+            "plans.current",
+            "proposals.propose",
+            "proposals.current",
+            "proposals.read",
+            "proposals.test",
+            "proposals.save",
+            "proposals.discard"
           ],
           "polling": {
             "map_seconds": 5,
@@ -53,7 +66,9 @@
           },
           "host_intents": {
             "ask_ori": {
-              "required_capabilities": ["reaper_live_control"]
+              "required_capabilities": [
+                "reaper_live_control"
+              ]
             },
             "open_setup": {
               "provider_id": "reaper-runtime"
@@ -74,7 +89,10 @@
           "verify": "runtime.verify",
           "repair": "runtime.repair"
         },
-        "scopes": ["loopback_reaper", "reaper_runner_exchange"]
+        "scopes": [
+          "loopback_reaper",
+          "reaper_runner_exchange"
+        ]
       },
       "agent_operations": [
         "state.read",
@@ -85,7 +103,15 @@
         "scripts.read",
         "draft.validate",
         "draft.run",
-        "results.read"
+        "results.read",
+        "plans.propose",
+        "plans.read",
+        "tracks.edit",
+        "tracks.undo",
+        "proposals.propose",
+        "proposals.current",
+        "proposals.read",
+        "proposals.test"
       ]
     }
   ],
@@ -96,7 +122,9 @@
       "protocol_version": 1,
       "entrypoint": {
         "artifact_id": "reaper-plugin-darwin-arm64",
-        "args": ["serve"]
+        "args": [
+          "serve"
+        ]
       },
       "artifacts": [
         {
@@ -107,8 +135,8 @@
             "kind": "bundled",
             "path": "artifacts/reaper-plugin-darwin-arm64"
           },
-          "sha256": "ce4d35c02f8a80c30b77c481beaf6d6d63cca8f30af10f31cfb098ff7dfe9cdf",
-          "size": 8323698
+          "sha256": "2fbb135ee3c696f02fe42b908a96dd00735577d4649d00df10371743fcdcd9ff",
+          "size": 8476786
         }
       ],
       "operations": [
@@ -140,7 +168,12 @@
                 "type": "boolean"
               }
             },
-            "required": ["name", "version", "protocol_version", "healthy"],
+            "required": [
+              "name",
+              "version",
+              "protocol_version",
+              "healthy"
+            ],
             "additionalProperties": false
           },
           "max_output_bytes": 65536,
@@ -184,7 +217,12 @@
                 "maxLength": 64
               }
             },
-            "required": ["state", "value", "description", "checked_at"],
+            "required": [
+              "state",
+              "value",
+              "description",
+              "checked_at"
+            ],
             "additionalProperties": false
           },
           "max_output_bytes": 65536,
@@ -211,7 +249,10 @@
                 "maxLength": 500
               }
             },
-            "required": ["ready", "summary"],
+            "required": [
+              "ready",
+              "summary"
+            ],
             "additionalProperties": false
           },
           "max_output_bytes": 65536,
@@ -238,7 +279,10 @@
                 "maxLength": 500
               }
             },
-            "required": ["ready", "summary"],
+            "required": [
+              "ready",
+              "summary"
+            ],
             "additionalProperties": false
           },
           "max_output_bytes": 65536,
@@ -265,7 +309,10 @@
                 "maxLength": 500
               }
             },
-            "required": ["available", "summary"],
+            "required": [
+              "available",
+              "summary"
+            ],
             "additionalProperties": false
           },
           "max_output_bytes": 65536,
@@ -292,7 +339,10 @@
                 "maxLength": 500
               }
             },
-            "required": ["verified", "summary"],
+            "required": [
+              "verified",
+              "summary"
+            ],
             "additionalProperties": false
           },
           "max_output_bytes": 65536,
@@ -319,7 +369,10 @@
                 "maxLength": 500
               }
             },
-            "required": ["repaired", "summary"],
+            "required": [
+              "repaired",
+              "summary"
+            ],
             "additionalProperties": false
           },
           "max_output_bytes": 65536,
@@ -519,7 +572,9 @@
                 "maxItems": 256
               }
             },
-            "required": ["actions"],
+            "required": [
+              "actions"
+            ],
             "additionalProperties": false
           },
           "max_output_bytes": 262144,
@@ -537,7 +592,9 @@
                 "maxLength": 120
               }
             },
-            "required": ["action_id"],
+            "required": [
+              "action_id"
+            ],
             "additionalProperties": false
           },
           "output_schema": {
@@ -552,7 +609,10 @@
                 "maxLength": 1000
               }
             },
-            "required": ["outcome", "summary"],
+            "required": [
+              "outcome",
+              "summary"
+            ],
             "additionalProperties": false
           },
           "max_output_bytes": 65536,
@@ -570,7 +630,9 @@
                 "maxLength": 120
               }
             },
-            "required": ["action_id"],
+            "required": [
+              "action_id"
+            ],
             "additionalProperties": false
           },
           "output_schema": {
@@ -585,7 +647,10 @@
                 "maxLength": 1000
               }
             },
-            "required": ["outcome", "summary"],
+            "required": [
+              "outcome",
+              "summary"
+            ],
             "additionalProperties": false
           },
           "max_output_bytes": 65536,
@@ -603,7 +668,9 @@
                 "maxLength": 120
               }
             },
-            "required": ["action_id"],
+            "required": [
+              "action_id"
+            ],
             "additionalProperties": false
           },
           "output_schema": {
@@ -618,7 +685,10 @@
                 "maxLength": 1000
               }
             },
-            "required": ["outcome", "summary"],
+            "required": [
+              "outcome",
+              "summary"
+            ],
             "additionalProperties": false
           },
           "max_output_bytes": 65536,
@@ -682,7 +752,9 @@
                 "maxItems": 256
               }
             },
-            "required": ["scripts"],
+            "required": [
+              "scripts"
+            ],
             "additionalProperties": false
           },
           "max_output_bytes": 262144,
@@ -700,7 +772,9 @@
                 "maxLength": 128
               }
             },
-            "required": ["id"],
+            "required": [
+              "id"
+            ],
             "additionalProperties": false
           },
           "output_schema": {
@@ -777,7 +851,11 @@
                 "maxLength": 32768
               }
             },
-            "required": ["name", "needs_confirmation", "code"],
+            "required": [
+              "name",
+              "needs_confirmation",
+              "code"
+            ],
             "additionalProperties": false
           },
           "output_schema": {
@@ -854,7 +932,11 @@
                 "maxLength": 32768
               }
             },
-            "required": ["name", "needs_confirmation", "code"],
+            "required": [
+              "name",
+              "needs_confirmation",
+              "code"
+            ],
             "additionalProperties": false
           },
           "output_schema": {
@@ -912,7 +994,9 @@
                 "maxLength": 128
               }
             },
-            "required": ["id"],
+            "required": [
+              "id"
+            ],
             "additionalProperties": false
           },
           "output_schema": {
@@ -927,7 +1011,10 @@
                 "maxLength": 1000
               }
             },
-            "required": ["outcome", "summary"],
+            "required": [
+              "outcome",
+              "summary"
+            ],
             "additionalProperties": false
           },
           "max_output_bytes": 65536,
@@ -945,7 +1032,9 @@
                 "maxLength": 32768
               }
             },
-            "required": ["code"],
+            "required": [
+              "code"
+            ],
             "additionalProperties": false
           },
           "output_schema": {
@@ -959,7 +1048,10 @@
                 "maxLength": 500
               }
             },
-            "required": ["valid", "summary"],
+            "required": [
+              "valid",
+              "summary"
+            ],
             "additionalProperties": false
           },
           "max_output_bytes": 65536,
@@ -977,7 +1069,9 @@
                 "maxLength": 32768
               }
             },
-            "required": ["code"],
+            "required": [
+              "code"
+            ],
             "additionalProperties": false
           },
           "output_schema": {
@@ -992,7 +1086,10 @@
                 "maxLength": 1000
               }
             },
-            "required": ["outcome", "summary"],
+            "required": [
+              "outcome",
+              "summary"
+            ],
             "additionalProperties": false
           },
           "max_output_bytes": 65536,
@@ -1020,12 +1117,1518 @@
                 "maxLength": 1000
               }
             },
-            "required": ["outcome", "summary"],
+            "required": [
+              "outcome",
+              "summary"
+            ],
             "additionalProperties": false
           },
           "max_output_bytes": 65536,
           "timeout_class": "fast",
           "policy": "read_only",
+          "scopes": []
+        },
+        {
+          "id": "plans.propose",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "edits": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "operation": {
+                      "type": "string",
+                      "maxLength": 16
+                    },
+                    "index": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 100000
+                    },
+                    "expected_name": {
+                      "type": "string",
+                      "maxLength": 512
+                    },
+                    "new_name": {
+                      "type": "string",
+                      "maxLength": 512
+                    },
+                    "new_color": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 33554431
+                    },
+                    "new_bool": {
+                      "type": "boolean"
+                    },
+                    "new_index": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 100000
+                    }
+                  },
+                  "required": [
+                    "operation",
+                    "index",
+                    "expected_name"
+                  ],
+                  "additionalProperties": false
+                },
+                "minItems": 1,
+                "maxItems": 64
+              }
+            },
+            "required": [
+              "edits"
+            ],
+            "additionalProperties": false
+          },
+          "output_schema": {
+            "type": "object",
+            "properties": {
+              "plan": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "maxLength": 64
+                  },
+                  "edits": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "operation": {
+                          "type": "string",
+                          "maxLength": 16
+                        },
+                        "index": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 100000
+                        },
+                        "expected_name": {
+                          "type": "string",
+                          "maxLength": 512
+                        },
+                        "new_name": {
+                          "type": "string",
+                          "maxLength": 512
+                        },
+                        "new_color": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 33554431
+                        },
+                        "new_bool": {
+                          "type": "boolean"
+                        },
+                        "new_index": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 100000
+                        }
+                      },
+                      "required": [
+                        "operation",
+                        "index",
+                        "expected_name"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "maxItems": 64
+                  },
+                  "created_at": {
+                    "type": "string",
+                    "maxLength": 64
+                  },
+                  "expires_at": {
+                    "type": "string",
+                    "maxLength": 64
+                  }
+                },
+                "required": [
+                  "id",
+                  "edits",
+                  "created_at",
+                  "expires_at"
+                ],
+                "additionalProperties": false
+              },
+              "outcome": {
+                "type": "string",
+                "maxLength": 32
+              },
+              "summary": {
+                "type": "string",
+                "maxLength": 1000
+              }
+            },
+            "required": [
+              "outcome",
+              "summary"
+            ],
+            "additionalProperties": false
+          },
+          "max_output_bytes": 65536,
+          "timeout_class": "fast",
+          "policy": "read_only",
+          "scopes": []
+        },
+        {
+          "id": "plans.read",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "plan_id": {
+                "type": "string",
+                "maxLength": 64
+              }
+            },
+            "required": [
+              "plan_id"
+            ],
+            "additionalProperties": false
+          },
+          "output_schema": {
+            "type": "object",
+            "properties": {
+              "plan": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "maxLength": 64
+                  },
+                  "edits": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "operation": {
+                          "type": "string",
+                          "maxLength": 16
+                        },
+                        "index": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 100000
+                        },
+                        "expected_name": {
+                          "type": "string",
+                          "maxLength": 512
+                        },
+                        "new_name": {
+                          "type": "string",
+                          "maxLength": 512
+                        },
+                        "new_color": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 33554431
+                        },
+                        "new_bool": {
+                          "type": "boolean"
+                        },
+                        "new_index": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 100000
+                        }
+                      },
+                      "required": [
+                        "operation",
+                        "index",
+                        "expected_name"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "maxItems": 64
+                  },
+                  "created_at": {
+                    "type": "string",
+                    "maxLength": 64
+                  },
+                  "expires_at": {
+                    "type": "string",
+                    "maxLength": 64
+                  }
+                },
+                "required": [
+                  "id",
+                  "edits",
+                  "created_at",
+                  "expires_at"
+                ],
+                "additionalProperties": false
+              },
+              "outcome": {
+                "type": "string",
+                "maxLength": 32
+              },
+              "summary": {
+                "type": "string",
+                "maxLength": 1000
+              }
+            },
+            "required": [
+              "outcome",
+              "summary"
+            ],
+            "additionalProperties": false
+          },
+          "max_output_bytes": 65536,
+          "timeout_class": "fast",
+          "policy": "read_only",
+          "scopes": []
+        },
+        {
+          "id": "plans.apply",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "plan_id": {
+                "type": "string",
+                "maxLength": 64
+              }
+            },
+            "required": [
+              "plan_id"
+            ],
+            "additionalProperties": false
+          },
+          "output_schema": {
+            "type": "object",
+            "properties": {
+              "plan": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "maxLength": 64
+                  },
+                  "edits": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "operation": {
+                          "type": "string",
+                          "maxLength": 16
+                        },
+                        "index": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 100000
+                        },
+                        "expected_name": {
+                          "type": "string",
+                          "maxLength": 512
+                        },
+                        "new_name": {
+                          "type": "string",
+                          "maxLength": 512
+                        },
+                        "new_color": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 33554431
+                        },
+                        "new_bool": {
+                          "type": "boolean"
+                        },
+                        "new_index": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 100000
+                        }
+                      },
+                      "required": [
+                        "operation",
+                        "index",
+                        "expected_name"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "maxItems": 64
+                  },
+                  "created_at": {
+                    "type": "string",
+                    "maxLength": 64
+                  },
+                  "expires_at": {
+                    "type": "string",
+                    "maxLength": 64
+                  }
+                },
+                "required": [
+                  "id",
+                  "edits",
+                  "created_at",
+                  "expires_at"
+                ],
+                "additionalProperties": false
+              },
+              "outcome": {
+                "type": "string",
+                "maxLength": 32
+              },
+              "summary": {
+                "type": "string",
+                "maxLength": 1000
+              }
+            },
+            "required": [
+              "outcome",
+              "summary"
+            ],
+            "additionalProperties": false
+          },
+          "max_output_bytes": 65536,
+          "timeout_class": "long",
+          "policy": "confirmation_required",
+          "scopes": []
+        },
+        {
+          "id": "plans.cancel",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "plan_id": {
+                "type": "string",
+                "maxLength": 64
+              }
+            },
+            "required": [
+              "plan_id"
+            ],
+            "additionalProperties": false
+          },
+          "output_schema": {
+            "type": "object",
+            "properties": {
+              "plan": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "maxLength": 64
+                  },
+                  "edits": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "operation": {
+                          "type": "string",
+                          "maxLength": 16
+                        },
+                        "index": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 100000
+                        },
+                        "expected_name": {
+                          "type": "string",
+                          "maxLength": 512
+                        },
+                        "new_name": {
+                          "type": "string",
+                          "maxLength": 512
+                        },
+                        "new_color": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 33554431
+                        },
+                        "new_bool": {
+                          "type": "boolean"
+                        },
+                        "new_index": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 100000
+                        }
+                      },
+                      "required": [
+                        "operation",
+                        "index",
+                        "expected_name"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "maxItems": 64
+                  },
+                  "created_at": {
+                    "type": "string",
+                    "maxLength": 64
+                  },
+                  "expires_at": {
+                    "type": "string",
+                    "maxLength": 64
+                  }
+                },
+                "required": [
+                  "id",
+                  "edits",
+                  "created_at",
+                  "expires_at"
+                ],
+                "additionalProperties": false
+              },
+              "outcome": {
+                "type": "string",
+                "maxLength": 32
+              },
+              "summary": {
+                "type": "string",
+                "maxLength": 1000
+              }
+            },
+            "required": [
+              "outcome",
+              "summary"
+            ],
+            "additionalProperties": false
+          },
+          "max_output_bytes": 65536,
+          "timeout_class": "fast",
+          "policy": "reversible",
+          "scopes": []
+        },
+        {
+          "id": "tracks.edit",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "edit": {
+                "type": "object",
+                "properties": {
+                  "operation": {
+                    "type": "string",
+                    "maxLength": 16,
+                    "enum": [
+                      "rename",
+                      "color",
+                      "mute",
+                      "solo",
+                      "arm",
+                      "move"
+                    ]
+                  },
+                  "index": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 100000
+                  },
+                  "expected_name": {
+                    "type": "string",
+                    "maxLength": 512
+                  },
+                  "new_name": {
+                    "type": "string",
+                    "maxLength": 512
+                  },
+                  "new_color": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 33554431
+                  },
+                  "new_bool": {
+                    "type": "boolean"
+                  },
+                  "new_index": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 100000
+                  }
+                },
+                "required": [
+                  "operation",
+                  "index",
+                  "expected_name"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "edit"
+            ],
+            "additionalProperties": false
+          },
+          "output_schema": {
+            "type": "object",
+            "properties": {
+              "outcome": {
+                "type": "string",
+                "maxLength": 32
+              },
+              "summary": {
+                "type": "string",
+                "maxLength": 1000
+              },
+              "state": {
+                "type": "object",
+                "properties": {
+                  "applies": {
+                    "type": "boolean"
+                  },
+                  "connected": {
+                    "type": "boolean"
+                  },
+                  "reason": {
+                    "type": "string",
+                    "maxLength": 64
+                  },
+                  "project": {
+                    "type": "string",
+                    "maxLength": 500
+                  },
+                  "tempo": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1000
+                  },
+                  "time_signature": {
+                    "type": "string",
+                    "maxLength": 32
+                  },
+                  "play_state": {
+                    "type": "string",
+                    "maxLength": 32
+                  },
+                  "position": {
+                    "type": "string",
+                    "maxLength": 64
+                  },
+                  "track_count": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 100000
+                  },
+                  "tracks": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "index": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 100000
+                        },
+                        "name": {
+                          "type": "string",
+                          "maxLength": 500
+                        },
+                        "muted": {
+                          "type": "boolean"
+                        },
+                        "soloed": {
+                          "type": "boolean"
+                        },
+                        "armed": {
+                          "type": "boolean"
+                        },
+                        "color": {
+                          "type": "integer"
+                        },
+                        "folder_depth": {
+                          "type": "integer",
+                          "minimum": -128,
+                          "maximum": 128
+                        },
+                        "peak_left_db": {
+                          "type": "number"
+                        },
+                        "peak_right_db": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "index",
+                        "name",
+                        "muted",
+                        "soloed",
+                        "armed",
+                        "color",
+                        "folder_depth",
+                        "peak_left_db",
+                        "peak_right_db"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "maxItems": 256
+                  },
+                  "folder_depth_available": {
+                    "type": "boolean"
+                  },
+                  "checked_at": {
+                    "type": "string",
+                    "maxLength": 64
+                  },
+                  "track_editing_available": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "applies",
+                  "connected",
+                  "project",
+                  "tempo",
+                  "time_signature",
+                  "play_state",
+                  "position",
+                  "track_count",
+                  "tracks",
+                  "folder_depth_available",
+                  "checked_at",
+                  "track_editing_available"
+                ],
+                "additionalProperties": false
+              },
+              "undo_available": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "outcome",
+              "summary",
+              "state",
+              "undo_available"
+            ],
+            "additionalProperties": false
+          },
+          "max_output_bytes": 262144,
+          "timeout_class": "long",
+          "policy": "reversible",
+          "scopes": []
+        },
+        {
+          "id": "tracks.undo",
+          "input_schema": {
+            "type": "object",
+            "properties": {},
+            "required": [],
+            "additionalProperties": false
+          },
+          "output_schema": {
+            "type": "object",
+            "properties": {
+              "outcome": {
+                "type": "string",
+                "maxLength": 32
+              },
+              "summary": {
+                "type": "string",
+                "maxLength": 1000
+              },
+              "state": {
+                "type": "object",
+                "properties": {
+                  "applies": {
+                    "type": "boolean"
+                  },
+                  "connected": {
+                    "type": "boolean"
+                  },
+                  "reason": {
+                    "type": "string",
+                    "maxLength": 64
+                  },
+                  "project": {
+                    "type": "string",
+                    "maxLength": 500
+                  },
+                  "tempo": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1000
+                  },
+                  "time_signature": {
+                    "type": "string",
+                    "maxLength": 32
+                  },
+                  "play_state": {
+                    "type": "string",
+                    "maxLength": 32
+                  },
+                  "position": {
+                    "type": "string",
+                    "maxLength": 64
+                  },
+                  "track_count": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 100000
+                  },
+                  "tracks": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "index": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 100000
+                        },
+                        "name": {
+                          "type": "string",
+                          "maxLength": 500
+                        },
+                        "muted": {
+                          "type": "boolean"
+                        },
+                        "soloed": {
+                          "type": "boolean"
+                        },
+                        "armed": {
+                          "type": "boolean"
+                        },
+                        "color": {
+                          "type": "integer"
+                        },
+                        "folder_depth": {
+                          "type": "integer",
+                          "minimum": -128,
+                          "maximum": 128
+                        },
+                        "peak_left_db": {
+                          "type": "number"
+                        },
+                        "peak_right_db": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "index",
+                        "name",
+                        "muted",
+                        "soloed",
+                        "armed",
+                        "color",
+                        "folder_depth",
+                        "peak_left_db",
+                        "peak_right_db"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "maxItems": 256
+                  },
+                  "folder_depth_available": {
+                    "type": "boolean"
+                  },
+                  "checked_at": {
+                    "type": "string",
+                    "maxLength": 64
+                  },
+                  "track_editing_available": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "applies",
+                  "connected",
+                  "project",
+                  "tempo",
+                  "time_signature",
+                  "play_state",
+                  "position",
+                  "track_count",
+                  "tracks",
+                  "folder_depth_available",
+                  "checked_at",
+                  "track_editing_available"
+                ],
+                "additionalProperties": false
+              },
+              "undo_available": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "outcome",
+              "summary",
+              "state",
+              "undo_available"
+            ],
+            "additionalProperties": false
+          },
+          "max_output_bytes": 262144,
+          "timeout_class": "long",
+          "policy": "reversible",
+          "scopes": []
+        },
+        {
+          "id": "plans.current",
+          "input_schema": {
+            "type": "object",
+            "properties": {},
+            "required": [],
+            "additionalProperties": false
+          },
+          "output_schema": {
+            "type": "object",
+            "properties": {
+              "plan": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "maxLength": 64
+                  },
+                  "edits": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "operation": {
+                          "type": "string",
+                          "maxLength": 16
+                        },
+                        "index": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 100000
+                        },
+                        "expected_name": {
+                          "type": "string",
+                          "maxLength": 512
+                        },
+                        "new_name": {
+                          "type": "string",
+                          "maxLength": 512
+                        },
+                        "new_color": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 33554431
+                        },
+                        "new_bool": {
+                          "type": "boolean"
+                        },
+                        "new_index": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 100000
+                        }
+                      },
+                      "required": [
+                        "operation",
+                        "index",
+                        "expected_name"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "maxItems": 64
+                  },
+                  "created_at": {
+                    "type": "string",
+                    "maxLength": 64
+                  },
+                  "expires_at": {
+                    "type": "string",
+                    "maxLength": 64
+                  }
+                },
+                "required": [
+                  "id",
+                  "edits",
+                  "created_at",
+                  "expires_at"
+                ],
+                "additionalProperties": false
+              },
+              "outcome": {
+                "type": "string",
+                "maxLength": 32
+              },
+              "summary": {
+                "type": "string",
+                "maxLength": 1000
+              }
+            },
+            "required": [
+              "outcome",
+              "summary"
+            ],
+            "additionalProperties": false
+          },
+          "max_output_bytes": 65536,
+          "timeout_class": "fast",
+          "policy": "read_only",
+          "scopes": []
+        },
+        {
+          "id": "proposals.propose",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "filename": {
+                "type": "string",
+                "maxLength": 120
+              },
+              "name": {
+                "type": "string",
+                "maxLength": 500
+              },
+              "description": {
+                "type": "string",
+                "maxLength": 500
+              },
+              "code": {
+                "type": "string",
+                "maxLength": 32768
+              },
+              "needs_confirmation": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "filename",
+              "name",
+              "code"
+            ],
+            "additionalProperties": false
+          },
+          "output_schema": {
+            "type": "object",
+            "properties": {
+              "proposal": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "maxLength": 64
+                  },
+                  "filename": {
+                    "type": "string",
+                    "maxLength": 120
+                  },
+                  "name": {
+                    "type": "string",
+                    "maxLength": 500
+                  },
+                  "description": {
+                    "type": "string",
+                    "maxLength": 500
+                  },
+                  "code": {
+                    "type": "string",
+                    "maxLength": 32768
+                  },
+                  "needs_confirmation": {
+                    "type": "boolean"
+                  },
+                  "tested": {
+                    "type": "boolean"
+                  },
+                  "test_summary": {
+                    "type": "string",
+                    "maxLength": 1000
+                  },
+                  "created_at": {
+                    "type": "string",
+                    "maxLength": 64
+                  }
+                },
+                "required": [
+                  "id",
+                  "filename",
+                  "name",
+                  "description",
+                  "code",
+                  "needs_confirmation",
+                  "tested",
+                  "created_at"
+                ],
+                "additionalProperties": false
+              },
+              "outcome": {
+                "type": "string",
+                "maxLength": 32
+              },
+              "summary": {
+                "type": "string",
+                "maxLength": 1000
+              }
+            },
+            "required": [
+              "outcome",
+              "summary"
+            ],
+            "additionalProperties": false
+          },
+          "max_output_bytes": 131072,
+          "timeout_class": "fast",
+          "policy": "read_only",
+          "scopes": []
+        },
+        {
+          "id": "proposals.current",
+          "input_schema": {
+            "type": "object",
+            "properties": {},
+            "required": [],
+            "additionalProperties": false
+          },
+          "output_schema": {
+            "type": "object",
+            "properties": {
+              "proposal": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "maxLength": 64
+                  },
+                  "filename": {
+                    "type": "string",
+                    "maxLength": 120
+                  },
+                  "name": {
+                    "type": "string",
+                    "maxLength": 500
+                  },
+                  "description": {
+                    "type": "string",
+                    "maxLength": 500
+                  },
+                  "code": {
+                    "type": "string",
+                    "maxLength": 32768
+                  },
+                  "needs_confirmation": {
+                    "type": "boolean"
+                  },
+                  "tested": {
+                    "type": "boolean"
+                  },
+                  "test_summary": {
+                    "type": "string",
+                    "maxLength": 1000
+                  },
+                  "created_at": {
+                    "type": "string",
+                    "maxLength": 64
+                  }
+                },
+                "required": [
+                  "id",
+                  "filename",
+                  "name",
+                  "description",
+                  "code",
+                  "needs_confirmation",
+                  "tested",
+                  "created_at"
+                ],
+                "additionalProperties": false
+              },
+              "outcome": {
+                "type": "string",
+                "maxLength": 32
+              },
+              "summary": {
+                "type": "string",
+                "maxLength": 1000
+              }
+            },
+            "required": [
+              "outcome",
+              "summary"
+            ],
+            "additionalProperties": false
+          },
+          "max_output_bytes": 131072,
+          "timeout_class": "fast",
+          "policy": "read_only",
+          "scopes": []
+        },
+        {
+          "id": "proposals.read",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "proposal_id": {
+                "type": "string",
+                "maxLength": 64
+              }
+            },
+            "required": [
+              "proposal_id"
+            ],
+            "additionalProperties": false
+          },
+          "output_schema": {
+            "type": "object",
+            "properties": {
+              "proposal": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "maxLength": 64
+                  },
+                  "filename": {
+                    "type": "string",
+                    "maxLength": 120
+                  },
+                  "name": {
+                    "type": "string",
+                    "maxLength": 500
+                  },
+                  "description": {
+                    "type": "string",
+                    "maxLength": 500
+                  },
+                  "code": {
+                    "type": "string",
+                    "maxLength": 32768
+                  },
+                  "needs_confirmation": {
+                    "type": "boolean"
+                  },
+                  "tested": {
+                    "type": "boolean"
+                  },
+                  "test_summary": {
+                    "type": "string",
+                    "maxLength": 1000
+                  },
+                  "created_at": {
+                    "type": "string",
+                    "maxLength": 64
+                  }
+                },
+                "required": [
+                  "id",
+                  "filename",
+                  "name",
+                  "description",
+                  "code",
+                  "needs_confirmation",
+                  "tested",
+                  "created_at"
+                ],
+                "additionalProperties": false
+              },
+              "outcome": {
+                "type": "string",
+                "maxLength": 32
+              },
+              "summary": {
+                "type": "string",
+                "maxLength": 1000
+              }
+            },
+            "required": [
+              "outcome",
+              "summary"
+            ],
+            "additionalProperties": false
+          },
+          "max_output_bytes": 131072,
+          "timeout_class": "fast",
+          "policy": "read_only",
+          "scopes": []
+        },
+        {
+          "id": "proposals.test",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "proposal_id": {
+                "type": "string",
+                "maxLength": 64
+              }
+            },
+            "required": [
+              "proposal_id"
+            ],
+            "additionalProperties": false
+          },
+          "output_schema": {
+            "type": "object",
+            "properties": {
+              "proposal": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "maxLength": 64
+                  },
+                  "filename": {
+                    "type": "string",
+                    "maxLength": 120
+                  },
+                  "name": {
+                    "type": "string",
+                    "maxLength": 500
+                  },
+                  "description": {
+                    "type": "string",
+                    "maxLength": 500
+                  },
+                  "code": {
+                    "type": "string",
+                    "maxLength": 32768
+                  },
+                  "needs_confirmation": {
+                    "type": "boolean"
+                  },
+                  "tested": {
+                    "type": "boolean"
+                  },
+                  "test_summary": {
+                    "type": "string",
+                    "maxLength": 1000
+                  },
+                  "created_at": {
+                    "type": "string",
+                    "maxLength": 64
+                  }
+                },
+                "required": [
+                  "id",
+                  "filename",
+                  "name",
+                  "description",
+                  "code",
+                  "needs_confirmation",
+                  "tested",
+                  "created_at"
+                ],
+                "additionalProperties": false
+              },
+              "outcome": {
+                "type": "string",
+                "maxLength": 32
+              },
+              "summary": {
+                "type": "string",
+                "maxLength": 1000
+              }
+            },
+            "required": [
+              "outcome",
+              "summary"
+            ],
+            "additionalProperties": false
+          },
+          "max_output_bytes": 131072,
+          "timeout_class": "long",
+          "policy": "confirmation_required",
+          "scopes": []
+        },
+        {
+          "id": "proposals.save",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "proposal_id": {
+                "type": "string",
+                "maxLength": 64
+              }
+            },
+            "required": [
+              "proposal_id"
+            ],
+            "additionalProperties": false
+          },
+          "output_schema": {
+            "type": "object",
+            "properties": {
+              "proposal": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "maxLength": 64
+                  },
+                  "filename": {
+                    "type": "string",
+                    "maxLength": 120
+                  },
+                  "name": {
+                    "type": "string",
+                    "maxLength": 500
+                  },
+                  "description": {
+                    "type": "string",
+                    "maxLength": 500
+                  },
+                  "code": {
+                    "type": "string",
+                    "maxLength": 32768
+                  },
+                  "needs_confirmation": {
+                    "type": "boolean"
+                  },
+                  "tested": {
+                    "type": "boolean"
+                  },
+                  "test_summary": {
+                    "type": "string",
+                    "maxLength": 1000
+                  },
+                  "created_at": {
+                    "type": "string",
+                    "maxLength": 64
+                  }
+                },
+                "required": [
+                  "id",
+                  "filename",
+                  "name",
+                  "description",
+                  "code",
+                  "needs_confirmation",
+                  "tested",
+                  "created_at"
+                ],
+                "additionalProperties": false
+              },
+              "outcome": {
+                "type": "string",
+                "maxLength": 32
+              },
+              "summary": {
+                "type": "string",
+                "maxLength": 1000
+              }
+            },
+            "required": [
+              "outcome",
+              "summary"
+            ],
+            "additionalProperties": false
+          },
+          "max_output_bytes": 131072,
+          "timeout_class": "normal",
+          "policy": "confirmation_required",
+          "scopes": []
+        },
+        {
+          "id": "proposals.discard",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "proposal_id": {
+                "type": "string",
+                "maxLength": 64
+              }
+            },
+            "required": [
+              "proposal_id"
+            ],
+            "additionalProperties": false
+          },
+          "output_schema": {
+            "type": "object",
+            "properties": {
+              "proposal": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "maxLength": 64
+                  },
+                  "filename": {
+                    "type": "string",
+                    "maxLength": 120
+                  },
+                  "name": {
+                    "type": "string",
+                    "maxLength": 500
+                  },
+                  "description": {
+                    "type": "string",
+                    "maxLength": 500
+                  },
+                  "code": {
+                    "type": "string",
+                    "maxLength": 32768
+                  },
+                  "needs_confirmation": {
+                    "type": "boolean"
+                  },
+                  "tested": {
+                    "type": "boolean"
+                  },
+                  "test_summary": {
+                    "type": "string",
+                    "maxLength": 1000
+                  },
+                  "created_at": {
+                    "type": "string",
+                    "maxLength": 64
+                  }
+                },
+                "required": [
+                  "id",
+                  "filename",
+                  "name",
+                  "description",
+                  "code",
+                  "needs_confirmation",
+                  "tested",
+                  "created_at"
+                ],
+                "additionalProperties": false
+              },
+              "outcome": {
+                "type": "string",
+                "maxLength": 32
+              },
+              "summary": {
+                "type": "string",
+                "maxLength": 1000
+              }
+            },
+            "required": [
+              "outcome",
+              "summary"
+            ],
+            "additionalProperties": false
+          },
+          "max_output_bytes": 131072,
+          "timeout_class": "fast",
+          "policy": "reversible",
           "scopes": []
         }
       ]
@@ -1037,7 +2640,9 @@
       "version": 1,
       "manifest": "blueprints/reaper-song/template.json",
       "skeleton": "blueprints/reaper-song/project",
-      "capabilities": ["reaper-live-control"]
+      "capabilities": [
+        "reaper-live-control"
+      ]
     }
   ]
 }

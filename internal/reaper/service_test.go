@@ -2,6 +2,8 @@ package reaper
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -74,6 +76,67 @@ func TestServiceRawCommandRejectsBrowserStylePayloadAndSanitizesFailure(t *testi
 	_, err := service.RunRawAction(context.Background(), host, ActionInput{ActionID: "1007"})
 	if err == nil || strings.Contains(err.Error(), host.ProjectEntry) || strings.Contains(err.Error(), "127.0.0.1") {
 		t.Fatalf("raw failure leaked internals: %v", err)
+	}
+}
+
+func TestServiceScriptProposalsAreWorkspaceScopedAndCannotSaveUntested(t *testing.T) {
+	library := NewLibraryAt(filepath.Join(t.TempDir(), "scripts"))
+	service := &Service{proposals: make(map[string]ScriptProposal), library: library}
+	hostA := HostContext{WorkspaceID: "workspace-a"}
+	hostB := HostContext{WorkspaceID: "workspace-b"}
+	proposed, err := service.ProposeScript(hostA, ProposalInput{
+		Filename: "agent-proposal.lua", Name: "Agent proposal", Description: "Harmless test",
+		Code: "return 1", NeedsConfirmation: true,
+	})
+	if err != nil || proposed.Proposal == nil {
+		t.Fatalf("proposal = %+v, %v", proposed, err)
+	}
+	id := proposed.Proposal.ID
+	if _, err := service.ReadProposal(hostB, ProposalInput{ProposalID: id}); err == nil {
+		t.Fatal("another workspace read the script proposal")
+	}
+	if _, err := service.SaveProposal(hostA, ProposalInput{ProposalID: id}); err == nil {
+		t.Fatal("untested proposal was saved globally")
+	}
+	if _, err := library.Read("agent-proposal.lua"); !errors.Is(err, ErrScriptNotFound) {
+		t.Fatalf("untested proposal wrote a file: %v", err)
+	}
+	if result, err := service.DiscardProposal(hostA, ProposalInput{ProposalID: id}); err != nil || result.Outcome != "discarded" {
+		t.Fatalf("discard = %+v, %v", result, err)
+	}
+}
+
+func TestServicePlansAreOpaqueWorkspaceScopedAndAgentCannotApply(t *testing.T) {
+	service := &Service{plans: make(map[string]PendingPlan)}
+	hostA := HostContext{WorkspaceID: "workspace-a"}
+	hostB := HostContext{WorkspaceID: "workspace-b"}
+	proposed, err := service.ProposePlan(hostA, PlanInput{Edits: []TrackEdit{RenameEdit(1, "Old", "New")}})
+	if err != nil || proposed.Plan == nil || proposed.Plan.ID == "" {
+		t.Fatalf("proposed = %+v, %v", proposed, err)
+	}
+	if _, err := service.ReadPlan(hostB, PlanInput{PlanID: proposed.Plan.ID}); err == nil {
+		t.Fatal("another workspace read the opaque plan")
+	}
+	cancelled, err := service.CancelPlan(hostA, PlanInput{PlanID: proposed.Plan.ID})
+	if err != nil || cancelled.Outcome != "cancelled" {
+		t.Fatalf("cancelled = %+v, %v", cancelled, err)
+	}
+	if _, err := service.ReadPlan(hostA, PlanInput{PlanID: proposed.Plan.ID}); err == nil {
+		t.Fatal("cancelled plan remained available")
+	}
+
+	data, err := os.ReadFile(filepath.Join("..", "..", ".ori-plugin", "plugin.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var manifest contributionManifest
+	if err := json.Unmarshal(data, &manifest); err != nil {
+		t.Fatal(err)
+	}
+	for _, operation := range manifest.Capabilities[0].AgentOperations {
+		if operation == "plans.apply" || operation == "plans.cancel" {
+			t.Fatalf("agent can bypass host plan review through %q", operation)
+		}
 	}
 }
 

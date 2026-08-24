@@ -96,6 +96,16 @@ button.danger {
   font-size: 0.75rem;
   white-space: nowrap;
 }
+.prompt-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  padding-top: 1rem;
+}
+.prompt-chips button {
+  min-height: 34px;
+  font-size: 0.75rem;
+}
 .transport {
   display: flex;
   flex-wrap: wrap;
@@ -178,6 +188,28 @@ button.danger {
   border-radius: 7px;
   background: #0d1013;
 }
+.track-identity {
+  padding-left: calc(var(--folder-depth, 0) * 0.9rem);
+}
+.track-identity strong,
+.track-identity small {
+  display: block;
+}
+.track-controls,
+.track-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+.track-control {
+  min-width: 36px;
+  min-height: 34px;
+  padding: 0.25rem 0.45rem;
+}
+.track-control[aria-pressed="true"] {
+  border-color: var(--signal);
+  color: var(--signal);
+}
 .track span,
 .track small,
 .script-row small {
@@ -199,8 +231,14 @@ button.danger {
   grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
   gap: 0.5rem;
 }
+.action-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.3rem;
+}
 .action {
   display: block;
+  width: 100%;
   text-align: left;
 }
 .action strong,
@@ -210,6 +248,25 @@ button.danger {
 .action small {
   margin-top: 0.2rem;
   color: var(--muted);
+}
+.pinned-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.pinned-action {
+  display: flex;
+  gap: 0.3rem;
+}
+.pin-controls {
+  display: flex;
+  gap: 0.2rem;
+}
+.pin-controls button,
+.pin-toggle {
+  min-height: 34px;
+  padding: 0.25rem 0.45rem;
+  font-size: 0.7rem;
 }
 .raw-form,
 .script-form {
@@ -285,6 +342,43 @@ textarea {
   color: var(--muted);
   border: 1px dashed var(--line);
   border-radius: 7px;
+}
+.plan-panel[hidden] {
+  display: none;
+}
+.plan-panel pre {
+  max-height: 260px;
+  overflow: auto;
+  padding: 0.8rem;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: #090b0d;
+  white-space: pre-wrap;
+}
+.plan-panel [data-plan-edits] p {
+  margin: 0.3rem 0;
+  padding: 0.5rem;
+  border-left: 2px solid var(--signal);
+  background: #0d1013;
+}
+.toast-region {
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  display: grid;
+  gap: 0.4rem;
+  width: min(360px, calc(100vw - 2rem));
+}
+.outcome-toast {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.7rem;
+  align-items: center;
+  padding: 0.7rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #171c20;
+  box-shadow: 0 10px 30px rgb(0 0 0 / 35%);
 }
 footer {
   display: flex;

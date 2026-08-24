@@ -18,7 +18,11 @@ func TestWorkspaceSurfaceUIUsesOnlySDKAndDeclaredOperations(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	source := string(data)
+	model, err := os.ReadFile(filepath.Join(root, "model.js")) // #nosec G304 -- fixed repository fixture
+	if err != nil {
+		t.Fatal(err)
+	}
+	source := string(data) + string(model)
 	for _, operation := range []string{"state.read", "actions.list", "actions.run_safe", "actions.run_confirmed", "actions.run_raw_confirmed", "scripts.list", "draft.validate", "draft.run"} {
 		if !strings.Contains(source, operation) {
 			t.Errorf("UI does not use declared operation %q", operation)

@@ -76,6 +76,45 @@ func runService() int {
 	addTool(server, "draft.run", "Run a host-confirmed Lua draft through the registered runner.", func(ctx context.Context, input reaper.Envelope[reaper.DraftInput]) (reaper.OperationResult, error) {
 		return service.RunDraft(ctx, input.Input)
 	})
+	addTool(server, "proposals.propose", "Propose a bounded workspace-scoped Lua script.", func(_ context.Context, input reaper.Envelope[reaper.ProposalInput]) (reaper.ProposalResult, error) {
+		return service.ProposeScript(input.Context, input.Input)
+	})
+	addTool(server, "proposals.current", "Read the latest workspace-scoped script proposal.", func(_ context.Context, input reaper.Envelope[reaper.EmptyInput]) (reaper.ProposalResult, error) {
+		return service.CurrentProposal(input.Context), nil
+	})
+	addTool(server, "proposals.read", "Read one workspace-scoped script proposal.", func(_ context.Context, input reaper.Envelope[reaper.ProposalInput]) (reaper.ProposalResult, error) {
+		return service.ReadProposal(input.Context, input.Input)
+	})
+	addTool(server, "proposals.test", "Run one host-confirmed proposal test.", func(ctx context.Context, input reaper.Envelope[reaper.ProposalInput]) (reaper.ProposalResult, error) {
+		return service.TestProposal(ctx, input.Context, input.Input)
+	})
+	addTool(server, "proposals.save", "Save one tested proposal to the global library.", func(_ context.Context, input reaper.Envelope[reaper.ProposalInput]) (reaper.ProposalResult, error) {
+		return service.SaveProposal(input.Context, input.Input)
+	})
+	addTool(server, "proposals.discard", "Discard one proposal without a library write.", func(_ context.Context, input reaper.Envelope[reaper.ProposalInput]) (reaper.ProposalResult, error) {
+		return service.DiscardProposal(input.Context, input.Input)
+	})
+	addTool(server, "tracks.edit", "Run one guarded reversible track edit.", func(ctx context.Context, input reaper.Envelope[reaper.TrackEditInput]) (reaper.TrackEditResult, error) {
+		return service.RunTrackEdit(ctx, input.Context, input.Input)
+	})
+	addTool(server, "tracks.undo", "Undo the latest guarded track edit once.", func(ctx context.Context, input reaper.Envelope[reaper.EmptyInput]) (reaper.TrackEditResult, error) {
+		return service.UndoTrackEdit(ctx, input.Context)
+	})
+	addTool(server, "plans.propose", "Propose a guarded workspace-scoped track plan.", func(_ context.Context, input reaper.Envelope[reaper.PlanInput]) (reaper.PlanResult, error) {
+		return service.ProposePlan(input.Context, input.Input)
+	})
+	addTool(server, "plans.current", "Read the latest workspace-scoped guarded track plan.", func(_ context.Context, input reaper.Envelope[reaper.EmptyInput]) (reaper.PlanResult, error) {
+		return service.CurrentPlan(input.Context), nil
+	})
+	addTool(server, "plans.read", "Read the current guarded track plan.", func(_ context.Context, input reaper.Envelope[reaper.PlanInput]) (reaper.PlanResult, error) {
+		return service.ReadPlan(input.Context, input.Input)
+	})
+	addTool(server, "plans.apply", "Apply one host-confirmed guarded track plan.", func(ctx context.Context, input reaper.Envelope[reaper.PlanInput]) (reaper.PlanResult, error) {
+		return service.ApplyPlan(ctx, input.Context, input.Input)
+	})
+	addTool(server, "plans.cancel", "Cancel one workspace-scoped guarded track plan.", func(_ context.Context, input reaper.Envelope[reaper.PlanInput]) (reaper.PlanResult, error) {
+		return service.CancelPlan(input.Context, input.Input)
+	})
 	addTool(server, "results.read", "Read the last bounded service operation result.", func(context.Context, reaper.Envelope[reaper.EmptyInput]) (reaper.OperationResult, error) {
 		return service.LastResult(), nil
 	})
