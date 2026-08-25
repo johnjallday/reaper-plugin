@@ -2,13 +2,14 @@
 set -eu
 
 repo_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+release_toolchain=go1.25.0
 artifact="$repo_root/artifacts/reaper-plugin-darwin-arm64"
 manifest="$repo_root/.ori-plugin/plugin.json"
 mkdir -p "$repo_root/artifacts"
 
 (
   cd "$repo_root"
-  CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 \
+  CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 GOTOOLCHAIN="$release_toolchain" \
     go build -buildvcs=false -trimpath -ldflags='-s -w -buildid=' -o "$artifact" ./cmd/reaper-plugin
 )
 chmod 0755 "$artifact"

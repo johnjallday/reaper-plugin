@@ -60,8 +60,8 @@ config tree. The runner wraps every run in an Undo block.
 
 The first supported service artifact is **macOS arm64**. Version **0.3.0** uses
 Workspace Surface protocol v1 and requires an Ori build that implements that
-protocol. The release artifact is 8,476,786 bytes with SHA-256
-`92c22804acabf7a87a1d7b5d2d668278ff004512227cf24a1393c39272e4e04a`.
+protocol. The release artifact is 8,476,866 bytes with SHA-256
+`06fdf6623a17737cbad38241584e198f2061956127b29efb3dc4219365ecfa93`.
 The manifest downloads those exact bytes from the `v0.3.0` GitHub release.
 Build and verify them reproducibly with:
 
@@ -72,9 +72,9 @@ make test-ui
 make release-package VERSION=v0.3.0
 ```
 
-The build disables VCS stamping, uses `-trimpath`, and clears the build ID;
-repeating it from unchanged Go source produces identical bytes across release
-metadata commits. Install by Git URL or local path through Ori's Plugins UI or
+The build pins Go 1.25.0, disables VCS stamping, uses `-trimpath`, and clears the
+build ID; repeating it from unchanged Go source produces identical bytes across
+maintainer machines and release-metadata commits. Install by Git URL or local path through Ori's Plugins UI or
 `POST /api/plugins/install`, review the complete trust disclosure, confirm, and
 enable. The service starts lazily only when an attached workspace asks for
 status/setup/an operation. Other platforms remain explicitly unsupported and
