@@ -23,8 +23,8 @@ the existing Claude/Codex skills and helper CLI.
 - Workspace Surface protocol: `1`
 - Minimum Ori protocol: `1`
 - Service artifact: macOS arm64 only
-- Release artifact size: `8,476,786` bytes
-- Release SHA-256: `92c22804acabf7a87a1d7b5d2d668278ff004512227cf24a1393c39272e4e04a`
+- Release artifact size: `8,476,866` bytes
+- Release SHA-256: `06fdf6623a17737cbad38241584e198f2061956127b29efb3dc4219365ecfa93`
 
 The service is trusted native code. Ori keeps browser code in an opaque-origin
 sandbox and mediates every UI/agent operation through workspace ownership,
