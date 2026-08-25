@@ -9,7 +9,7 @@ mkdir -p "$repo_root/artifacts"
 (
   cd "$repo_root"
   CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 \
-    go build -trimpath -ldflags='-s -w -buildid=' -o "$artifact" ./cmd/reaper-plugin
+    go build -buildvcs=false -trimpath -ldflags='-s -w -buildid=' -o "$artifact" ./cmd/reaper-plugin
 )
 chmod 0755 "$artifact"
 sha=$(shasum -a 256 "$artifact" | awk '{print $1}')
