@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>REAPER Live Control</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <main class="console" aria-labelledby="title">
+      <header class="hero">
+        <div>
+          <p class="eyebrow">REAPER · plugin workspace surface</p>
+          <h1 id="title">Live Control</h1>
+          <p data-project>Waiting for the authenticated host…</p>
+        </div>
+        <span class="status" data-status aria-live="polite">Connecting</span>
+      </header>
+
+      <nav
+        class="prompt-chips"
+        aria-label="Suggested questions"
+        data-prompt-chips
+      ></nav>
+      <form class="ask-composer" data-ask-form>
+        <label for="ask-context">Ask Ori about this project</label>
+        <div>
+          <input
+            id="ask-context"
+            data-ask-input
+            name="context"
+            maxlength="1000"
+            autocomplete="off"
+            placeholder="Choose a suggestion or enter a question"
+          />
+          <button type="submit">Ask Ori</button>
+        </div>
+      </form>
+
+      <section class="transport" aria-label="Transport controls">
+        <button type="button" data-action="1007">Play</button>
+        <button type="button" data-action="1008">Pause</button>
+        <button type="button" data-action="1016">Stop</button>
+        <button type="button" class="danger" data-action="1013">Record</button>
+        <output data-action-result aria-live="polite">No action run.</output>
+      </section>
+
+      <section class="facts" aria-label="Current project facts">
+        <article><span>Tempo</span><strong data-tempo>—</strong></article>
+        <article><span>Position</span><strong data-position>—</strong></article>
+        <article>
+          <span>Tracks</span><strong data-track-count>—</strong>
+        </article>
+        <article><span>Runner</span><strong data-runner>—</strong></article>
+      </section>
+
+      <section class="panel pinned-panel" aria-labelledby="pinned-title">
+        <div class="panel-heading">
+          <div>
+            <p class="eyebrow">Workspace defaults</p>
+            <h2 id="pinned-title">Pinned actions</h2>
+          </div>
+        </div>
+        <div class="pinned-actions" data-pinned-actions>
+          <p class="empty">Loading pinned actions…</p>
+        </div>
+      </section>
+
+      <section class="panel" aria-labelledby="tracks-title">
+        <div class="panel-heading">
+          <div>
+            <p class="eyebrow">Live snapshot</p>
+            <h2 id="tracks-title">Tracks</h2>
+          </div>
+          <div class="track-toolbar">
+            <button type="button" class="quiet" data-track-undo>
+              Undo edit
+            </button>
+            <button type="button" class="quiet" data-refresh>Refresh</button>
+          </div>
+        </div>
+        <div class="track-list" data-tracks>
+          <p class="empty">No live track state yet.</p>
+        </div>
+      </section>
+
+      <section class="panel" aria-labelledby="actions-title">
+        <div class="panel-heading">
+          <div>
+            <p class="eyebrow">Curated + registered + custom</p>
+            <h2 id="actions-title">Action catalog</h2>
+          </div>
+        </div>
+        <div class="action-grid" data-actions>
+          <p class="empty">Loading actions…</p>
+        </div>
+        <form class="raw-form" data-raw-form>
+          <label for="raw-command"
+            >Raw command ID <span>advanced · always confirmed</span></label
+          >
+          <div>
+            <input
+              id="raw-command"
+              name="command"
+              maxlength="100"
+              placeholder="40026 or _RS…"
+            /><button>Run</button>
+          </div>
+        </form>
+      </section>
+
+      <section
+        class="panel plan-panel"
+        data-proposal-panel
+        hidden
+        aria-labelledby="proposal-title"
+      >
+        <p class="eyebrow">Agent script proposal</p>
+        <h2 id="proposal-title" data-proposal-name>Pending script</h2>
+        <p data-proposal-description></p>
+        <pre><code data-proposal-code></code></pre>
+        <div class="draft-actions">
+          <button type="button" data-proposal-test>Review & test</button>
+          <button type="button" data-proposal-save>
+            Review & save globally
+          </button>
+          <button type="button" class="quiet" data-proposal-discard>
+            Discard
+          </button>
+        </div>
+        <output data-proposal-result aria-live="polite"></output>
+      </section>
+
+      <section
+        class="panel plan-panel"
+        data-plan-panel
+        hidden
+        aria-labelledby="plan-title"
+      >
+        <p class="eyebrow">Host-reviewed proposal</p>
+        <h2 id="plan-title">Pending track plan</h2>
+        <div data-plan-edits></div>
+        <div class="draft-actions">
+          <button type="button" data-plan-apply>Review & apply</button>
+          <button type="button" class="quiet" data-plan-cancel>
+            Cancel plan
+          </button>
+        </div>
+        <output data-plan-result aria-live="polite"></output>
+      </section>
+
+      <section class="split">
+        <section class="panel" aria-labelledby="scripts-title">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">Global library</p>
+              <h2 id="scripts-title">Custom scripts</h2>
+            </div>
+          </div>
+          <div data-scripts><p class="empty">No scripts loaded.</p></div>
+          <form class="script-form" data-script-form>
+            <label for="script-filename">New disposable script filename</label>
+            <input
+              id="script-filename"
+              name="filename"
+              maxlength="120"
+              placeholder="ori-demo.lua"
+              required
+            />
+            <label for="script-name">Display name</label>
+            <input
+              id="script-name"
+              name="name"
+              maxlength="120"
+              placeholder="Ori demo"
+              required
+            />
+            <label for="script-code">Lua source</label>
+            <textarea
+              id="script-code"
+              name="code"
+              rows="5"
+              spellcheck="false"
+              required
+            ></textarea>
+            <button type="submit">Review & save</button>
+            <output data-script-result aria-live="polite"
+              >No script saved.</output
+            >
+          </form>
+        </section>
+        <section class="panel" aria-labelledby="draft-title">
+          <p class="eyebrow">Review before run</p>
+          <h2 id="draft-title">Lua draft</h2>
+          <label for="draft-code">Draft source</label>
+          <textarea
+            id="draft-code"
+            rows="8"
+            spellcheck="false"
+            placeholder="reaper.ShowConsoleMsg('Hello')"
+          ></textarea>
+          <div class="draft-actions">
+            <button type="button" class="quiet" data-validate>Validate</button>
+            <button type="button" data-run-draft>Review & run</button>
+          </div>
+          <output data-draft-result aria-live="polite"
+            >No draft checked.</output
+          >
+        </section>
+      </section>
+
+      <footer>
+        <button type="button" class="quiet" data-ask>Ask Ori</button>
+        <button type="button" class="quiet" data-setup>Open Setup</button>
+        <button type="button" class="quiet" data-close>Close</button>
+      </footer>
+      <section
+        class="toast-region"
+        data-toasts
+        aria-label="Recent REAPER outcomes"
+        aria-live="polite"
+      ></section>
+    </main>
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>

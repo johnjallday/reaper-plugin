@@ -13,12 +13,33 @@ const (
 	envScriptsDir    = "REAPER_SCRIPTS_DIR"
 	envWebRemotePort = "REAPER_WEB_REMOTE_PORT"
 	envMarketplace   = "REAPER_MARKETPLACE_URL"
+	envServiceHome   = "REAPER_PLUGIN_HOME"
 )
 
 type Manager struct {
 	ScriptsDir     string
 	WebRemotePort  int
 	MarketplaceURL string
+}
+
+// ApplyServiceHomeOverride lets an operator/demo launch the private service
+// against a real user's REAPER support directory while Ori itself runs under a
+// disposable HOME. The path is process environment, never manifest/browser/
+// workspace/service-call input.
+func ApplyServiceHomeOverride() error {
+	home := strings.TrimSpace(os.Getenv(envServiceHome))
+	if home == "" {
+		return nil
+	}
+	absolute, err := filepath.Abs(home)
+	if err != nil || !filepath.IsAbs(absolute) {
+		return fmt.Errorf("REAPER service home is invalid")
+	}
+	info, err := os.Lstat(absolute) // #nosec G304 -- explicit operator environment, checked before process use
+	if err != nil || !info.IsDir() || info.Mode()&os.ModeSymlink != 0 {
+		return fmt.Errorf("REAPER service home is unsafe")
+	}
+	return os.Setenv("HOME", filepath.Clean(absolute))
 }
 
 func NewManagerFromEnv() *Manager {

@@ -1,12 +1,14 @@
 # reaper-plugin
 
 An Ori / Claude / Codex **plugin** that lets an AI agent control REAPER over its
-**Web Remote** HTTP interface using plain shell (curl) and file operations — **no
-MCP server**. It ships ready-to-use [skills](skills/) plus an optional helper CLI
-(`bin/reaper-plugin`) for the parts that are fiddly in shell, such as registering
-ReaScripts in `reaper-kb.ini`.
+**Web Remote** HTTP interface. Portable skills continue to use plain shell and
+file operations with no native MCP grant. Ori can additionally install the
+private, brokered MCP stdio service declared by
+[`.ori-plugin/plugin.json`](.ori-plugin/plugin.json) to provide a sandboxed
+Workspace Surface, runtime setup provider, Reaper Song blueprint, and
+per-agent-grant-gated operations.
 
-The plugin manifest lives in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
+Portable identity lives in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json).
 
 ## How it works
 
@@ -18,8 +20,10 @@ CLI sandbox posture — an agent can:
 - run any action or registered ReaScript by command ID: `curl .../_/<COMMAND_ID>`
 - manage ReaScript files directly on disk (write/list/delete)
 
-No MCP tool call and no app automation are required. The [skills](skills/) teach
-the agent these workflows; start with
+No MCP tool call and no app automation are required for the portable shell
+workflow. Ori's private service is never attached wholesale as native MCP; its
+UI and agent calls go through declared schemas, grants, scopes, and host-owned
+confirmation. The [skills](skills/) teach the portable workflows; start with
 [`reaper-web-remote`](skills/reaper-web-remote/SKILL.md).
 
 ## Running new Lua live — the runner
@@ -33,9 +37,9 @@ you hand it.
 **One-time setup:**
 
 ```bash
-./bin/reaper-plugin install-runner   # copy + register the runner action
-# then restart REAPER once, and trigger "ori-reaper-runner" once from the Actions
-# list (Actions → Show action list…) so it records its command ID.
+./bin/reaper-plugin install-runner   # stage the runner in REAPER's Scripts folder
+# In REAPER's Actions list, load and run "ori-reaper-runner" once so REAPER
+# registers it and the runner records its command ID. No restart is required.
 ```
 
 **After that, run any Lua immediately — no restart, no per-script registration:**
@@ -51,6 +55,40 @@ runner over Web Remote, and reports the runner's status. `~/.ori-reaper/` is the
 **only** path the agent writes to — so inside the Codex sandbox you whitelist just
 that one directory (`sandbox_workspace_write.writable_roots`), not REAPER's whole
 config tree. The runner wraps every run in an Undo block.
+
+## Ori Workspace Surface development
+
+The first supported service artifact is **macOS arm64**. Version **0.3.0** uses
+Workspace Surface protocol v1 and requires an Ori build that implements that
+protocol. The current release-candidate artifact is 8,476,786 bytes with
+SHA-256 `a1bb85487c03b9a552e0fb6482359f4862bc0d24d3f1f8e8bfc9aac46c03afdd`.
+Build it reproducibly, update the bundled artifact digest/size in the Ori
+manifest, and run both suites:
+
+```bash
+make artifact-local
+make test
+make test-ui
+shasum -a 256 artifacts/reaper-plugin-darwin-arm64
+```
+
+The build uses `-trimpath` and an empty build ID; repeating it from unchanged
+source produces identical bytes. Install by local path through Ori's Plugins UI
+or `POST /api/plugins/install`, review the complete trust disclosure, confirm,
+and enable. The service starts lazily only when an attached workspace asks for
+status/setup/an operation. Other platforms remain explicitly unsupported and
+must not launch the artifact.
+
+Ori workspaces created from the retired compiled Reaper Song template are
+**not migrated**. Installing this plugin never imports legacy pins, grants,
+setup history, template provenance, tasks, or project metadata. Create a new
+workspace from the plugin-contributed Reaper Song blueprint for the supported
+full-parity path. A manual capability attachment is fresh plugin state, not a
+migration.
+
+For a sandboxed disposable Ori demo that should use the real user's REAPER
+configuration, launch Ori with `REAPER_PLUGIN_HOME=/absolute/user/home`; this is
+an operator environment setting, never manifest/browser/workspace input.
 
 ## Helper CLI
 
@@ -76,6 +114,7 @@ make build            # or: go build -o bin/reaper-plugin ./cmd/reaper-plugin
 - `REAPER_SCRIPTS_DIR` override scripts directory
 - `REAPER_WEB_REMOTE_PORT` override web remote port (otherwise auto-detect from `reaper.ini`)
 - `REAPER_MARKETPLACE_URL` marketplace URL shown by marketplace operations
+- `REAPER_PLUGIN_HOME` operator-only private-service home override for isolated demos
 
 ## Skills
 

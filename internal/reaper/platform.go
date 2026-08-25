@@ -35,7 +35,7 @@ func isReaperRunning() (bool, error) {
 		return false, err
 	}
 
-	currentPID := int32(os.Getpid())
+	currentPID := int32(os.Getpid()) // #nosec G115 -- supported OS process IDs are bounded to signed 32-bit values
 	for _, p := range procs {
 		if p.Pid == currentPID {
 			continue
@@ -74,13 +74,13 @@ func launchScript(scriptPath string) error {
 
 	switch runtime.GOOS {
 	case "darwin":
-		cmd := exec.Command("open", "-a", "Reaper", scriptPath)
+		cmd := exec.Command("open", "-a", "Reaper", scriptPath) // #nosec G204 -- scriptPath passed strict scripts-root/name validation
 		return cmd.Run()
 	case "windows":
-		cmd := exec.Command("cmd", "/c", "start", "", scriptPath)
+		cmd := exec.Command("cmd", "/c", "start", "", scriptPath) // #nosec G204 -- scriptPath passed strict scripts-root/name validation
 		return cmd.Run()
 	default:
-		cmd := exec.Command("reaper", scriptPath)
+		cmd := exec.Command("reaper", scriptPath) // #nosec G204 -- scriptPath passed strict scripts-root/name validation
 		return cmd.Run()
 	}
 }

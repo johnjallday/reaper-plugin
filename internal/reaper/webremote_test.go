@@ -4,7 +4,7 @@ import "testing"
 
 func TestParseTracks(t *testing.T) {
 	input := "TRACK\t1\tKick\t8\t1.000000\t0.000000\t-1500\t-1500\t1.000000\t3\t0\t0\t0\t0\nTRACK\t2\tBass\t8\t0.500000\t-0.250000\t-1500\t-1500\t1.000000\t3\t1\t2\t1\t0"
-	tracks := parseTracks(input)
+	tracks := parseCLITracks(input)
 	if len(tracks) != 2 {
 		t.Fatalf("len(tracks) = %d, want 2", len(tracks))
 	}

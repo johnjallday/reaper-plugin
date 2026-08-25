@@ -1,0 +1,12 @@
+{
+  "name": "reaper-plugin-ui",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test ui/**/*.test.js",
+    "format:check": "prettier --check 'ui/**/*.{js,css,html}'"
+  },
+  "devDependencies": {
+    "prettier": "^3.0.0"
+  }
+}

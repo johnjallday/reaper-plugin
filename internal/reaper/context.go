@@ -59,7 +59,7 @@ if file then
 end
 `, escapedOutput)
 
-	if err := os.WriteFile(scriptPath, []byte(lua), 0o644); err != nil {
+	if err := os.WriteFile(scriptPath, []byte(lua), 0o600); err != nil {
 		return "", "", fmt.Errorf("write temp script: %w", err)
 	}
 	defer func() { _ = os.Remove(scriptPath) }()
@@ -70,7 +70,7 @@ end
 	}
 
 	time.Sleep(1 * time.Second)
-	data, err := os.ReadFile(outputPath)
+	data, err := os.ReadFile(outputPath) // #nosec G304 -- fixed output path paired with the generated context probe
 	if err != nil {
 		return "", "", fmt.Errorf("read context output: %w", err)
 	}

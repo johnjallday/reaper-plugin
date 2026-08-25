@@ -1,156 +1,270 @@
 package reaper
 
 import (
-	_ "embed"
-	"fmt"
-	"net/http"
+	"context"
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 )
 
-// runnerLua is the source of the persistent "runner" action, embedded so
-// `install-runner` can write it out regardless of the working directory.
-//
-//go:embed ori_reaper_runner.lua
-var runnerLua string
+const (
+	maxRunnerScriptBytes  = 1 << 20
+	maxRunnerStatusBytes  = 64 << 10
+	maxRunnerReceiptBytes = 8 << 10
+)
 
-// runnerScriptName is the filename the runner is installed as in REAPER's
-// Scripts directory.
-const runnerScriptName = "ori-reaper-runner.lua"
+var (
+	ErrRunnerUnavailable = errors.New("REAPER script runner is unavailable")
+	ErrRunnerFailed      = errors.New("REAPER script runner failed")
+	ErrRunnerTimedOut    = errors.New("REAPER script runner timed out")
+)
 
-// OriDir is the fixed scratch directory the agent and REAPER share. It is the
-// ONLY path the (sandboxed) agent writes to; on Codex it should be added to
-// sandbox_workspace_write.writable_roots.
-func (m *Manager) OriDir() string {
-	home, _ := os.UserHomeDir()
-	return filepath.Join(home, ".ori-reaper")
+type ScriptRunResult struct {
+	Outcome   string `json:"outcome"`
+	ErrorText string `json:"error_text,omitempty"`
 }
 
-// InboxPath is where the agent drops Lua for the runner to execute.
-func (m *Manager) InboxPath() string { return filepath.Join(m.OriDir(), "inbox.lua") }
+// Runner executes Lua through the installed Ori runner exchange. It serializes
+// writes because inbox.lua and last_status.txt are one global buffer shared by
+// every REAPER workspace.
+type Runner struct {
+	roots   RunnerRootResolver
+	probe   RunnerProbe
+	client  *Client
+	timeout time.Duration
+	mu      sync.Mutex
+}
 
-// RunnerIDPath is where the runner records its own Web Remote command ID.
-func (m *Manager) RunnerIDPath() string { return filepath.Join(m.OriDir(), "runner.id") }
+func NewRunner(roots RunnerRootResolver, probes ProbeSet, client *Client) *Runner {
+	return &Runner{roots: roots, probe: probes.Runner, client: client, timeout: 8 * time.Second}
+}
 
-// statusPath is where the runner records the outcome of the last inbox run.
-func (m *Manager) statusPath() string { return filepath.Join(m.OriDir(), "last_status.txt") }
+// Available reports whether the runner exchange is installed and ready. The
+// console uses it to degrade track editing to a read-only list rather than
+// offering controls that cannot work.
+func (r *Runner) Available(ctx context.Context) bool {
+	if r == nil || r.roots == nil || r.probe == nil {
+		return false
+	}
+	observation := r.probe.DetectRunner(ctx)
+	if observation.State != ProbeReady || !validExecutableCommandID(observation.CommandID) {
+		return false
+	}
+	root, err := r.roots.Resolve()
+	return err == nil && filepath.Clean(root) == filepath.Clean(observation.Root)
+}
 
-func (m *Manager) ensureOriDir() error {
-	if err := os.MkdirAll(m.OriDir(), 0o755); err != nil {
-		return fmt.Errorf("create %s: %w", m.OriDir(), err)
+func (r *Runner) RunScript(ctx context.Context, lua string) (ScriptRunResult, error) {
+	result, _, err := r.run(ctx, func(string) (string, error) { return lua, nil }, false)
+	return result, err
+}
+
+// RunTrackEdit generates the guarded Lua for one single-track edit, runs it,
+// and returns the receipt the script wrote. The receipt — not the runner
+// status — says whether the project actually changed, because a guard that
+// deliberately refuses still leaves the script itself reporting ok. The
+// receipt path is resolved here and never leaves this package.
+func (r *Runner) RunTrackEdit(ctx context.Context, edit TrackEdit) (EditReceipt, error) {
+	if err := edit.Validate(); err != nil {
+		return EditReceipt{}, err
+	}
+	_, raw, err := r.run(ctx, edit.Lua, true)
+	if err != nil {
+		return EditReceipt{}, err
+	}
+	return ParseEditReceipt(raw)
+}
+
+// RunBulkPlan runs a whole guarded bulk plan as one script and returns the
+// receipt it wrote: how many edits applied, or which original track indices
+// refused their guard. Like RunTrackEdit, the runner reporting ok only means
+// the script ran cleanly — the receipt is the authority on whether the
+// project actually changed.
+func (r *Runner) RunBulkPlan(ctx context.Context, plan BulkPlan) (BulkReceipt, error) {
+	if err := plan.Validate(); err != nil {
+		return BulkReceipt{}, err
+	}
+	_, raw, err := r.run(ctx, plan.Lua, true)
+	if err != nil {
+		return BulkReceipt{}, err
+	}
+	return ParseBulkReceipt(raw)
+}
+
+func (r *Runner) run(ctx context.Context, build func(receiptPath string) (string, error), wantReceipt bool) (ScriptRunResult, []byte, error) {
+	if r == nil || r.roots == nil || r.probe == nil || r.client == nil || build == nil {
+		return ScriptRunResult{Outcome: "error"}, nil, ErrRunnerUnavailable
+	}
+	if _, reason := r.client.resolve(ctx); reason != "" {
+		return ScriptRunResult{Outcome: "error", ErrorText: "REAPER is not connected. Nothing was run."}, nil, ErrActionDisconnected
+	}
+	observation := r.probe.DetectRunner(ctx)
+	if observation.State != ProbeReady || !validExecutableCommandID(observation.CommandID) {
+		return ScriptRunResult{Outcome: "error"}, nil, ErrRunnerUnavailable
+	}
+	root, err := r.roots.Resolve()
+	if err != nil || filepath.Clean(root) != filepath.Clean(observation.Root) {
+		return ScriptRunResult{Outcome: "error"}, nil, ErrRunnerUnavailable
+	}
+
+	receiptPath := filepath.Join(root, receiptFileName)
+	lua, err := build(receiptPath)
+	if err != nil || strings.TrimSpace(lua) == "" || len(lua) > maxRunnerScriptBytes {
+		return ScriptRunResult{Outcome: "error"}, nil, ErrRunnerUnavailable
+	}
+
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	inboxPath := filepath.Join(root, "inbox.lua")
+	statusPath := filepath.Join(root, "last_status.txt")
+	if err := removeRunnerStatus(statusPath, root); err != nil {
+		return ScriptRunResult{Outcome: "error"}, nil, err
+	}
+	// Clear the receipt inside the same lock as the status file, so a stale
+	// receipt from an earlier run can never be read as this run's result.
+	if wantReceipt {
+		if err := removeRunnerStatus(receiptPath, root); err != nil {
+			return ScriptRunResult{Outcome: "error"}, nil, err
+		}
+	}
+	if err := atomicRunnerWrite(root, inboxPath, []byte(lua)); err != nil {
+		return ScriptRunResult{Outcome: "error"}, nil, err
+	}
+	port, reason := r.client.resolve(ctx)
+	if reason != "" {
+		return ScriptRunResult{Outcome: "error", ErrorText: "REAPER is not connected. Nothing was run."}, nil, ErrActionDisconnected
+	}
+	if _, err := r.client.get(ctx, port, observation.CommandID); err != nil {
+		return ScriptRunResult{Outcome: "error", ErrorText: "The REAPER runner did not accept the script."}, nil, ErrRunnerFailed
+	}
+
+	timeout := r.timeout
+	if timeout <= 0 {
+		timeout = 8 * time.Second
+	}
+	if timeout > 15*time.Second {
+		timeout = 15 * time.Second
+	}
+	waitCtx, cancel := context.WithTimeout(ctx, timeout)
+	defer cancel()
+	ticker := time.NewTicker(50 * time.Millisecond)
+	defer ticker.Stop()
+	for {
+		result, complete := readRunnerStatus(statusPath)
+		if complete {
+			if result.Outcome != "ok" {
+				return result, nil, ErrRunnerFailed
+			}
+			if !wantReceipt {
+				return result, nil, nil
+			}
+			raw, err := readRunnerReceiptBytes(receiptPath)
+			if err != nil {
+				return ScriptRunResult{Outcome: "error", ErrorText: "The REAPER edit did not report a result."}, nil, ErrRunnerFailed
+			}
+			return result, raw, nil
+		}
+		select {
+		case <-waitCtx.Done():
+			return ScriptRunResult{Outcome: "error", ErrorText: "The REAPER runner timed out."}, nil, ErrRunnerTimedOut
+		case <-ticker.C:
+		}
+	}
+}
+
+// readRunnerReceiptBytes validates the receipt exactly like last_status.txt is
+// validated: a regular file, no symlink, at a fixed path under the canonical
+// runner root, with a bounded size. Parsing into EditReceipt or BulkReceipt is
+// the caller's job — both shapes share this one validated read.
+func readRunnerReceiptBytes(path string) ([]byte, error) {
+	info, err := os.Lstat(path) // #nosec G304 -- fixed receipt path under canonical runner root
+	if err != nil || info.Mode()&os.ModeSymlink != 0 || !info.Mode().IsRegular() || info.Size() > maxRunnerReceiptBytes {
+		return nil, ErrInvalidReceipt
+	}
+	data, err := os.ReadFile(path) // #nosec G304 -- bounded regular exchange receipt file
+	if err != nil {
+		return nil, ErrInvalidReceipt
+	}
+	return data, nil
+}
+
+func removeRunnerStatus(path, root string) error {
+	if filepath.Dir(path) != filepath.Clean(root) {
+		return ErrRunnerUnavailable
+	}
+	info, err := os.Lstat(path) // #nosec G304 -- fixed status path under canonical runner root
+	if errors.Is(err, os.ErrNotExist) {
+		return nil
+	}
+	if err != nil || info.Mode()&os.ModeSymlink != 0 || !info.Mode().IsRegular() {
+		return ErrRunnerUnavailable
+	}
+	if err := os.Remove(path); err != nil { // #nosec G304 -- exact checked exchange status file
+		return ErrRunnerUnavailable
 	}
 	return nil
 }
 
-// InstallRunner stages the runner script into REAPER's Scripts directory. It does
-// NOT edit reaper-kb.ini — registering a ReaScript by hand-editing that file while
-// REAPER is running is unsafe (REAPER can overwrite it on quit) and the SCR line
-// format is finicky. Instead the user loads the staged script once via REAPER's
-// Actions list, which registers it live (no restart) and lets REAPER assign +
-// persist the command ID itself. This is a ONE-TIME setup step; afterwards the
-// runner is reused across REAPER restarts and workspaces.
-func (m *Manager) InstallRunner() (string, error) {
-	dir := expandHome(m.ScriptsDir)
-	if err := os.MkdirAll(dir, 0o755); err != nil {
-		return "", fmt.Errorf("create scripts dir: %w", err)
+func atomicRunnerWrite(root, destination string, data []byte) error {
+	if filepath.Dir(destination) != filepath.Clean(root) {
+		return ErrRunnerUnavailable
 	}
-	dest := filepath.Join(dir, runnerScriptName)
-	if err := os.WriteFile(dest, []byte(runnerLua), 0o644); err != nil {
-		return "", fmt.Errorf("write runner script: %w", err)
+	temp, err := os.CreateTemp(root, ".ori-run-*")
+	if err != nil {
+		return ErrRunnerUnavailable
 	}
-	if err := m.ensureOriDir(); err != nil {
-		return "", err
+	tempPath := temp.Name()
+	defer func() { _ = os.Remove(tempPath) }()
+	if err := temp.Chmod(0o600); err != nil {
+		_ = temp.Close()
+		return ErrRunnerUnavailable
 	}
-
-	return fmt.Sprintf(`Staged runner script: %s
-
-One-time setup remaining (no REAPER restart needed):
-  1. In REAPER: Actions → Show action list… → "New action…" ▾ → "Load ReaScript…"
-     and select the file above. REAPER registers it live and assigns a command ID.
-  2. With "ori-reaper-runner" selected in the action list, click "Run" once. On
-     first run it records its Web Remote command ID to:
-       %s
-  3. Done. From now on `+"`reaper-plugin exec`"+` (and the skills) drive REAPER with
-     no further setup; the command ID is stable across restarts.
-
-Scratch dir (the only path the agent writes): %s
-  - inbox.lua       Lua the agent wants REAPER to run
-  - runner.id       the runner's Web Remote command ID (written by the runner)
-  - last_status.txt  outcome of the last run ("ok" / "error: …")`,
-		dest, m.RunnerIDPath(), m.OriDir()), nil
+	if _, err := temp.Write(data); err != nil {
+		_ = temp.Close()
+		return ErrRunnerUnavailable
+	}
+	if err := temp.Sync(); err != nil {
+		_ = temp.Close()
+		return ErrRunnerUnavailable
+	}
+	if err := temp.Close(); err != nil {
+		return ErrRunnerUnavailable
+	}
+	if err := os.Rename(tempPath, destination); err != nil {
+		return ErrRunnerUnavailable
+	}
+	return nil
 }
 
-// ReadRunnerID returns the runner's Web Remote command ID, or an error with
-// guidance if the runner has not been triggered yet.
-func (m *Manager) ReadRunnerID() (string, error) {
-	data, err := os.ReadFile(m.RunnerIDPath())
+func readRunnerStatus(path string) (ScriptRunResult, bool) {
+	info, err := os.Lstat(path) // #nosec G304 -- fixed status path under canonical runner root
+	if errors.Is(err, os.ErrNotExist) {
+		return ScriptRunResult{}, false
+	}
+	if err != nil || info.Mode()&os.ModeSymlink != 0 || !info.Mode().IsRegular() || info.Size() > maxRunnerStatusBytes {
+		return ScriptRunResult{Outcome: "error", ErrorText: "The REAPER runner returned an invalid status."}, true
+	}
+	data, err := os.ReadFile(path) // #nosec G304 -- bounded regular exchange status file
 	if err != nil {
-		if os.IsNotExist(err) {
-			return "", fmt.Errorf("runner not initialized — run `reaper-plugin install-runner`, restart REAPER, then trigger ori-reaper-runner once (it writes %s)", m.RunnerIDPath())
+		return ScriptRunResult{Outcome: "error", ErrorText: "The REAPER runner status could not be read."}, true
+	}
+	status := strings.TrimSpace(string(data))
+	if status == "ok" {
+		return ScriptRunResult{Outcome: "ok"}, true
+	}
+	if strings.HasPrefix(status, "error:") {
+		message := strings.TrimSpace(strings.TrimPrefix(status, "error:"))
+		if len(message) > 2000 {
+			message = message[:2000]
 		}
-		return "", fmt.Errorf("read runner id: %w", err)
-	}
-	id := strings.TrimSpace(string(data))
-	if id == "" {
-		return "", fmt.Errorf("runner id file is empty: %s", m.RunnerIDPath())
-	}
-	return id, nil
-}
-
-// Exec writes content to the inbox and triggers the runner over Web Remote so
-// REAPER runs it live. It best-effort waits for the runner to record an outcome.
-func (m *Manager) Exec(content string) (string, error) {
-	if strings.TrimSpace(content) == "" {
-		return "", fmt.Errorf("inbox content is required")
-	}
-	if err := m.ensureOriDir(); err != nil {
-		return "", err
-	}
-
-	id, err := m.ReadRunnerID()
-	if err != nil {
-		return "", err
-	}
-
-	_ = os.Remove(m.statusPath())
-	if err := os.WriteFile(m.InboxPath(), []byte(content), 0o644); err != nil {
-		return "", fmt.Errorf("write inbox: %w", err)
-	}
-
-	port := m.ResolveWebRemotePort()
-	url := fmt.Sprintf("http://127.0.0.1:%d/_/%s", port, id)
-	client := &http.Client{Timeout: 5 * time.Second}
-	resp, err := client.Get(url) //nolint:noctx // short fixed-timeout localhost call
-	if err != nil {
-		return "", fmt.Errorf("trigger runner over Web Remote at %s: %w (is REAPER running with the Web Remote interface enabled?)", url, err)
-	}
-	defer func() { _ = resp.Body.Close() }()
-	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("Web Remote returned status %d", resp.StatusCode)
-	}
-
-	if status := m.waitStatus(2 * time.Second); status != "" {
-		if strings.HasPrefix(status, "error:") {
-			return "", fmt.Errorf("runner reported %s", status)
+		if message == "" {
+			message = "The REAPER runner reported an error."
 		}
-		return fmt.Sprintf("ran inbox via runner %s — status: %s", id, status), nil
+		return ScriptRunResult{Outcome: "error", ErrorText: message}, true
 	}
-	return fmt.Sprintf("triggered runner %s (no status reported within timeout)", id), nil
-}
-
-// waitStatus polls the status file the runner writes, returning its contents or
-// "" if nothing appears within the deadline.
-func (m *Manager) waitStatus(d time.Duration) string {
-	deadline := time.Now().Add(d)
-	for time.Now().Before(deadline) {
-		if data, err := os.ReadFile(m.statusPath()); err == nil {
-			if s := strings.TrimSpace(string(data)); s != "" {
-				return s
-			}
-		}
-		time.Sleep(75 * time.Millisecond)
-	}
-	return ""
+	return ScriptRunResult{Outcome: "error", ErrorText: "The REAPER runner returned an invalid status."}, true
 }
