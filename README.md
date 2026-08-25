@@ -60,22 +60,23 @@ config tree. The runner wraps every run in an Undo block.
 
 The first supported service artifact is **macOS arm64**. Version **0.3.0** uses
 Workspace Surface protocol v1 and requires an Ori build that implements that
-protocol. The current release-candidate artifact is 8,476,786 bytes with
-SHA-256 `a1bb85487c03b9a552e0fb6482359f4862bc0d24d3f1f8e8bfc9aac46c03afdd`.
-Build it reproducibly, update the bundled artifact digest/size in the Ori
-manifest, and run both suites:
+protocol. The release artifact is 8,476,786 bytes with SHA-256
+`92c22804acabf7a87a1d7b5d2d668278ff004512227cf24a1393c39272e4e04a`.
+The manifest downloads those exact bytes from the `v0.3.0` GitHub release.
+Build and verify them reproducibly with:
 
 ```bash
 make artifact-local
 make test
 make test-ui
-shasum -a 256 artifacts/reaper-plugin-darwin-arm64
+make release-package VERSION=v0.3.0
 ```
 
-The build uses `-trimpath` and an empty build ID; repeating it from unchanged
-source produces identical bytes. Install by local path through Ori's Plugins UI
-or `POST /api/plugins/install`, review the complete trust disclosure, confirm,
-and enable. The service starts lazily only when an attached workspace asks for
+The build disables VCS stamping, uses `-trimpath`, and clears the build ID;
+repeating it from unchanged Go source produces identical bytes across release
+metadata commits. Install by Git URL or local path through Ori's Plugins UI or
+`POST /api/plugins/install`, review the complete trust disclosure, confirm, and
+enable. The service starts lazily only when an attached workspace asks for
 status/setup/an operation. Other platforms remain explicitly unsupported and
 must not launch the artifact.
 

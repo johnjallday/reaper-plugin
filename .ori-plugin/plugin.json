@@ -129,10 +129,10 @@
           "os": "darwin",
           "arch": "arm64",
           "source": {
-            "kind": "bundled",
-            "path": "artifacts/reaper-plugin-darwin-arm64"
+            "kind": "https",
+            "url": "https://github.com/johnjallday/reaper-plugin/releases/download/v0.3.0/reaper-plugin_v0.3.0_darwin_arm64"
           },
-          "sha256": "6e131375f13ce6af39d2114b98ce1b95d4a02082a784a0b7fa890737b446925e",
+          "sha256": "92c22804acabf7a87a1d7b5d2d668278ff004512227cf24a1393c39272e4e04a",
           "size": 8476786
         }
       ],

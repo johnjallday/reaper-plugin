@@ -1,6 +1,6 @@
 # Release notes
 
-## 0.3.0 — Workspace Surface release candidate
+## 0.3.0 — Workspace Surface
 
 This release adds the optional Ori Workspace Surface adapter while preserving
 the existing Claude/Codex skills and helper CLI.
@@ -23,8 +23,8 @@ the existing Claude/Codex skills and helper CLI.
 - Workspace Surface protocol: `1`
 - Minimum Ori protocol: `1`
 - Service artifact: macOS arm64 only
-- Candidate artifact size: `8,476,786` bytes
-- Candidate SHA-256: `a1bb85487c03b9a552e0fb6482359f4862bc0d24d3f1f8e8bfc9aac46c03afdd`
+- Release artifact size: `8,476,786` bytes
+- Release SHA-256: `92c22804acabf7a87a1d7b5d2d668278ff004512227cf24a1393c39272e4e04a`
 
 The service is trusted native code. Ori keeps browser code in an opaque-origin
 sandbox and mediates every UI/agent operation through workspace ownership,
@@ -37,4 +37,5 @@ migrated or automatically attached. No pins, grants, setup history, provenance,
 tasks, or project metadata are imported. The supported path is a new workspace
 created from this plugin's blueprint.
 
-Publication is intentionally deferred until the coordinated Ori delivery gate.
+The release asset is selected by exact platform and downloaded over HTTPS;
+Ori verifies this digest before making the managed copy executable.
