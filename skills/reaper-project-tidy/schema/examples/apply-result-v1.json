@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "plan_id": "tidy-plan-001",
+  "project_change_count_before": 44,
+  "project_change_count_after": 47,
+  "items": [
+    {
+      "id": "color-vocals",
+      "verb": "set_track_color",
+      "status": "applied"
+    },
+    {
+      "id": "rename-marker-1",
+      "verb": "rename_marker",
+      "status": "applied"
+    },
+    {
+      "id": "rename-region-2",
+      "verb": "rename_region",
+      "status": "skipped",
+      "reason": "snapshot name changed"
+    },
+    {
+      "id": "delete-marker-3",
+      "verb": "delete_marker",
+      "status": "failed",
+      "error": "REAPER rejected marker deletion"
+    }
+  ]
+}

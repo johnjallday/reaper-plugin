@@ -53,10 +53,16 @@ file write — no binary:
     curl -s -m 5 "http://127.0.0.1:$PORT/_/$(cat ~/.ori-reaper/runner.id)"
     cat ~/.ori-reaper/last_status.txt      # "ok" or "error: …"
 
-The runner wraps your Lua in an Undo block. Examples of things only the runner can
-do (Web Remote actions can't): set tempo `reaper.SetCurrentBPM(0, 120, true)`, save
-to a path `reaper.Main_SaveProjectEx(0, "/path/Song.RPP", 0)`, name/color/arm
-tracks.
+The runner wraps ordinary Lua in an Undo block. Examples of things only the
+runner can do (Web Remote actions can't): set tempo
+`reaper.SetCurrentBPM(0, 120, true)`, save to a path
+`reaper.Main_SaveProjectEx(0, "/path/Song.RPP", 0)`, and name/color/arm tracks.
+
+Two checked-in Project Tidy scripts have reserved first-line runner modes: its
+inspector uses an audited no-undo pure-read path, while its applier validates and
+stale-checks before one runner-owned undo block. Never add either reserved line
+to ad-hoc Lua; follow `reaper-project-tidy` and run those canonical scripts
+unchanged.
 
 ### If `~/.ori-reaper/runner.id` does not exist
 The runner has not been set up on this machine. **Do not try to install it

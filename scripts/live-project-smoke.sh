@@ -24,7 +24,9 @@ else
   previous=$(cat "$state_file")
   case "$previous" in *"'"*|*"\n"*|*"\r"*) echo "unsafe previous path" >&2; exit 1;; esac
   cat > "$root/inbox.lua" <<LUA
-reaper.Main_openProject('$previous')
+-- The smoke target is disposable and may remain dirty after undo. Restore the
+-- previously open project without raising a modal save prompt for that target.
+reaper.Main_openProject('noprompt:$previous')
 LUA
 fi
 chmod 0600 "$root/inbox.lua"

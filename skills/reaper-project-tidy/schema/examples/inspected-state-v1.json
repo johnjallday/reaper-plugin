@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "project": {
+    "name": "Messy Project",
+    "path": "/Users/producer/Songs/Messy Project.RPP",
+    "save_dirty": true,
+    "project_change_count": 41
+  },
+  "tracks": [
+    {
+      "guid": "{DB7F23BB-38B6-3844-8A87-22FD017EE05B}",
+      "index": 0,
+      "name": "Vox 2",
+      "color": null,
+      "folder_depth": 0,
+      "item_count": 3,
+      "fx_count": 2
+    }
+  ],
+  "markers": [
+    {
+      "enumeration_index": 0,
+      "id": 1,
+      "is_region": false,
+      "position_seconds": 10,
+      "name": "chorus",
+      "color": null
+    },
+    {
+      "enumeration_index": 1,
+      "id": 2,
+      "is_region": true,
+      "position_seconds": 20,
+      "end_seconds": 30,
+      "name": "verse 1",
+      "color": { "red": 12, "green": 34, "blue": 56 }
+    }
+  ]
+}

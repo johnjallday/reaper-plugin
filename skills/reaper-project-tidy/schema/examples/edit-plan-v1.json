@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "plan_id": "tidy-plan-001",
+  "inspected_project": {
+    "name": "Messy Project",
+    "path": "/Users/producer/Songs/Messy Project.RPP",
+    "project_change_count": 41
+  },
+  "items": [
+    {
+      "id": "color-vocals",
+      "verb": "set_track_color",
+      "target": {
+        "track_guid": "{DB7F23BB-38B6-3844-8A87-22FD017EE05B}"
+      },
+      "payload": {
+        "color": { "red": 30, "green": 90, "blue": 220 }
+      },
+      "reason": "conventions: vocals are blue"
+    },
+    {
+      "id": "rename-marker-1",
+      "verb": "rename_marker",
+      "target": {
+        "marker_id": 1,
+        "snapshot_name": "chorus"
+      },
+      "payload": {
+        "new_name": "Chorus"
+      },
+      "reason": "conventions: markers use Title Case"
+    },
+    {
+      "id": "rename-region-2",
+      "verb": "rename_region",
+      "target": {
+        "marker_id": 2,
+        "snapshot_name": "verse 1"
+      },
+      "payload": {
+        "new_name": "Verse 1"
+      },
+      "reason": "conventions: regions use Title Case"
+    },
+    {
+      "id": "delete-marker-3",
+      "verb": "delete_marker",
+      "target": {
+        "marker_id": 3,
+        "snapshot_name": "",
+        "snapshot_position_seconds": 10
+      },
+      "payload": {
+        "survivor_marker_id": 1
+      },
+      "reason": "duplicate: empty marker at the exact same position as marker 1"
+    }
+  ]
+}
