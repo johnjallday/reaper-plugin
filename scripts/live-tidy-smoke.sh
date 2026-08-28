@@ -62,11 +62,11 @@ plan = {
     },
     "items": [
         {
-            "id": "color-drums",
+            "id": "color-vocals-custom",
             "verb": "set_track_color",
-            "target": {"track_guid": tracks["DRUM BUS"]["guid"]},
-            "payload": {"color": {"red": 220, "green": 40, "blue": 30}},
-            "reason": "live smoke: drums are red",
+            "target": {"track_guid": tracks["Vox 2"]["guid"]},
+            "payload": {"color": {"red": 1, "green": 2, "blue": 3}},
+            "reason": "live smoke: custom convention changed vocals to rgb(1, 2, 3)",
         },
         {
             "id": "rename-marker-1",
@@ -171,10 +171,12 @@ import json, sys
 result, state = (json.load(open(path)) for path in sys.argv[1:])
 tracks = {track["name"]: track for track in state["tracks"]}
 markers = {(marker["is_region"], marker["id"]): marker for marker in state["markers"]}
-assert tracks["DRUM BUS"]["color"] == {"red": 220, "green": 40, "blue": 30}
+assert tracks["Vox 2"]["color"] == {"red": 1, "green": 2, "blue": 3}
+assert tracks["DRUM BUS"]["color"] is None
 assert markers[(False, 1)]["name"] == "Chorus"
 assert markers[(True, 202)]["name"] == "Chorus 2"
 assert (False, 2) not in markers
+assert markers[(False, 4)]["name"] == "chorus"  # unchecked proposal item stayed untouched
 assert result["project_change_count_after"] == state["project"]["project_change_count"]
 PY
 
