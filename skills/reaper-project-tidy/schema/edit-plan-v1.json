@@ -11,7 +11,11 @@
       "properties": {
         "name": { "type": "string", "minLength": 1, "maxLength": 512 },
         "path": { "type": "string", "maxLength": 4096 },
-        "project_change_count": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 }
+        "project_change_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
       },
       "required": ["name", "path", "project_change_count"],
       "additionalProperties": false
@@ -19,7 +23,7 @@
     "items": {
       "type": "array",
       "minItems": 1,
-      "maxItems": 256,
+      "maxItems": 64,
       "items": {
         "oneOf": [
           { "$ref": "#/$defs/set_track_color" },
@@ -140,12 +144,18 @@
             "snapshot_name": { "$ref": "#/$defs/name" },
             "snapshot_position_seconds": { "$ref": "#/$defs/position" }
           },
-          "required": ["marker_id", "snapshot_name", "snapshot_position_seconds"],
+          "required": [
+            "marker_id",
+            "snapshot_name",
+            "snapshot_position_seconds"
+          ],
           "additionalProperties": false
         },
         "payload": {
           "type": "object",
-          "properties": { "survivor_marker_id": { "$ref": "#/$defs/marker_id" } },
+          "properties": {
+            "survivor_marker_id": { "$ref": "#/$defs/marker_id" }
+          },
           "required": ["survivor_marker_id"],
           "additionalProperties": false
         },

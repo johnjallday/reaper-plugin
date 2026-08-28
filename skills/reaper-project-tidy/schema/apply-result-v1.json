@@ -11,7 +11,7 @@
     "items": {
       "type": "array",
       "minItems": 1,
-      "maxItems": 256,
+      "maxItems": 64,
       "items": {
         "oneOf": [
           { "$ref": "#/$defs/applied" },
@@ -21,17 +21,32 @@
       }
     }
   },
-  "required": ["schema_version", "plan_id", "project_change_count_before", "project_change_count_after", "items"],
+  "required": [
+    "schema_version",
+    "plan_id",
+    "project_change_count_before",
+    "project_change_count_after",
+    "items"
+  ],
   "additionalProperties": false,
   "$defs": {
     "stable_id": {
       "type": "string",
       "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$"
     },
-    "change_count": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+    "change_count": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
     "verb": {
       "type": "string",
-      "enum": ["set_track_color", "rename_marker", "rename_region", "delete_marker"]
+      "enum": [
+        "set_track_color",
+        "rename_marker",
+        "rename_region",
+        "delete_marker"
+      ]
     },
     "reason": { "type": "string", "minLength": 1, "maxLength": 2048 },
     "applied": {

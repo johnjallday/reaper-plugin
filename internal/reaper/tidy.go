@@ -29,7 +29,7 @@ const (
 	maxTidyResultBytes     = 1 << 20
 	maxTidyTracks          = 2048
 	maxTidyMarkers         = 4096
-	maxTidyPlanItems       = 256
+	maxTidyPlanItems       = 64
 	maxTidyNameBytes       = 512
 	maxTidyPathBytes       = 4096
 	maxTidyReasonBytes     = 1024

@@ -14,6 +14,44 @@ type contributionManifest struct {
 		ID              string   `json:"id"`
 		AgentOperations []string `json:"agent_operations"`
 	} `json:"capabilities"`
+	Services []struct {
+		Operations []struct {
+			ID     string   `json:"id"`
+			Policy string   `json:"policy"`
+			Scopes []string `json:"scopes"`
+		} `json:"operations"`
+	} `json:"services"`
+}
+
+func TestContributionDeclaresBoundedTidyReadOperations(t *testing.T) {
+	root := filepath.Join("..", "..")
+	data, err := os.ReadFile(filepath.Join(root, ".ori-plugin", "plugin.json")) // #nosec G304 -- fixed repository manifest
+	if err != nil {
+		t.Fatal(err)
+	}
+	var manifest contributionManifest
+	if err := json.Unmarshal(data, &manifest); err != nil {
+		t.Fatal(err)
+	}
+	if len(manifest.Services) != 1 {
+		t.Fatalf("services = %+v", manifest.Services)
+	}
+	operations := make(map[string]struct {
+		policy string
+		scopes int
+	})
+	for _, operation := range manifest.Services[0].Operations {
+		operations[operation.ID] = struct {
+			policy string
+			scopes int
+		}{operation.Policy, len(operation.Scopes)}
+	}
+	for _, id := range []string{"tidy.status", "tidy.proposal.read"} {
+		operation, ok := operations[id]
+		if !ok || operation.policy != "read_only" || operation.scopes != 0 {
+			t.Errorf("tidy operation %q = %+v, %t", id, operation, ok)
+		}
+	}
 }
 
 func TestContributionDeclaresGrantGatedAgentOperationsWithoutPortableMCP(t *testing.T) {

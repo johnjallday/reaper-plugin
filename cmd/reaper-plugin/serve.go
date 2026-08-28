@@ -118,6 +118,18 @@ func runService() int {
 	addTool(server, "results.read", "Read the last bounded service operation result.", func(context.Context, reaper.Envelope[reaper.EmptyInput]) (reaper.OperationResult, error) {
 		return service.LastResult(), nil
 	})
+	addTool(server, "tidy.station", "Read Project Tidy station status for the host project.", func(ctx context.Context, input reaper.Envelope[reaper.EmptyInput]) (reaper.StationResult, error) {
+		return service.TidyStation(ctx, input.Context), nil
+	})
+	addTool(server, "tidy.status", "Read bounded Project Tidy proposal status for the host project.", func(_ context.Context, input reaper.Envelope[reaper.EmptyInput]) (reaper.TidySurfaceStatus, error) {
+		return service.TidyStatus(input.Context)
+	})
+	addTool(server, "tidy.proposal.read", "Read the latest or selected human Project Tidy proposal projection.", func(_ context.Context, input reaper.Envelope[reaper.TidyProposalReadInput]) (reaper.TidyProposalView, error) {
+		return service.ReadTidyProposal(input.Context, input.Input)
+	})
+	addTool(server, "tidy.proposal.dismiss", "Dismiss one open Project Tidy proposal without changing REAPER.", func(_ context.Context, input reaper.Envelope[reaper.TidyProposalActionInput]) (reaper.OperationResult, error) {
+		return service.DismissTidyProposal(input.Context, input.Input)
+	})
 
 	if err := server.Run(context.Background(), &sdkmcp.StdioTransport{}); err != nil && !errors.Is(err, context.Canceled) {
 		return 1

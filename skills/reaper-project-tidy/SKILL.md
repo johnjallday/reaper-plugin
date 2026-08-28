@@ -119,7 +119,7 @@ Every proposed item needs a musician-readable line and a reason tied to one of:
 ### 3. Build only v1 items
 
 A plan has `schema_version: 1`, one stable `plan_id`, the inspected project name,
-path, and change count, and 1–256 uniquely identified items. Stable item IDs use
+path, and change count, and 1–64 uniquely identified items. Stable item IDs use
 only letters, digits, `.`, `_`, and `-` and do not change when the proposal is
 filtered for apply.
 
