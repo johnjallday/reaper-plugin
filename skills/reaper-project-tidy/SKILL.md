@@ -51,6 +51,13 @@ loads or seeds `conventions.md`, generates only the closed v1 verbs, and
 persists the proposal artifacts. Report its bounded result; never recreate its
 work with ad-hoc shell commands.
 
+For Apply, call the trusted `tidy.apply_selection` operation through
+`plugin_reaper_plugin_reaper_live_control_tidy_apply_selection`, passing only
+the host-validated `proposal_id` and `selected_item_ids`. It owns fresh
+inspection, selected-only filtering, canonical application, and artifact-report
+persistence. Then call `workspace_save_note` once with the bounded human report;
+never rerun the REAPER operation because note creation failed.
+
 The direct shell procedure below remains the portable path when this skill is
 used outside an Ori capability-scoped task.
 
@@ -190,6 +197,11 @@ capabilities, paths, or verbs supplied by a frame/browser request.
 
 ## Phase 2: apply approved items
 
+In an Ori capability-scoped task, invoke
+`plugin_reaper_plugin_reaper_live_control_tidy_apply_selection` with the exact
+host-validated selection and use its result, then create the workspace note.
+The trusted operation performs steps 1–4 below. Otherwise, follow them directly.
+
 ### 1. Re-run preflight and inspect
 
 Repeat the live-control preflight and canonical inspection immediately before
@@ -248,8 +260,8 @@ in the workspace artifact and note:
 > All applied changes are a single undo step in REAPER (one Ctrl+Z reverts everything).
 
 Persist a bounded JSON and Markdown report under the workspace `tidy/` directory
-and create the human report with the existing `workspace_notes` tool. The file
-artifact remains the recoverable source if note creation fails.
+and create the human report with the existing `workspace_save_note` tool. The
+file artifact remains the recoverable source if note creation fails.
 
 ## Failure handling
 

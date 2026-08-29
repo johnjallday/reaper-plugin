@@ -43,7 +43,7 @@ func (s *TidyArtifactStore) WriteApplyReport(proposalID string, result TidyApply
 		return TidyStoredApplyReport{}, errors.New("tidy apply report is invalid")
 	}
 	proposal, err := s.ReadProposal(proposalID)
-	if err != nil || proposal.Record.Status != TidyProposalStatusOpen || proposal.Plan == nil || result.ValidateAgainstPlan(*proposal.Plan) != nil {
+	if err != nil || proposal.Record.Status != TidyProposalStatusOpen || proposal.Plan == nil || result.ValidateAgainstPlanSubset(*proposal.Plan) != nil {
 		return TidyStoredApplyReport{}, errors.New("tidy apply report does not match an open proposal")
 	}
 	if err := s.ensureDirectory(); err != nil {

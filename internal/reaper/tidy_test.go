@@ -215,6 +215,27 @@ func TestTidyApplyResultContractBindsEveryRowToReviewedPlan(t *testing.T) {
 	}
 }
 
+func TestTidyApplyResultSubsetAcceptsOnlyOrderedReviewedItems(t *testing.T) {
+	plan := validTidyPlanFixture()
+	result := validTidyResultFixture()
+	result.Items = []TidyApplyResultItem{result.Items[0], result.Items[2]}
+	if err := result.ValidateAgainstPlanSubset(plan); err != nil {
+		t.Fatalf("selected subset error = %v", err)
+	}
+
+	reordered := result
+	reordered.Items = []TidyApplyResultItem{result.Items[1], result.Items[0]}
+	if err := reordered.ValidateAgainstPlanSubset(plan); !errors.Is(err, ErrInvalidTidyResult) {
+		t.Fatalf("reordered subset error = %v", err)
+	}
+	injected := result
+	injected.Items = append([]TidyApplyResultItem(nil), result.Items...)
+	injected.Items[1].ID = "not-reviewed"
+	if err := injected.ValidateAgainstPlanSubset(plan); !errors.Is(err, ErrInvalidTidyResult) {
+		t.Fatalf("injected subset error = %v", err)
+	}
+}
+
 func TestTidyApplyResultRejectsOutcomeShapeConfusion(t *testing.T) {
 	tests := map[string]func(*TidyApplyResult){
 		"count decreases":        func(result *TidyApplyResult) { result.ProjectChangeCountAfter = 1 },

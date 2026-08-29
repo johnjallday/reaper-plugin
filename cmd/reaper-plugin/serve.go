@@ -121,6 +121,9 @@ func runService() int {
 	addTool(server, "tidy.survey", "Run the canonical read-only inspector and persist a cosmetic-only Project Tidy proposal.", func(ctx context.Context, input reaper.Envelope[reaper.EmptyInput]) (reaper.TidySurveyResult, error) {
 		return service.RunTidySurvey(ctx, input.Context)
 	})
+	addTool(server, "tidy.apply_selection", "Apply only selected items from an open Project Tidy proposal and persist the bounded report.", func(ctx context.Context, input reaper.Envelope[reaper.TidyApplySelectionInput]) (reaper.TidyApplyOperationResult, error) {
+		return service.RunTidyApplySelection(ctx, input.Context, input.Input)
+	})
 	addTool(server, "tidy.station", "Read Project Tidy station status for the host project.", func(ctx context.Context, input reaper.Envelope[reaper.EmptyInput]) (reaper.StationResult, error) {
 		return service.TidyStation(ctx, input.Context), nil
 	})

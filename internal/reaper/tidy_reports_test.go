@@ -47,6 +47,25 @@ func TestTidyApplyReportPersistsRecoverableResultAndClosesProposal(t *testing.T)
 	}
 }
 
+func TestTidyApplyReportAcceptsSelectedOnlyResult(t *testing.T) {
+	root := t.TempDir()
+	store, _ := NewTidyArtifactStore(root)
+	plan := validTidyPlanFixture()
+	created := time.Date(2026, 8, 28, 13, 30, 0, 0, time.UTC)
+	if _, err := store.WriteProposal(tidyProposalFromPlan(plan), created); err != nil {
+		t.Fatal(err)
+	}
+	result := validTidyResultFixture()
+	result.Items = []TidyApplyResultItem{result.Items[1], result.Items[3]}
+	report, err := store.WriteApplyReport(plan.PlanID, result, created.Add(time.Minute))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(report.Record.Items) != 2 || report.Record.Items[0].ID != plan.Items[1].ID || report.Record.Items[1].ID != plan.Items[3].ID {
+		t.Fatalf("selected-only report = %+v", report.Record.Items)
+	}
+}
+
 func TestTidyApplyReportTreatsFullySkippedAsFreshSurveyOutcome(t *testing.T) {
 	root := t.TempDir()
 	store, _ := NewTidyArtifactStore(root)

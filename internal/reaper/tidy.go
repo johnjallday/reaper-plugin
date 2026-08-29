@@ -356,6 +356,31 @@ func (r TidyApplyResult) ValidateAgainstPlan(plan TidyEditPlan) error {
 	return nil
 }
 
+// ValidateAgainstPlanSubset binds an apply result to a non-empty, ordered
+// selection from the reviewed proposal. It permits unchecked items to be absent
+// while rejecting injected, duplicated, or reordered rows.
+func (r TidyApplyResult) ValidateAgainstPlanSubset(plan TidyEditPlan) error {
+	if r.Validate() != nil || plan.Validate() != nil || r.PlanID != plan.PlanID || len(r.Items) > len(plan.Items) {
+		return ErrInvalidTidyResult
+	}
+	nextPlanIndex := 0
+	for _, resultItem := range r.Items {
+		matched := false
+		for nextPlanIndex < len(plan.Items) {
+			planItem := plan.Items[nextPlanIndex]
+			nextPlanIndex++
+			if resultItem.ID == planItem.ID && resultItem.Verb == planItem.Verb {
+				matched = true
+				break
+			}
+		}
+		if !matched {
+			return ErrInvalidTidyResult
+		}
+	}
+	return nil
+}
+
 func (c TidyRGB) valid() bool {
 	return c.Red >= 0 && c.Red <= 255 && c.Green >= 0 && c.Green <= 255 && c.Blue >= 0 && c.Blue <= 255
 }
