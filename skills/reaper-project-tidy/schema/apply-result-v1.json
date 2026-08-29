@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ori.local/schemas/reaper-project-tidy/apply-result-v1.json",
+  "title": "REAPER Project Tidy apply result v1",
+  "type": "object",
+  "properties": {
+    "schema_version": { "const": 1 },
+    "plan_id": { "$ref": "#/$defs/stable_id" },
+    "project_change_count_before": { "$ref": "#/$defs/change_count" },
+    "project_change_count_after": { "$ref": "#/$defs/change_count" },
+    "items": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 64,
+      "items": {
+        "oneOf": [
+          { "$ref": "#/$defs/applied" },
+          { "$ref": "#/$defs/skipped" },
+          { "$ref": "#/$defs/failed" }
+        ]
+      }
+    }
+  },
+  "required": [
+    "schema_version",
+    "plan_id",
+    "project_change_count_before",
+    "project_change_count_after",
+    "items"
+  ],
+  "additionalProperties": false,
+  "$defs": {
+    "stable_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$"
+    },
+    "change_count": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "verb": {
+      "type": "string",
+      "enum": [
+        "set_track_color",
+        "rename_marker",
+        "rename_region",
+        "delete_marker"
+      ]
+    },
+    "reason": { "type": "string", "minLength": 1, "maxLength": 2048 },
+    "applied": {
+      "type": "object",
+      "properties": {
+        "id": { "$ref": "#/$defs/stable_id" },
+        "verb": { "$ref": "#/$defs/verb" },
+        "status": { "const": "applied" }
+      },
+      "required": ["id", "verb", "status"],
+      "additionalProperties": false
+    },
+    "skipped": {
+      "type": "object",
+      "properties": {
+        "id": { "$ref": "#/$defs/stable_id" },
+        "verb": { "$ref": "#/$defs/verb" },
+        "status": { "const": "skipped" },
+        "reason": { "$ref": "#/$defs/reason" }
+      },
+      "required": ["id", "verb", "status", "reason"],
+      "additionalProperties": false
+    },
+    "failed": {
+      "type": "object",
+      "properties": {
+        "id": { "$ref": "#/$defs/stable_id" },
+        "verb": { "$ref": "#/$defs/verb" },
+        "status": { "const": "failed" },
+        "error": { "$ref": "#/$defs/reason" }
+      },
+      "required": ["id", "verb", "status", "error"],
+      "additionalProperties": false
+    }
+  }
+}

@@ -1,0 +1,137 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ori.local/schemas/reaper-project-tidy/inspected-state-v1.json",
+  "title": "REAPER Project Tidy inspected state v1",
+  "type": "object",
+  "properties": {
+    "schema_version": { "const": 1 },
+    "project": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "minLength": 1, "maxLength": 512 },
+        "path": { "type": "string", "maxLength": 4096 },
+        "save_dirty": { "type": "boolean" },
+        "project_change_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": ["name", "path", "save_dirty", "project_change_count"],
+      "additionalProperties": false
+    },
+    "tracks": {
+      "type": "array",
+      "maxItems": 2048,
+      "items": {
+        "type": "object",
+        "properties": {
+          "guid": { "$ref": "#/$defs/guid" },
+          "index": { "type": "integer", "minimum": 0, "maximum": 2047 },
+          "name": { "type": "string", "maxLength": 512 },
+          "color": {
+            "oneOf": [{ "$ref": "#/$defs/rgb" }, { "type": "null" }]
+          },
+          "folder_depth": {
+            "type": "integer",
+            "minimum": -128,
+            "maximum": 128
+          },
+          "item_count": { "type": "integer", "minimum": 0, "maximum": 1000000 },
+          "fx_count": { "type": "integer", "minimum": 0, "maximum": 1000000 }
+        },
+        "required": [
+          "guid",
+          "index",
+          "name",
+          "color",
+          "folder_depth",
+          "item_count",
+          "fx_count"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "markers": {
+      "type": "array",
+      "maxItems": 4096,
+      "items": {
+        "oneOf": [{ "$ref": "#/$defs/marker" }, { "$ref": "#/$defs/region" }]
+      }
+    }
+  },
+  "required": ["schema_version", "project", "tracks", "markers"],
+  "additionalProperties": false,
+  "$defs": {
+    "guid": {
+      "type": "string",
+      "pattern": "^\\{[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}\\}$"
+    },
+    "marker_id": { "type": "integer", "minimum": 0, "maximum": 2147483647 },
+    "position": { "type": "number", "minimum": 0, "maximum": 315576000 },
+    "rgb": {
+      "type": "object",
+      "properties": {
+        "red": { "type": "integer", "minimum": 0, "maximum": 255 },
+        "green": { "type": "integer", "minimum": 0, "maximum": 255 },
+        "blue": { "type": "integer", "minimum": 0, "maximum": 255 }
+      },
+      "required": ["red", "green", "blue"],
+      "additionalProperties": false
+    },
+    "marker": {
+      "type": "object",
+      "properties": {
+        "enumeration_index": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 4095
+        },
+        "id": { "$ref": "#/$defs/marker_id" },
+        "is_region": { "const": false },
+        "position_seconds": { "$ref": "#/$defs/position" },
+        "name": { "type": "string", "maxLength": 512 },
+        "color": {
+          "oneOf": [{ "$ref": "#/$defs/rgb" }, { "type": "null" }]
+        }
+      },
+      "required": [
+        "enumeration_index",
+        "id",
+        "is_region",
+        "position_seconds",
+        "name",
+        "color"
+      ],
+      "additionalProperties": false
+    },
+    "region": {
+      "type": "object",
+      "properties": {
+        "enumeration_index": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 4095
+        },
+        "id": { "$ref": "#/$defs/marker_id" },
+        "is_region": { "const": true },
+        "position_seconds": { "$ref": "#/$defs/position" },
+        "end_seconds": { "$ref": "#/$defs/position" },
+        "name": { "type": "string", "maxLength": 512 },
+        "color": {
+          "oneOf": [{ "$ref": "#/$defs/rgb" }, { "type": "null" }]
+        }
+      },
+      "required": [
+        "enumeration_index",
+        "id",
+        "is_region",
+        "position_seconds",
+        "end_seconds",
+        "name",
+        "color"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

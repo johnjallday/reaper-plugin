@@ -5,6 +5,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"sync"
 	"time"
@@ -14,12 +15,53 @@ const (
 	maxRunnerScriptBytes  = 1 << 20
 	maxRunnerStatusBytes  = 64 << 10
 	maxRunnerReceiptBytes = 8 << 10
+
+	readOnlyInspectorHeader = "-- ori-runner-mode: read-only-inspector-v1\n"
+	tidyApplierHeader       = "-- ori-runner-mode: tidy-applier-v1\n"
 )
 
 var (
-	ErrRunnerUnavailable = errors.New("REAPER script runner is unavailable")
-	ErrRunnerFailed      = errors.New("REAPER script runner failed")
-	ErrRunnerTimedOut    = errors.New("REAPER script runner timed out")
+	ErrRunnerUnavailable          = errors.New("REAPER script runner is unavailable")
+	ErrRunnerFailed               = errors.New("REAPER script runner failed")
+	ErrRunnerTimedOut             = errors.New("REAPER script runner timed out")
+	ErrReadOnlyInspectionRejected = errors.New("REAPER read-only inspection was rejected")
+)
+
+var (
+	readOnlyInspectorAPI = regexp.MustCompile(`\breaper\s*\.\s*([A-Za-z_][A-Za-z0-9_]*)`)
+	readOnlyForbidden    = regexp.MustCompile(`(?m)(reaper\s*\[|=\s*reaper(?:\s|[,;)}])|\(\s*reaper\s*[,)]|(?:^|[\s(=,])_(?:G|ENV)(?:\s|[\[.,;)}]|$)|os\s*\.\s*execute\s*\(|io\s*\.\s*popen\s*\(|\b(?:load|loadfile|loadstring|dofile|require|rawget|getmetatable)\s*\(|\b(?:package|debug)\s*\.)`)
+	readOnlyAllowedAPIs  = map[string]struct{}{
+		"ColorFromNative":            {},
+		"CountProjectMarkers":        {},
+		"CountTrackMediaItems":       {},
+		"CountTracks":                {},
+		"EnumProjectMarkers3":        {},
+		"EnumProjects":               {},
+		"GetAppVersion":              {},
+		"GetMediaTrackInfo_Value":    {},
+		"GetProjectName":             {},
+		"GetProjectStateChangeCount": {},
+		"GetTrack":                   {},
+		"GetTrackGUID":               {},
+		"GetTrackName":               {},
+		"IsProjectDirty":             {},
+		"TrackFX_GetCount":           {},
+	}
+	tidyApplierAllowedAPIs = map[string]struct{}{
+		"ColorToNative":              {},
+		"CountProjectMarkers":        {},
+		"CountTracks":                {},
+		"DeleteProjectMarker":        {},
+		"EnumProjectMarkers3":        {},
+		"EnumProjects":               {},
+		"GetMediaTrackInfo_Value":    {},
+		"GetProjectName":             {},
+		"GetProjectStateChangeCount": {},
+		"GetTrack":                   {},
+		"GetTrackGUID":               {},
+		"SetMediaTrackInfo_Value":    {},
+		"SetProjectMarker3":          {},
+	}
 )
 
 type ScriptRunResult struct {
@@ -58,8 +100,64 @@ func (r *Runner) Available(ctx context.Context) bool {
 }
 
 func (r *Runner) RunScript(ctx context.Context, lua string) (ScriptRunResult, error) {
+	if strings.HasPrefix(lua, readOnlyInspectorHeader) || strings.HasPrefix(lua, tidyApplierHeader) {
+		return ScriptRunResult{Outcome: "error"}, ErrReadOnlyInspectionRejected
+	}
 	result, _, err := r.run(ctx, func(string) (string, error) { return lua, nil }, false)
 	return result, err
+}
+
+// RunReadOnlyInspection is the only Go entry point that accepts the reserved
+// inspector header. The installed Lua runner repeats this audit, so portable
+// direct-inbox use and brokered service use enforce the same pure-read REAPER
+// API allowlist. Ordinary scripts and the tidy applier remain on RunScript's
+// mutation path and cannot accidentally opt out of its undo boundary.
+func (r *Runner) RunReadOnlyInspection(ctx context.Context, lua string) (ScriptRunResult, error) {
+	if validateReadOnlyInspectorLua(lua) != nil {
+		return ScriptRunResult{Outcome: "error"}, ErrReadOnlyInspectionRejected
+	}
+	result, _, err := r.run(ctx, func(string) (string, error) { return lua, nil }, false)
+	return result, err
+}
+
+func validateReadOnlyInspectorLua(lua string) error {
+	if validateReservedRunnerLua(lua, readOnlyInspectorHeader, readOnlyAllowedAPIs) != nil {
+		return ErrReadOnlyInspectionRejected
+	}
+	return nil
+}
+
+// RunTidyApplier is intentionally separate from RunScript and from the
+// no-undo inspector. Its reserved script returns a two-phase contract: all
+// schema validation and stale-target preparation happen first, then the Lua
+// runner opens one undo block only when the contract has mutations to apply.
+func (r *Runner) RunTidyApplier(ctx context.Context, lua string) (ScriptRunResult, error) {
+	if validateTidyApplierLua(lua) != nil {
+		return ScriptRunResult{Outcome: "error"}, ErrRunnerFailed
+	}
+	result, _, err := r.run(ctx, func(string) (string, error) { return lua, nil }, false)
+	return result, err
+}
+
+func validateTidyApplierLua(lua string) error {
+	return validateReservedRunnerLua(lua, tidyApplierHeader, tidyApplierAllowedAPIs)
+}
+
+func validateReservedRunnerLua(lua, header string, allowedAPIs map[string]struct{}) error {
+	if !strings.HasPrefix(lua, header) || strings.TrimSpace(strings.TrimPrefix(lua, header)) == "" ||
+		len(lua) > maxRunnerScriptBytes || readOnlyForbidden.MatchString(lua) {
+		return ErrRunnerFailed
+	}
+	matches := readOnlyInspectorAPI.FindAllStringSubmatch(lua, -1)
+	if len(matches) == 0 {
+		return ErrRunnerFailed
+	}
+	for _, match := range matches {
+		if _, allowed := allowedAPIs[match[1]]; !allowed {
+			return ErrRunnerFailed
+		}
+	}
+	return nil
 }
 
 // RunTrackEdit generates the guarded Lua for one single-track edit, runs it,

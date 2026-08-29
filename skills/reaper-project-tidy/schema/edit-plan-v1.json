@@ -1,0 +1,168 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ori.local/schemas/reaper-project-tidy/edit-plan-v1.json",
+  "title": "REAPER Project Tidy edit plan v1",
+  "type": "object",
+  "properties": {
+    "schema_version": { "const": 1 },
+    "plan_id": { "$ref": "#/$defs/stable_id" },
+    "inspected_project": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "minLength": 1, "maxLength": 512 },
+        "path": { "type": "string", "maxLength": 4096 },
+        "project_change_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": ["name", "path", "project_change_count"],
+      "additionalProperties": false
+    },
+    "items": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 64,
+      "items": {
+        "oneOf": [
+          { "$ref": "#/$defs/set_track_color" },
+          { "$ref": "#/$defs/rename_marker" },
+          { "$ref": "#/$defs/rename_region" },
+          { "$ref": "#/$defs/delete_marker" }
+        ]
+      }
+    }
+  },
+  "required": ["schema_version", "plan_id", "inspected_project", "items"],
+  "additionalProperties": false,
+  "$defs": {
+    "stable_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$"
+    },
+    "guid": {
+      "type": "string",
+      "pattern": "^\\{[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}\\}$"
+    },
+    "name": { "type": "string", "maxLength": 512 },
+    "new_name": { "type": "string", "minLength": 1, "maxLength": 512 },
+    "reason": { "type": "string", "minLength": 1, "maxLength": 1024 },
+    "marker_id": { "type": "integer", "minimum": 0, "maximum": 2147483647 },
+    "position": { "type": "number", "minimum": 0, "maximum": 315576000 },
+    "rgb": {
+      "type": "object",
+      "properties": {
+        "red": { "type": "integer", "minimum": 0, "maximum": 255 },
+        "green": { "type": "integer", "minimum": 0, "maximum": 255 },
+        "blue": { "type": "integer", "minimum": 0, "maximum": 255 }
+      },
+      "required": ["red", "green", "blue"],
+      "additionalProperties": false
+    },
+    "set_track_color": {
+      "type": "object",
+      "properties": {
+        "id": { "$ref": "#/$defs/stable_id" },
+        "verb": { "const": "set_track_color" },
+        "target": {
+          "type": "object",
+          "properties": { "track_guid": { "$ref": "#/$defs/guid" } },
+          "required": ["track_guid"],
+          "additionalProperties": false
+        },
+        "payload": {
+          "type": "object",
+          "properties": { "color": { "$ref": "#/$defs/rgb" } },
+          "required": ["color"],
+          "additionalProperties": false
+        },
+        "reason": { "$ref": "#/$defs/reason" }
+      },
+      "required": ["id", "verb", "target", "payload", "reason"],
+      "additionalProperties": false
+    },
+    "rename_marker": {
+      "type": "object",
+      "properties": {
+        "id": { "$ref": "#/$defs/stable_id" },
+        "verb": { "const": "rename_marker" },
+        "target": {
+          "type": "object",
+          "properties": {
+            "marker_id": { "$ref": "#/$defs/marker_id" },
+            "snapshot_name": { "$ref": "#/$defs/name" }
+          },
+          "required": ["marker_id", "snapshot_name"],
+          "additionalProperties": false
+        },
+        "payload": {
+          "type": "object",
+          "properties": { "new_name": { "$ref": "#/$defs/new_name" } },
+          "required": ["new_name"],
+          "additionalProperties": false
+        },
+        "reason": { "$ref": "#/$defs/reason" }
+      },
+      "required": ["id", "verb", "target", "payload", "reason"],
+      "additionalProperties": false
+    },
+    "rename_region": {
+      "type": "object",
+      "properties": {
+        "id": { "$ref": "#/$defs/stable_id" },
+        "verb": { "const": "rename_region" },
+        "target": {
+          "type": "object",
+          "properties": {
+            "marker_id": { "$ref": "#/$defs/marker_id" },
+            "snapshot_name": { "$ref": "#/$defs/name" }
+          },
+          "required": ["marker_id", "snapshot_name"],
+          "additionalProperties": false
+        },
+        "payload": {
+          "type": "object",
+          "properties": { "new_name": { "$ref": "#/$defs/new_name" } },
+          "required": ["new_name"],
+          "additionalProperties": false
+        },
+        "reason": { "$ref": "#/$defs/reason" }
+      },
+      "required": ["id", "verb", "target", "payload", "reason"],
+      "additionalProperties": false
+    },
+    "delete_marker": {
+      "type": "object",
+      "properties": {
+        "id": { "$ref": "#/$defs/stable_id" },
+        "verb": { "const": "delete_marker" },
+        "target": {
+          "type": "object",
+          "properties": {
+            "marker_id": { "$ref": "#/$defs/marker_id" },
+            "snapshot_name": { "$ref": "#/$defs/name" },
+            "snapshot_position_seconds": { "$ref": "#/$defs/position" }
+          },
+          "required": [
+            "marker_id",
+            "snapshot_name",
+            "snapshot_position_seconds"
+          ],
+          "additionalProperties": false
+        },
+        "payload": {
+          "type": "object",
+          "properties": {
+            "survivor_marker_id": { "$ref": "#/$defs/marker_id" }
+          },
+          "required": ["survivor_marker_id"],
+          "additionalProperties": false
+        },
+        "reason": { "$ref": "#/$defs/reason" }
+      },
+      "required": ["id", "verb", "target", "payload", "reason"],
+      "additionalProperties": false
+    }
+  }
+}

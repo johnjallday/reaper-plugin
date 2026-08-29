@@ -1,5 +1,34 @@
 # Release notes
 
+## 0.4.0 — Project Tidy
+
+This release adds a propose-first, sound-safe cleanup workflow to plugin-created
+Reaper Song workspaces.
+
+### Added
+
+- Audited read-only inspector and strict cosmetic applier with one REAPER undo
+  block for all selected changes.
+- Convention-aware proposals for track colors, marker/region naming, and exact
+  duplicate markers, with durable plan/summary/report artifacts.
+- Project Folder action, proposal badge, accessible review checklist, dismiss /
+  supersede lifecycle, selected-only Apply, and recoverable workspace notes.
+- Capability-scoped `tidy.survey` and `tidy.apply_selection` agent operations so
+  Codex CLI tasks can use Ori's broker without arbitrary localhost shell access.
+
+### Safety and compatibility
+
+- The closed plan language still has exactly four verbs and cannot express item,
+  FX, routing, gain, pan, tempo, render, track rename, or track movement edits.
+- Survey creates no REAPER undo point. Apply rejects malformed plans before
+  mutation, stale-checks every target, and runs checked pending rows as one undo.
+- Plugin/service version: `0.4.0`
+- Reaper Song blueprint version: `2`
+- Workspace Surface protocol: `1`
+- Service artifact: macOS arm64 only
+- Release artifact size: `8,763,458` bytes
+- Release SHA-256: `591d8703f5bebe6339e61f983faa896cd7cf82dce4d2915b2fb7dab6df096778`
+
 ## 0.3.0 — Workspace Surface
 
 This release adds the optional Ori Workspace Surface adapter while preserving

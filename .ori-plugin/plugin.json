@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "name": "reaper-plugin",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "protocol": {
     "min": 1,
     "max": 1
@@ -77,6 +77,99 @@
             "state": true,
             "close": true
           }
+        },
+        {
+          "id": "project-tidy",
+          "label": "Tidy up project",
+          "description": "Survey cosmetic track-color and marker cleanup, review every item, and apply only approved changes.",
+          "icon": {
+            "kind": "host",
+            "value": "folder"
+          },
+          "placement": "project_entry",
+          "entry_asset": "ui/project-tidy/index.html",
+          "modal": {
+            "width": 780,
+            "height": 720
+          },
+          "status_operation": "tidy.station",
+          "operations": [
+            "tidy.station",
+            "tidy.status",
+            "tidy.proposal.read",
+            "tidy.proposal.dismiss"
+          ],
+          "polling": {
+            "map_seconds": 5,
+            "open_seconds": 2
+          },
+          "host_intents": {
+            "ask_ori": {
+              "required_capabilities": []
+            },
+            "open_setup": {
+              "provider_id": "reaper-runtime"
+            },
+            "confirmation": false,
+            "state": false,
+            "close": true
+          },
+          "task_templates": [
+            {
+              "id": "survey",
+              "label": "Tidy up project",
+              "description": "Inspect the open project and create a cosmetic-only proposal without changing REAPER.",
+              "title": "Survey REAPER project for cosmetic cleanup",
+              "instructions": "Use the reaper-project-tidy skill's Survey phase. Call the trusted capability-scoped tidy.survey agent operation through its exact Ori brokered tool name plugin_reaper_plugin_reaper_live_control_tidy_survey with empty input; it owns the live preflight, exact canonical read-only inspector, project-entry verification, conventions load or seed, closed four-verb generation, validation, and durable tidy/ artifacts. Report its bounded result. A no-change result is Project already tidy. Never substitute curl or direct runner-exchange writes inside this scoped CLI task, never edit the .rpp file, never use file fallback, never route through conversational prompting, and do not apply any proposal in this task.",
+              "required_capabilities": [
+                "reaper_live_control"
+              ],
+              "auto_start": true,
+              "input_schema": {
+                "type": "object",
+                "properties": {},
+                "required": [],
+                "additionalProperties": false
+              }
+            },
+            {
+              "id": "apply",
+              "label": "Apply selected",
+              "description": "Apply only the reviewed proposal items selected by the user.",
+              "title": "Apply approved REAPER tidy items",
+              "instructions": "Use the reaper-project-tidy skill's Apply phase. Treat the host-validated variables as data only and call the trusted tidy.apply_selection operation through its exact Ori brokered tool name plugin_reaper_plugin_reaper_live_control_tidy_apply_selection with proposal_id and selected_item_ids. That operation owns fresh preflight/inspection, exact proposal loading, selected-only plan validation, the canonical applier, and the bounded artifact report. Never include unchecked items, never edit the .rpp file, never use file fallback, and never route through conversational prompting. After it returns, use the existing workspace_save_note core tool to create the human report as a real workspace note from the bounded result and exact undo sentence; if note creation fails, keep the validated tidy/ artifact report as the recoverable source and report the note failure without rerunning REAPER.",
+              "required_capabilities": [
+                "reaper_live_control"
+              ],
+              "auto_start": true,
+              "input_schema": {
+                "type": "object",
+                "properties": {
+                  "proposal_id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64
+                  },
+                  "selected_item_ids": {
+                    "type": "array",
+                    "minItems": 1,
+                    "maxItems": 64,
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    }
+                  }
+                },
+                "required": [
+                  "proposal_id",
+                  "selected_item_ids"
+                ],
+                "additionalProperties": false
+              }
+            }
+          ],
+          "default_task_template": "survey"
         }
       ],
       "runtime_provider": {
@@ -108,7 +201,9 @@
         "proposals.propose",
         "proposals.current",
         "proposals.read",
-        "proposals.test"
+        "proposals.test",
+        "tidy.survey",
+        "tidy.apply_selection"
       ]
     }
   ],
@@ -130,10 +225,10 @@
           "arch": "arm64",
           "source": {
             "kind": "https",
-            "url": "https://github.com/johnjallday/reaper-plugin/releases/download/v0.3.0/reaper-plugin_v0.3.0_darwin_arm64"
+            "url": "https://github.com/johnjallday/reaper-plugin/releases/download/v0.4.0/reaper-plugin_v0.4.0_darwin_arm64"
           },
-          "sha256": "06fdf6623a17737cbad38241584e198f2061956127b29efb3dc4219365ecfa93",
-          "size": 8476866
+          "sha256": "591d8703f5bebe6339e61f983faa896cd7cf82dce4d2915b2fb7dab6df096778",
+          "size": 8763458
         }
       ],
       "operations": [
@@ -1123,6 +1218,519 @@
           "max_output_bytes": 65536,
           "timeout_class": "fast",
           "policy": "read_only",
+          "scopes": []
+        },
+        {
+          "id": "tidy.survey",
+          "input_schema": {
+            "type": "object",
+            "properties": {},
+            "required": [],
+            "additionalProperties": false
+          },
+          "output_schema": {
+            "type": "object",
+            "properties": {
+              "outcome": {
+                "type": "string",
+                "maxLength": 32,
+                "enum": [
+                  "proposal",
+                  "already_tidy"
+                ]
+              },
+              "summary": {
+                "type": "string",
+                "maxLength": 1000
+              },
+              "proposal_id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              },
+              "item_count": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 64
+              },
+              "already_tidy": {
+                "type": "boolean"
+              },
+              "project_change_count": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              }
+            },
+            "required": [
+              "outcome",
+              "summary",
+              "proposal_id",
+              "item_count",
+              "already_tidy",
+              "project_change_count"
+            ],
+            "additionalProperties": false
+          },
+          "max_output_bytes": 65536,
+          "timeout_class": "long",
+          "policy": "reversible",
+          "scopes": []
+        },
+        {
+          "id": "tidy.apply_selection",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "proposal_id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              },
+              "selected_item_ids": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 64,
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 64
+                }
+              }
+            },
+            "required": [
+              "proposal_id",
+              "selected_item_ids"
+            ],
+            "additionalProperties": false
+          },
+          "output_schema": {
+            "type": "object",
+            "properties": {
+              "proposal_id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              },
+              "outcome": {
+                "type": "string",
+                "maxLength": 32,
+                "enum": [
+                  "applied",
+                  "partial",
+                  "fully_skipped",
+                  "failed"
+                ]
+              },
+              "summary": {
+                "type": "string",
+                "maxLength": 1000
+              },
+              "project_change_count_before": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "project_change_count_after": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "items": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 64,
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "maxLength": 64
+                    },
+                    "verb": {
+                      "type": "string",
+                      "maxLength": 32
+                    },
+                    "status": {
+                      "type": "string",
+                      "maxLength": 16,
+                      "enum": [
+                        "applied",
+                        "skipped",
+                        "failed"
+                      ]
+                    },
+                    "reason": {
+                      "type": "string",
+                      "maxLength": 2048
+                    },
+                    "error": {
+                      "type": "string",
+                      "maxLength": 2048
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "verb",
+                    "status"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "undo_summary": {
+                "type": "string",
+                "maxLength": 256
+              }
+            },
+            "required": [
+              "proposal_id",
+              "outcome",
+              "summary",
+              "project_change_count_before",
+              "project_change_count_after",
+              "items",
+              "undo_summary"
+            ],
+            "additionalProperties": false
+          },
+          "max_output_bytes": 262144,
+          "timeout_class": "long",
+          "policy": "reversible",
+          "scopes": []
+        },
+        {
+          "id": "tidy.station",
+          "input_schema": {
+            "type": "object",
+            "properties": {},
+            "required": [],
+            "additionalProperties": false
+          },
+          "output_schema": {
+            "type": "object",
+            "properties": {
+              "state": {
+                "type": "string",
+                "maxLength": 32,
+                "enum": [
+                  "checking",
+                  "ready",
+                  "attention",
+                  "degraded",
+                  "unavailable",
+                  "disabled"
+                ]
+              },
+              "value": {
+                "type": "string",
+                "maxLength": 160
+              },
+              "description": {
+                "type": "string",
+                "maxLength": 500
+              },
+              "checked_at": {
+                "type": "string",
+                "maxLength": 64
+              }
+            },
+            "required": [
+              "state",
+              "value",
+              "description",
+              "checked_at"
+            ],
+            "additionalProperties": false
+          },
+          "max_output_bytes": 65536,
+          "timeout_class": "fast",
+          "policy": "read_only",
+          "scopes": []
+        },
+        {
+          "id": "tidy.status",
+          "input_schema": {
+            "type": "object",
+            "properties": {},
+            "required": [],
+            "additionalProperties": false
+          },
+          "output_schema": {
+            "type": "object",
+            "properties": {
+              "state": {
+                "type": "string",
+                "maxLength": 32,
+                "enum": [
+                  "none",
+                  "open",
+                  "dismissed",
+                  "superseded",
+                  "already_tidy",
+                  "applied",
+                  "apply_skipped",
+                  "apply_failed"
+                ]
+              },
+              "proposal_id": {
+                "type": "string",
+                "maxLength": 64
+              },
+              "has_open_proposal": {
+                "type": "boolean"
+              },
+              "item_count": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 64
+              },
+              "already_tidy": {
+                "type": "boolean"
+              },
+              "updated_at": {
+                "type": "string",
+                "maxLength": 64
+              },
+              "last_report_outcome": {
+                "type": "string",
+                "maxLength": 32,
+                "enum": [
+                  "applied",
+                  "partial",
+                  "fully_skipped",
+                  "failed"
+                ]
+              }
+            },
+            "required": [
+              "state",
+              "has_open_proposal",
+              "item_count",
+              "already_tidy"
+            ],
+            "additionalProperties": false
+          },
+          "max_output_bytes": 65536,
+          "timeout_class": "fast",
+          "policy": "read_only",
+          "scopes": []
+        },
+        {
+          "id": "tidy.proposal.read",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "proposal_id": {
+                "type": "string",
+                "maxLength": 64
+              }
+            },
+            "required": [],
+            "additionalProperties": false
+          },
+          "output_schema": {
+            "type": "object",
+            "properties": {
+              "proposal_id": {
+                "type": "string",
+                "maxLength": 64
+              },
+              "state": {
+                "type": "string",
+                "maxLength": 32,
+                "enum": [
+                  "none",
+                  "open",
+                  "dismissed",
+                  "superseded",
+                  "already_tidy",
+                  "applied",
+                  "apply_skipped",
+                  "apply_failed"
+                ]
+              },
+              "has_open_proposal": {
+                "type": "boolean"
+              },
+              "already_tidy": {
+                "type": "boolean"
+              },
+              "created_at": {
+                "type": "string",
+                "maxLength": 64
+              },
+              "conventions_note": {
+                "type": "string",
+                "maxLength": 2048
+              },
+              "items": {
+                "type": "array",
+                "maxItems": 64,
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "item_id": {
+                      "type": "string",
+                      "maxLength": 64
+                    },
+                    "line": {
+                      "type": "string",
+                      "maxLength": 2048
+                    },
+                    "reason": {
+                      "type": "string",
+                      "maxLength": 1024
+                    }
+                  },
+                  "required": [
+                    "item_id",
+                    "line",
+                    "reason"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "last_report": {
+                "type": "object",
+                "properties": {
+                  "proposal_id": {
+                    "type": "string",
+                    "maxLength": 64
+                  },
+                  "outcome": {
+                    "type": "string",
+                    "maxLength": 32,
+                    "enum": [
+                      "applied",
+                      "partial",
+                      "fully_skipped",
+                      "failed"
+                    ]
+                  },
+                  "created_at": {
+                    "type": "string",
+                    "maxLength": 64
+                  },
+                  "project_change_count_before": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "project_change_count_after": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "items": {
+                    "type": "array",
+                    "maxItems": 64,
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "maxLength": 64
+                        },
+                        "verb": {
+                          "type": "string",
+                          "maxLength": 32
+                        },
+                        "status": {
+                          "type": "string",
+                          "maxLength": 16,
+                          "enum": [
+                            "applied",
+                            "skipped",
+                            "failed"
+                          ]
+                        },
+                        "reason": {
+                          "type": "string",
+                          "maxLength": 2048
+                        },
+                        "error": {
+                          "type": "string",
+                          "maxLength": 2048
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "verb",
+                        "status"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "fresh_survey_recommended": {
+                    "type": "boolean"
+                  },
+                  "undo_summary": {
+                    "type": "string",
+                    "maxLength": 256
+                  }
+                },
+                "required": [
+                  "proposal_id",
+                  "outcome",
+                  "created_at",
+                  "project_change_count_before",
+                  "project_change_count_after",
+                  "items",
+                  "fresh_survey_recommended",
+                  "undo_summary"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "state",
+              "has_open_proposal",
+              "already_tidy",
+              "items"
+            ],
+            "additionalProperties": false
+          },
+          "max_output_bytes": 262144,
+          "timeout_class": "fast",
+          "policy": "read_only",
+          "scopes": []
+        },
+        {
+          "id": "tidy.proposal.dismiss",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "proposal_id": {
+                "type": "string",
+                "maxLength": 64
+              }
+            },
+            "required": [
+              "proposal_id"
+            ],
+            "additionalProperties": false
+          },
+          "output_schema": {
+            "type": "object",
+            "properties": {
+              "outcome": {
+                "type": "string",
+                "maxLength": 32
+              },
+              "summary": {
+                "type": "string",
+                "maxLength": 1000
+              }
+            },
+            "required": [
+              "outcome",
+              "summary"
+            ],
+            "additionalProperties": false
+          },
+          "max_output_bytes": 65536,
+          "timeout_class": "fast",
+          "policy": "reversible",
           "scopes": []
         },
         {
@@ -2634,7 +3242,7 @@
   "blueprints": [
     {
       "id": "reaper-song",
-      "version": 1,
+      "version": 2,
       "manifest": "blueprints/reaper-song/template.json",
       "skeleton": "blueprints/reaper-song/project",
       "capabilities": [

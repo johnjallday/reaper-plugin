@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>REAPER Project Tidy</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <main class="tidy" aria-labelledby="tidy-title">
+      <header class="masthead">
+        <div class="tape-mark" aria-hidden="true">SIDE A · PROJECT CARE</div>
+        <div class="masthead-copy">
+          <p class="eyebrow">REAPER / cosmetic pass</p>
+          <h1 id="tidy-title">Project Tidy</h1>
+          <p class="lede">Names, colors, markers. Never sound.</p>
+        </div>
+        <div class="meter" aria-hidden="true">
+          <i></i><i></i><i></i><i></i><i></i>
+        </div>
+      </header>
+
+      <section class="status-deck" aria-labelledby="status-title">
+        <div>
+          <p class="eyebrow">Latest pass</p>
+          <h2 id="status-title" data-heading>Waiting for Ori</h2>
+          <p data-message aria-live="polite">
+            Opening the authenticated workspace surface…
+          </p>
+        </div>
+        <button type="button" class="survey-button" data-survey>
+          Survey project
+        </button>
+      </section>
+
+      <p class="conventions-note" data-conventions hidden></p>
+
+      <section
+        class="proposal"
+        data-proposal
+        hidden
+        aria-labelledby="proposal-title"
+      >
+        <div class="proposal-head">
+          <div>
+            <p class="eyebrow">Proposed edit list</p>
+            <h2 id="proposal-title">Review every move</h2>
+          </div>
+          <span class="count" data-count>0 selected</span>
+        </div>
+        <div class="proposal-list" data-items></div>
+        <div class="proposal-actions">
+          <button type="button" class="apply-button" data-apply disabled>
+            Apply selected
+          </button>
+          <button type="button" class="quiet-button" data-dismiss>
+            Dismiss
+          </button>
+        </div>
+      </section>
+
+      <section class="empty-state" data-empty>
+        <div class="record-groove" aria-hidden="true"></div>
+        <p data-empty-message>No proposal yet.</p>
+      </section>
+
+      <section class="report" data-report hidden aria-labelledby="report-title">
+        <div class="proposal-head">
+          <div>
+            <p class="eyebrow">Last run</p>
+            <h2 id="report-title" data-report-title>Tidy report</h2>
+          </div>
+        </div>
+        <div class="report-list" data-report-items></div>
+        <p class="undo-note" data-undo-note></p>
+      </section>
+
+      <output class="outcome" data-outcome aria-live="polite"></output>
+
+      <footer>
+        <span>One approved pass · one undo</span>
+        <div>
+          <button type="button" class="text-button" data-setup>
+            Live setup
+          </button>
+          <button type="button" class="text-button" data-close>Close</button>
+        </div>
+      </footer>
+    </main>
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>

@@ -4,7 +4,7 @@
   "icon": "\ud83c\udfb5",
   "behavior_profile": "general",
   "tools": {
-    "skills": ["reaper-session-setup", "reaper-web-remote"]
+    "skills": ["reaper-session-setup", "reaper-web-remote", "reaper-project-tidy"]
   },
   "project_entry": {
     "relative_path": "{{name}}.rpp",
@@ -29,7 +29,7 @@
       "role": "orchestrator",
       "system_prompt": "You are the music producer for this workspace. It was created from the Reaper Song template, so one scaffolded REAPER session file named after the project already exists in the project folder at 120 BPM. Treat that persisted project entry as the only authoritative song project and never create or initialize a second .rpp file. Help the user shape the song: adjust session settings, plan arrangements, and drive REAPER through the reaper-session-setup skill only after live REAPER state and its required control interface are verified. An operating-system open request does not prove that REAPER or Web Remote is ready. If live control is unavailable, ask the user to open or wait for REAPER or enable the required interface, and never claim live changes were applied. Before editing the .rpp file directly as a fallback, explain that live state is unverified and obtain the user's explicit confirmation; then edit only the existing authoritative file and distinguish file changes from verified live-session changes. Keep answers practical, truthful, and studio-minded.",
       "tools": {
-        "skills": ["reaper-session-setup"]
+        "skills": ["reaper-session-setup", "reaper-project-tidy"]
       }
     }
   ],
