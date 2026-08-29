@@ -118,7 +118,7 @@
               "label": "Tidy up project",
               "description": "Inspect the open project and create a cosmetic-only proposal without changing REAPER.",
               "title": "Survey REAPER project for cosmetic cleanup",
-              "instructions": "Use the reaper-project-tidy skill's Survey phase. Run the live-control preflight and the canonical read-only inspector, verify the open project matches this workspace, load or lazily seed conventions.md, generate only the four supported cosmetic verbs, validate the complete plan, and persist the machine plan plus human summary under tidy/. A no-change result is Project already tidy. Never edit the .rpp file, never use file fallback, never route through conversational prompting, and do not apply any proposal in this task.",
+              "instructions": "Use the reaper-project-tidy skill's Survey phase. Call the trusted capability-scoped tidy.survey agent operation through its exact Ori brokered tool name plugin_reaper_plugin_reaper_live_control_tidy_survey with empty input; it owns the live preflight, exact canonical read-only inspector, project-entry verification, conventions load or seed, closed four-verb generation, validation, and durable tidy/ artifacts. Report its bounded result. A no-change result is Project already tidy. Never substitute curl or direct runner-exchange writes inside this scoped CLI task, never edit the .rpp file, never use file fallback, never route through conversational prompting, and do not apply any proposal in this task.",
               "required_capabilities": ["reaper_live_control"],
               "auto_start": true,
               "input_schema": {
@@ -192,7 +192,8 @@
         "proposals.propose",
         "proposals.current",
         "proposals.read",
-        "proposals.test"
+        "proposals.test",
+        "tidy.survey"
       ]
     }
   ],
@@ -1133,6 +1134,60 @@
           "max_output_bytes": 65536,
           "timeout_class": "fast",
           "policy": "read_only",
+          "scopes": []
+        },
+        {
+          "id": "tidy.survey",
+          "input_schema": {
+            "type": "object",
+            "properties": {},
+            "required": [],
+            "additionalProperties": false
+          },
+          "output_schema": {
+            "type": "object",
+            "properties": {
+              "outcome": {
+                "type": "string",
+                "maxLength": 32,
+                "enum": ["proposal", "already_tidy"]
+              },
+              "summary": {
+                "type": "string",
+                "maxLength": 1000
+              },
+              "proposal_id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              },
+              "item_count": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 64
+              },
+              "already_tidy": {
+                "type": "boolean"
+              },
+              "project_change_count": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              }
+            },
+            "required": [
+              "outcome",
+              "summary",
+              "proposal_id",
+              "item_count",
+              "already_tidy",
+              "project_change_count"
+            ],
+            "additionalProperties": false
+          },
+          "max_output_bytes": 65536,
+          "timeout_class": "long",
+          "policy": "reversible",
           "scopes": []
         },
         {

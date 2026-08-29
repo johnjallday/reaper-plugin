@@ -37,6 +37,23 @@ Lua and never append project-specific code to a canonical script. The LLM may
 compose the declarative plan JSON, which must validate against the closed v1
 contract before it is offered or applied.
 
+### Ori capability tasks
+
+When Ori grants `reaper_live_control` to a CLI-backed workspace task, arbitrary
+localhost shell access remains disabled by design. For the Survey phase, call the
+trusted agent operation `tidy.survey` with an empty input instead of using
+`curl` or writing the runner exchange directly. Ori exposes it to the model as
+`plugin_reaper_plugin_reaper_live_control_tidy_survey`; that brokered name is
+the one to call. The operation performs the
+live preflight, runs the exact canonical inspector through its audited no-undo
+path, validates the bounded state, verifies the host-injected project entry,
+loads or seeds `conventions.md`, generates only the closed v1 verbs, and
+persists the proposal artifacts. Report its bounded result; never recreate its
+work with ad-hoc shell commands.
+
+The direct shell procedure below remains the portable path when this skill is
+used outside an Ori capability-scoped task.
+
 ## Before either phase
 
 1. Follow `reaper-web-remote` to discover the live `$PORT`; do not assume the
@@ -55,7 +72,8 @@ contract before it is offered or applied.
 
 ## Running a canonical script
 
-Use the serialized runner exchange described by `reaper-web-remote`. Clear the
+Outside an Ori capability-scoped task, use the serialized runner exchange
+described by `reaper-web-remote`. Clear the
 old status and the expected output first so stale files cannot be mistaken for
 this run:
 
@@ -87,6 +105,11 @@ options:
 ## Phase 1: survey and propose
 
 ### 1. Run the inspector
+
+In an Ori capability-scoped task, invoke
+`plugin_reaper_plugin_reaper_live_control_tidy_survey` and use its result; the
+trusted `tidy.survey` operation performs all of the steps in this Survey phase.
+Otherwise:
 
 1. Remove stale `~/.ori-reaper/state.json`.
 2. Copy `scripts/inspect_project.lua` to `inbox.lua` and trigger the runner.

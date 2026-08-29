@@ -118,6 +118,9 @@ func runService() int {
 	addTool(server, "results.read", "Read the last bounded service operation result.", func(context.Context, reaper.Envelope[reaper.EmptyInput]) (reaper.OperationResult, error) {
 		return service.LastResult(), nil
 	})
+	addTool(server, "tidy.survey", "Run the canonical read-only inspector and persist a cosmetic-only Project Tidy proposal.", func(ctx context.Context, input reaper.Envelope[reaper.EmptyInput]) (reaper.TidySurveyResult, error) {
+		return service.RunTidySurvey(ctx, input.Context)
+	})
 	addTool(server, "tidy.station", "Read Project Tidy station status for the host project.", func(ctx context.Context, input reaper.Envelope[reaper.EmptyInput]) (reaper.StationResult, error) {
 		return service.TidyStation(ctx, input.Context), nil
 	})
