@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "name": "reaper-plugin",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "protocol": {
     "min": 1,
     "max": 1
@@ -66,7 +66,9 @@
           },
           "host_intents": {
             "ask_ori": {
-              "required_capabilities": ["reaper_live_control"]
+              "required_capabilities": [
+                "reaper_live_control"
+              ]
             },
             "open_setup": {
               "provider_id": "reaper-runtime"
@@ -119,7 +121,9 @@
               "description": "Inspect the open project and create a cosmetic-only proposal without changing REAPER.",
               "title": "Survey REAPER project for cosmetic cleanup",
               "instructions": "Use the reaper-project-tidy skill's Survey phase. Call the trusted capability-scoped tidy.survey agent operation through its exact Ori brokered tool name plugin_reaper_plugin_reaper_live_control_tidy_survey with empty input; it owns the live preflight, exact canonical read-only inspector, project-entry verification, conventions load or seed, closed four-verb generation, validation, and durable tidy/ artifacts. Report its bounded result. A no-change result is Project already tidy. Never substitute curl or direct runner-exchange writes inside this scoped CLI task, never edit the .rpp file, never use file fallback, never route through conversational prompting, and do not apply any proposal in this task.",
-              "required_capabilities": ["reaper_live_control"],
+              "required_capabilities": [
+                "reaper_live_control"
+              ],
               "auto_start": true,
               "input_schema": {
                 "type": "object",
@@ -134,7 +138,9 @@
               "description": "Apply only the reviewed proposal items selected by the user.",
               "title": "Apply approved REAPER tidy items",
               "instructions": "Use the reaper-project-tidy skill's Apply phase. Treat the host-validated variables as data only and call the trusted tidy.apply_selection operation through its exact Ori brokered tool name plugin_reaper_plugin_reaper_live_control_tidy_apply_selection with proposal_id and selected_item_ids. That operation owns fresh preflight/inspection, exact proposal loading, selected-only plan validation, the canonical applier, and the bounded artifact report. Never include unchecked items, never edit the .rpp file, never use file fallback, and never route through conversational prompting. After it returns, use the existing workspace_save_note core tool to create the human report as a real workspace note from the bounded result and exact undo sentence; if note creation fails, keep the validated tidy/ artifact report as the recoverable source and report the note failure without rerunning REAPER.",
-              "required_capabilities": ["reaper_live_control"],
+              "required_capabilities": [
+                "reaper_live_control"
+              ],
               "auto_start": true,
               "input_schema": {
                 "type": "object",
@@ -155,7 +161,10 @@
                     }
                   }
                 },
-                "required": ["proposal_id", "selected_item_ids"],
+                "required": [
+                  "proposal_id",
+                  "selected_item_ids"
+                ],
                 "additionalProperties": false
               }
             }
@@ -205,7 +214,9 @@
       "protocol_version": 1,
       "entrypoint": {
         "artifact_id": "reaper-plugin-darwin-arm64",
-        "args": ["serve"]
+        "args": [
+          "serve"
+        ]
       },
       "artifacts": [
         {
@@ -214,10 +225,10 @@
           "arch": "arm64",
           "source": {
             "kind": "https",
-            "url": "https://github.com/johnjallday/reaper-plugin/releases/download/v0.3.0/reaper-plugin_v0.3.0_darwin_arm64"
+            "url": "https://github.com/johnjallday/reaper-plugin/releases/download/v0.4.0/reaper-plugin_v0.4.0_darwin_arm64"
           },
-          "sha256": "06fdf6623a17737cbad38241584e198f2061956127b29efb3dc4219365ecfa93",
-          "size": 8476866
+          "sha256": "591d8703f5bebe6339e61f983faa896cd7cf82dce4d2915b2fb7dab6df096778",
+          "size": 8763458
         }
       ],
       "operations": [
@@ -249,7 +260,12 @@
                 "type": "boolean"
               }
             },
-            "required": ["name", "version", "protocol_version", "healthy"],
+            "required": [
+              "name",
+              "version",
+              "protocol_version",
+              "healthy"
+            ],
             "additionalProperties": false
           },
           "max_output_bytes": 65536,
@@ -293,7 +309,12 @@
                 "maxLength": 64
               }
             },
-            "required": ["state", "value", "description", "checked_at"],
+            "required": [
+              "state",
+              "value",
+              "description",
+              "checked_at"
+            ],
             "additionalProperties": false
           },
           "max_output_bytes": 65536,
@@ -320,7 +341,10 @@
                 "maxLength": 500
               }
             },
-            "required": ["ready", "summary"],
+            "required": [
+              "ready",
+              "summary"
+            ],
             "additionalProperties": false
           },
           "max_output_bytes": 65536,
@@ -347,7 +371,10 @@
                 "maxLength": 500
               }
             },
-            "required": ["ready", "summary"],
+            "required": [
+              "ready",
+              "summary"
+            ],
             "additionalProperties": false
           },
           "max_output_bytes": 65536,
@@ -374,7 +401,10 @@
                 "maxLength": 500
               }
             },
-            "required": ["available", "summary"],
+            "required": [
+              "available",
+              "summary"
+            ],
             "additionalProperties": false
           },
           "max_output_bytes": 65536,
@@ -401,7 +431,10 @@
                 "maxLength": 500
               }
             },
-            "required": ["verified", "summary"],
+            "required": [
+              "verified",
+              "summary"
+            ],
             "additionalProperties": false
           },
           "max_output_bytes": 65536,
@@ -428,7 +461,10 @@
                 "maxLength": 500
               }
             },
-            "required": ["repaired", "summary"],
+            "required": [
+              "repaired",
+              "summary"
+            ],
             "additionalProperties": false
           },
           "max_output_bytes": 65536,
@@ -628,7 +664,9 @@
                 "maxItems": 256
               }
             },
-            "required": ["actions"],
+            "required": [
+              "actions"
+            ],
             "additionalProperties": false
           },
           "max_output_bytes": 262144,
@@ -646,7 +684,9 @@
                 "maxLength": 120
               }
             },
-            "required": ["action_id"],
+            "required": [
+              "action_id"
+            ],
             "additionalProperties": false
           },
           "output_schema": {
@@ -661,7 +701,10 @@
                 "maxLength": 1000
               }
             },
-            "required": ["outcome", "summary"],
+            "required": [
+              "outcome",
+              "summary"
+            ],
             "additionalProperties": false
           },
           "max_output_bytes": 65536,
@@ -679,7 +722,9 @@
                 "maxLength": 120
               }
             },
-            "required": ["action_id"],
+            "required": [
+              "action_id"
+            ],
             "additionalProperties": false
           },
           "output_schema": {
@@ -694,7 +739,10 @@
                 "maxLength": 1000
               }
             },
-            "required": ["outcome", "summary"],
+            "required": [
+              "outcome",
+              "summary"
+            ],
             "additionalProperties": false
           },
           "max_output_bytes": 65536,
@@ -712,7 +760,9 @@
                 "maxLength": 120
               }
             },
-            "required": ["action_id"],
+            "required": [
+              "action_id"
+            ],
             "additionalProperties": false
           },
           "output_schema": {
@@ -727,7 +777,10 @@
                 "maxLength": 1000
               }
             },
-            "required": ["outcome", "summary"],
+            "required": [
+              "outcome",
+              "summary"
+            ],
             "additionalProperties": false
           },
           "max_output_bytes": 65536,
@@ -791,7 +844,9 @@
                 "maxItems": 256
               }
             },
-            "required": ["scripts"],
+            "required": [
+              "scripts"
+            ],
             "additionalProperties": false
           },
           "max_output_bytes": 262144,
@@ -809,7 +864,9 @@
                 "maxLength": 128
               }
             },
-            "required": ["id"],
+            "required": [
+              "id"
+            ],
             "additionalProperties": false
           },
           "output_schema": {
@@ -886,7 +943,11 @@
                 "maxLength": 32768
               }
             },
-            "required": ["name", "needs_confirmation", "code"],
+            "required": [
+              "name",
+              "needs_confirmation",
+              "code"
+            ],
             "additionalProperties": false
           },
           "output_schema": {
@@ -963,7 +1024,11 @@
                 "maxLength": 32768
               }
             },
-            "required": ["name", "needs_confirmation", "code"],
+            "required": [
+              "name",
+              "needs_confirmation",
+              "code"
+            ],
             "additionalProperties": false
           },
           "output_schema": {
@@ -1021,7 +1086,9 @@
                 "maxLength": 128
               }
             },
-            "required": ["id"],
+            "required": [
+              "id"
+            ],
             "additionalProperties": false
           },
           "output_schema": {
@@ -1036,7 +1103,10 @@
                 "maxLength": 1000
               }
             },
-            "required": ["outcome", "summary"],
+            "required": [
+              "outcome",
+              "summary"
+            ],
             "additionalProperties": false
           },
           "max_output_bytes": 65536,
@@ -1054,7 +1124,9 @@
                 "maxLength": 32768
               }
             },
-            "required": ["code"],
+            "required": [
+              "code"
+            ],
             "additionalProperties": false
           },
           "output_schema": {
@@ -1068,7 +1140,10 @@
                 "maxLength": 500
               }
             },
-            "required": ["valid", "summary"],
+            "required": [
+              "valid",
+              "summary"
+            ],
             "additionalProperties": false
           },
           "max_output_bytes": 65536,
@@ -1086,7 +1161,9 @@
                 "maxLength": 32768
               }
             },
-            "required": ["code"],
+            "required": [
+              "code"
+            ],
             "additionalProperties": false
           },
           "output_schema": {
@@ -1101,7 +1178,10 @@
                 "maxLength": 1000
               }
             },
-            "required": ["outcome", "summary"],
+            "required": [
+              "outcome",
+              "summary"
+            ],
             "additionalProperties": false
           },
           "max_output_bytes": 65536,
@@ -1129,7 +1209,10 @@
                 "maxLength": 1000
               }
             },
-            "required": ["outcome", "summary"],
+            "required": [
+              "outcome",
+              "summary"
+            ],
             "additionalProperties": false
           },
           "max_output_bytes": 65536,
@@ -1151,7 +1234,10 @@
               "outcome": {
                 "type": "string",
                 "maxLength": 32,
-                "enum": ["proposal", "already_tidy"]
+                "enum": [
+                  "proposal",
+                  "already_tidy"
+                ]
               },
               "summary": {
                 "type": "string",
@@ -1212,7 +1298,10 @@
                 }
               }
             },
-            "required": ["proposal_id", "selected_item_ids"],
+            "required": [
+              "proposal_id",
+              "selected_item_ids"
+            ],
             "additionalProperties": false
           },
           "output_schema": {
@@ -1226,7 +1315,12 @@
               "outcome": {
                 "type": "string",
                 "maxLength": 32,
-                "enum": ["applied", "partial", "fully_skipped", "failed"]
+                "enum": [
+                  "applied",
+                  "partial",
+                  "fully_skipped",
+                  "failed"
+                ]
               },
               "summary": {
                 "type": "string",
@@ -1260,7 +1354,11 @@
                     "status": {
                       "type": "string",
                       "maxLength": 16,
-                      "enum": ["applied", "skipped", "failed"]
+                      "enum": [
+                        "applied",
+                        "skipped",
+                        "failed"
+                      ]
                     },
                     "reason": {
                       "type": "string",
@@ -1271,7 +1369,11 @@
                       "maxLength": 2048
                     }
                   },
-                  "required": ["id", "verb", "status"],
+                  "required": [
+                    "id",
+                    "verb",
+                    "status"
+                  ],
                   "additionalProperties": false
                 }
               },
@@ -1332,7 +1434,12 @@
                 "maxLength": 64
               }
             },
-            "required": ["state", "value", "description", "checked_at"],
+            "required": [
+              "state",
+              "value",
+              "description",
+              "checked_at"
+            ],
             "additionalProperties": false
           },
           "max_output_bytes": 65536,
@@ -1387,7 +1494,12 @@
               "last_report_outcome": {
                 "type": "string",
                 "maxLength": 32,
-                "enum": ["applied", "partial", "fully_skipped", "failed"]
+                "enum": [
+                  "applied",
+                  "partial",
+                  "fully_skipped",
+                  "failed"
+                ]
               }
             },
             "required": [
@@ -1470,7 +1582,11 @@
                       "maxLength": 1024
                     }
                   },
-                  "required": ["item_id", "line", "reason"],
+                  "required": [
+                    "item_id",
+                    "line",
+                    "reason"
+                  ],
                   "additionalProperties": false
                 }
               },
@@ -1484,7 +1600,12 @@
                   "outcome": {
                     "type": "string",
                     "maxLength": 32,
-                    "enum": ["applied", "partial", "fully_skipped", "failed"]
+                    "enum": [
+                      "applied",
+                      "partial",
+                      "fully_skipped",
+                      "failed"
+                    ]
                   },
                   "created_at": {
                     "type": "string",
@@ -1517,7 +1638,11 @@
                         "status": {
                           "type": "string",
                           "maxLength": 16,
-                          "enum": ["applied", "skipped", "failed"]
+                          "enum": [
+                            "applied",
+                            "skipped",
+                            "failed"
+                          ]
                         },
                         "reason": {
                           "type": "string",
@@ -1528,7 +1653,11 @@
                           "maxLength": 2048
                         }
                       },
-                      "required": ["id", "verb", "status"],
+                      "required": [
+                        "id",
+                        "verb",
+                        "status"
+                      ],
                       "additionalProperties": false
                     }
                   },
@@ -1553,7 +1682,12 @@
                 "additionalProperties": false
               }
             },
-            "required": ["state", "has_open_proposal", "already_tidy", "items"],
+            "required": [
+              "state",
+              "has_open_proposal",
+              "already_tidy",
+              "items"
+            ],
             "additionalProperties": false
           },
           "max_output_bytes": 262144,
@@ -1571,7 +1705,9 @@
                 "maxLength": 64
               }
             },
-            "required": ["proposal_id"],
+            "required": [
+              "proposal_id"
+            ],
             "additionalProperties": false
           },
           "output_schema": {
@@ -1586,7 +1722,10 @@
                 "maxLength": 1000
               }
             },
-            "required": ["outcome", "summary"],
+            "required": [
+              "outcome",
+              "summary"
+            ],
             "additionalProperties": false
           },
           "max_output_bytes": 65536,
@@ -1635,21 +1774,30 @@
                       "maximum": 100000
                     }
                   },
-                  "required": ["operation", "index", "expected_name"],
+                  "required": [
+                    "operation",
+                    "index",
+                    "expected_name"
+                  ],
                   "additionalProperties": false
                 },
                 "minItems": 1,
                 "maxItems": 64
               }
             },
-            "required": ["edits"],
+            "required": [
+              "edits"
+            ],
             "additionalProperties": false
           },
           "output_schema": {
             "type": "object",
             "properties": {
               "plan": {
-                "type": ["object", "null"],
+                "type": [
+                  "object",
+                  "null"
+                ],
                 "properties": {
                   "id": {
                     "type": "string",
@@ -1691,7 +1839,11 @@
                           "maximum": 100000
                         }
                       },
-                      "required": ["operation", "index", "expected_name"],
+                      "required": [
+                        "operation",
+                        "index",
+                        "expected_name"
+                      ],
                       "additionalProperties": false
                     },
                     "maxItems": 64
@@ -1705,7 +1857,12 @@
                     "maxLength": 64
                   }
                 },
-                "required": ["id", "edits", "created_at", "expires_at"],
+                "required": [
+                  "id",
+                  "edits",
+                  "created_at",
+                  "expires_at"
+                ],
                 "additionalProperties": false
               },
               "outcome": {
@@ -1717,7 +1874,10 @@
                 "maxLength": 1000
               }
             },
-            "required": ["outcome", "summary"],
+            "required": [
+              "outcome",
+              "summary"
+            ],
             "additionalProperties": false
           },
           "max_output_bytes": 65536,
@@ -1735,14 +1895,19 @@
                 "maxLength": 64
               }
             },
-            "required": ["plan_id"],
+            "required": [
+              "plan_id"
+            ],
             "additionalProperties": false
           },
           "output_schema": {
             "type": "object",
             "properties": {
               "plan": {
-                "type": ["object", "null"],
+                "type": [
+                  "object",
+                  "null"
+                ],
                 "properties": {
                   "id": {
                     "type": "string",
@@ -1784,7 +1949,11 @@
                           "maximum": 100000
                         }
                       },
-                      "required": ["operation", "index", "expected_name"],
+                      "required": [
+                        "operation",
+                        "index",
+                        "expected_name"
+                      ],
                       "additionalProperties": false
                     },
                     "maxItems": 64
@@ -1798,7 +1967,12 @@
                     "maxLength": 64
                   }
                 },
-                "required": ["id", "edits", "created_at", "expires_at"],
+                "required": [
+                  "id",
+                  "edits",
+                  "created_at",
+                  "expires_at"
+                ],
                 "additionalProperties": false
               },
               "outcome": {
@@ -1810,7 +1984,10 @@
                 "maxLength": 1000
               }
             },
-            "required": ["outcome", "summary"],
+            "required": [
+              "outcome",
+              "summary"
+            ],
             "additionalProperties": false
           },
           "max_output_bytes": 65536,
@@ -1828,14 +2005,19 @@
                 "maxLength": 64
               }
             },
-            "required": ["plan_id"],
+            "required": [
+              "plan_id"
+            ],
             "additionalProperties": false
           },
           "output_schema": {
             "type": "object",
             "properties": {
               "plan": {
-                "type": ["object", "null"],
+                "type": [
+                  "object",
+                  "null"
+                ],
                 "properties": {
                   "id": {
                     "type": "string",
@@ -1877,7 +2059,11 @@
                           "maximum": 100000
                         }
                       },
-                      "required": ["operation", "index", "expected_name"],
+                      "required": [
+                        "operation",
+                        "index",
+                        "expected_name"
+                      ],
                       "additionalProperties": false
                     },
                     "maxItems": 64
@@ -1891,7 +2077,12 @@
                     "maxLength": 64
                   }
                 },
-                "required": ["id", "edits", "created_at", "expires_at"],
+                "required": [
+                  "id",
+                  "edits",
+                  "created_at",
+                  "expires_at"
+                ],
                 "additionalProperties": false
               },
               "outcome": {
@@ -1903,7 +2094,10 @@
                 "maxLength": 1000
               }
             },
-            "required": ["outcome", "summary"],
+            "required": [
+              "outcome",
+              "summary"
+            ],
             "additionalProperties": false
           },
           "max_output_bytes": 65536,
@@ -1921,14 +2115,19 @@
                 "maxLength": 64
               }
             },
-            "required": ["plan_id"],
+            "required": [
+              "plan_id"
+            ],
             "additionalProperties": false
           },
           "output_schema": {
             "type": "object",
             "properties": {
               "plan": {
-                "type": ["object", "null"],
+                "type": [
+                  "object",
+                  "null"
+                ],
                 "properties": {
                   "id": {
                     "type": "string",
@@ -1970,7 +2169,11 @@
                           "maximum": 100000
                         }
                       },
-                      "required": ["operation", "index", "expected_name"],
+                      "required": [
+                        "operation",
+                        "index",
+                        "expected_name"
+                      ],
                       "additionalProperties": false
                     },
                     "maxItems": 64
@@ -1984,7 +2187,12 @@
                     "maxLength": 64
                   }
                 },
-                "required": ["id", "edits", "created_at", "expires_at"],
+                "required": [
+                  "id",
+                  "edits",
+                  "created_at",
+                  "expires_at"
+                ],
                 "additionalProperties": false
               },
               "outcome": {
@@ -1996,7 +2204,10 @@
                 "maxLength": 1000
               }
             },
-            "required": ["outcome", "summary"],
+            "required": [
+              "outcome",
+              "summary"
+            ],
             "additionalProperties": false
           },
           "max_output_bytes": 65536,
@@ -2015,7 +2226,14 @@
                   "operation": {
                     "type": "string",
                     "maxLength": 16,
-                    "enum": ["rename", "color", "mute", "solo", "arm", "move"]
+                    "enum": [
+                      "rename",
+                      "color",
+                      "mute",
+                      "solo",
+                      "arm",
+                      "move"
+                    ]
                   },
                   "index": {
                     "type": "integer",
@@ -2044,11 +2262,17 @@
                     "maximum": 100000
                   }
                 },
-                "required": ["operation", "index", "expected_name"],
+                "required": [
+                  "operation",
+                  "index",
+                  "expected_name"
+                ],
                 "additionalProperties": false
               }
             },
-            "required": ["edit"],
+            "required": [
+              "edit"
+            ],
             "additionalProperties": false
           },
           "output_schema": {
@@ -2185,7 +2409,12 @@
                 "type": "boolean"
               }
             },
-            "required": ["outcome", "summary", "state", "undo_available"],
+            "required": [
+              "outcome",
+              "summary",
+              "state",
+              "undo_available"
+            ],
             "additionalProperties": false
           },
           "max_output_bytes": 262144,
@@ -2335,7 +2564,12 @@
                 "type": "boolean"
               }
             },
-            "required": ["outcome", "summary", "state", "undo_available"],
+            "required": [
+              "outcome",
+              "summary",
+              "state",
+              "undo_available"
+            ],
             "additionalProperties": false
           },
           "max_output_bytes": 262144,
@@ -2355,7 +2589,10 @@
             "type": "object",
             "properties": {
               "plan": {
-                "type": ["object", "null"],
+                "type": [
+                  "object",
+                  "null"
+                ],
                 "properties": {
                   "id": {
                     "type": "string",
@@ -2397,7 +2634,11 @@
                           "maximum": 100000
                         }
                       },
-                      "required": ["operation", "index", "expected_name"],
+                      "required": [
+                        "operation",
+                        "index",
+                        "expected_name"
+                      ],
                       "additionalProperties": false
                     },
                     "maxItems": 64
@@ -2411,7 +2652,12 @@
                     "maxLength": 64
                   }
                 },
-                "required": ["id", "edits", "created_at", "expires_at"],
+                "required": [
+                  "id",
+                  "edits",
+                  "created_at",
+                  "expires_at"
+                ],
                 "additionalProperties": false
               },
               "outcome": {
@@ -2423,7 +2669,10 @@
                 "maxLength": 1000
               }
             },
-            "required": ["outcome", "summary"],
+            "required": [
+              "outcome",
+              "summary"
+            ],
             "additionalProperties": false
           },
           "max_output_bytes": 65536,
@@ -2456,14 +2705,21 @@
                 "type": "boolean"
               }
             },
-            "required": ["filename", "name", "code"],
+            "required": [
+              "filename",
+              "name",
+              "code"
+            ],
             "additionalProperties": false
           },
           "output_schema": {
             "type": "object",
             "properties": {
               "proposal": {
-                "type": ["object", "null"],
+                "type": [
+                  "object",
+                  "null"
+                ],
                 "properties": {
                   "id": {
                     "type": "string",
@@ -2521,7 +2777,10 @@
                 "maxLength": 1000
               }
             },
-            "required": ["outcome", "summary"],
+            "required": [
+              "outcome",
+              "summary"
+            ],
             "additionalProperties": false
           },
           "max_output_bytes": 131072,
@@ -2541,7 +2800,10 @@
             "type": "object",
             "properties": {
               "proposal": {
-                "type": ["object", "null"],
+                "type": [
+                  "object",
+                  "null"
+                ],
                 "properties": {
                   "id": {
                     "type": "string",
@@ -2599,7 +2861,10 @@
                 "maxLength": 1000
               }
             },
-            "required": ["outcome", "summary"],
+            "required": [
+              "outcome",
+              "summary"
+            ],
             "additionalProperties": false
           },
           "max_output_bytes": 131072,
@@ -2617,14 +2882,19 @@
                 "maxLength": 64
               }
             },
-            "required": ["proposal_id"],
+            "required": [
+              "proposal_id"
+            ],
             "additionalProperties": false
           },
           "output_schema": {
             "type": "object",
             "properties": {
               "proposal": {
-                "type": ["object", "null"],
+                "type": [
+                  "object",
+                  "null"
+                ],
                 "properties": {
                   "id": {
                     "type": "string",
@@ -2682,7 +2952,10 @@
                 "maxLength": 1000
               }
             },
-            "required": ["outcome", "summary"],
+            "required": [
+              "outcome",
+              "summary"
+            ],
             "additionalProperties": false
           },
           "max_output_bytes": 131072,
@@ -2700,14 +2973,19 @@
                 "maxLength": 64
               }
             },
-            "required": ["proposal_id"],
+            "required": [
+              "proposal_id"
+            ],
             "additionalProperties": false
           },
           "output_schema": {
             "type": "object",
             "properties": {
               "proposal": {
-                "type": ["object", "null"],
+                "type": [
+                  "object",
+                  "null"
+                ],
                 "properties": {
                   "id": {
                     "type": "string",
@@ -2765,7 +3043,10 @@
                 "maxLength": 1000
               }
             },
-            "required": ["outcome", "summary"],
+            "required": [
+              "outcome",
+              "summary"
+            ],
             "additionalProperties": false
           },
           "max_output_bytes": 131072,
@@ -2783,14 +3064,19 @@
                 "maxLength": 64
               }
             },
-            "required": ["proposal_id"],
+            "required": [
+              "proposal_id"
+            ],
             "additionalProperties": false
           },
           "output_schema": {
             "type": "object",
             "properties": {
               "proposal": {
-                "type": ["object", "null"],
+                "type": [
+                  "object",
+                  "null"
+                ],
                 "properties": {
                   "id": {
                     "type": "string",
@@ -2848,7 +3134,10 @@
                 "maxLength": 1000
               }
             },
-            "required": ["outcome", "summary"],
+            "required": [
+              "outcome",
+              "summary"
+            ],
             "additionalProperties": false
           },
           "max_output_bytes": 131072,
@@ -2866,14 +3155,19 @@
                 "maxLength": 64
               }
             },
-            "required": ["proposal_id"],
+            "required": [
+              "proposal_id"
+            ],
             "additionalProperties": false
           },
           "output_schema": {
             "type": "object",
             "properties": {
               "proposal": {
-                "type": ["object", "null"],
+                "type": [
+                  "object",
+                  "null"
+                ],
                 "properties": {
                   "id": {
                     "type": "string",
@@ -2931,7 +3225,10 @@
                 "maxLength": 1000
               }
             },
-            "required": ["outcome", "summary"],
+            "required": [
+              "outcome",
+              "summary"
+            ],
             "additionalProperties": false
           },
           "max_output_bytes": 131072,
@@ -2948,7 +3245,9 @@
       "version": 2,
       "manifest": "blueprints/reaper-song/template.json",
       "skeleton": "blueprints/reaper-song/project",
-      "capabilities": ["reaper-live-control"]
+      "capabilities": [
+        "reaper-live-control"
+      ]
     }
   ]
 }

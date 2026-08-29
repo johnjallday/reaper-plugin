@@ -56,20 +56,34 @@ runner over Web Remote, and reports the runner's status. `~/.ori-reaper/` is the
 that one directory (`sandbox_workspace_write.writable_roots`), not REAPER's whole
 config tree. The runner wraps every run in an Undo block.
 
+## Project Tidy
+
+The Reaper Song blueprint includes **Project Tidy**, a propose-first cosmetic
+cleanup workflow. Survey reads the authoritative open project through an
+audited no-undo inspector, applies workspace `conventions.md`, and writes a
+reviewable plan for only four verbs: color a track, rename a marker, rename a
+region, or delete an exact duplicate marker. Apply runs only checked rows in one
+REAPER undo step and persists applied/skipped/failed reports. Neither phase has
+an `.rpp` fallback or a vocabulary for sound-affecting edits.
+
+Ori capability-scoped Codex tasks keep arbitrary localhost access disabled and
+call exact brokered `tidy.survey` / `tidy.apply_selection` operations. Portable
+Claude/Codex skill use can still follow the documented shell runner path.
+
 ## Ori Workspace Surface development
 
-The first supported service artifact is **macOS arm64**. Version **0.3.0** uses
+The first supported service artifact is **macOS arm64**. Version **0.4.0** uses
 Workspace Surface protocol v1 and requires an Ori build that implements that
-protocol. The release artifact is 8,476,866 bytes with SHA-256
-`06fdf6623a17737cbad38241584e198f2061956127b29efb3dc4219365ecfa93`.
-The manifest downloads those exact bytes from the `v0.3.0` GitHub release.
+protocol. The release artifact is 8,763,458 bytes with SHA-256
+`591d8703f5bebe6339e61f983faa896cd7cf82dce4d2915b2fb7dab6df096778`.
+The manifest downloads those exact bytes from the `v0.4.0` GitHub release.
 Build and verify them reproducibly with:
 
 ```bash
 make artifact-local
 make test
 make test-ui
-make release-package VERSION=v0.3.0
+make release-package VERSION=v0.4.0
 ```
 
 The build pins Go 1.25.0, disables VCS stamping, uses `-trimpath`, and clears the
@@ -125,6 +139,9 @@ Ready-made agent skills live in [`skills/`](skills/):
   playbook (port discovery, transport/track reads, running command IDs).
 - [`reaper-session-setup`](skills/reaper-session-setup/SKILL.md) — "set up a
   session, name and arm my tracks."
+- [`reaper-project-tidy`](skills/reaper-project-tidy/SKILL.md) — survey
+  cosmetic track-color and marker cleanup, review every item, and apply only
+  checked changes as one undo step.
 
 The same `SKILL.md` files work across Ori, Claude, and Codex; see
 [`skills/README.md`](skills/README.md) for install instructions.

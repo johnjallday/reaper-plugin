@@ -7,10 +7,11 @@ teaches an AI agent *how* to perform a workflow. For the fiddly bits (registerin
 ReaScripts in `reaper-kb.ini`), the skills call the optional helper binary at
 `${CLAUDE_PLUGIN_ROOT}/bin/reaper-plugin`.
 
-Because the skills rely only on shell + localhost HTTP, the same `SKILL.md` works
-across **Ori**, **Claude** (Code / Desktop), and **Codex** — including inside the
-CLI sandbox posture, where localhost network is enabled but MCP tool calls and app
-automation are not required.
+The same `SKILL.md` works across **Ori**, **Claude** (Code / Desktop), and
+**Codex**. Portable use relies on shell + localhost HTTP. Ori's
+capability-scoped Codex posture instead keeps arbitrary localhost access off and
+exposes the exact Project Tidy survey/apply operations through its authorized
+brokered tool loop; no private plugin service is attached wholesale.
 
 ## Available skills
 
@@ -18,6 +19,7 @@ automation are not required.
 |-------|--------------|
 | [`reaper-web-remote`](reaper-web-remote/SKILL.md) | Core Web Remote playbook: discover the port, read transport/tracks, run actions and registered ReaScripts by command ID. |
 | [`reaper-session-setup`](reaper-session-setup/SKILL.md) | Insert, name, color, and record-arm tracks to a requested layout (writes + registers a ReaScript, runs it via Web Remote). |
+| [`reaper-project-tidy`](reaper-project-tidy/SKILL.md) | Survey convention-aware cosmetic cleanup, review every proposal row, and apply only checked changes as one REAPER undo step. |
 
 ## Prerequisites
 
@@ -34,18 +36,18 @@ copying its folder there. From the repo root:
 
 **Ori**
 ```bash
-cp -R skills/reaper-web-remote skills/reaper-session-setup ~/.agents/skills/
+cp -R skills/reaper-web-remote skills/reaper-session-setup skills/reaper-project-tidy ~/.agents/skills/
 ```
 Then enable/bind the skill to your REAPER workspace.
 
 **Claude (Code / Desktop)**
 ```bash
-cp -R skills/reaper-web-remote skills/reaper-session-setup ~/.claude/skills/
+cp -R skills/reaper-web-remote skills/reaper-session-setup skills/reaper-project-tidy ~/.claude/skills/
 ```
 
 **Codex**
 ```bash
-cp -R skills/reaper-web-remote skills/reaper-session-setup ~/.codex/skills/
+cp -R skills/reaper-web-remote skills/reaper-session-setup skills/reaper-project-tidy ~/.codex/skills/
 ```
 
 > Make sure REAPER is running with the Web Remote interface enabled before you
