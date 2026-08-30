@@ -1,6 +1,6 @@
 # Release notes
 
-## 0.5.0 — Shared Music Producer Assistant
+## 0.4.1 — Shared Music Producer Assistant
 
 This release makes the Reaper Song blueprint opt in to Ori's generic shared
 assistant-program host contract. Creating a song links an inert Producer Home;
@@ -23,7 +23,7 @@ work only.
   runtime, and undo gates.
 - Reflection is host-bounded and read-only; only user-approved learnings can
   affect later prompts.
-- Plugin/service version: `0.5.0`
+- Plugin/service version: `0.4.1`
 - Reaper Song blueprint version: `3`
 - Required Ori host feature: `assistant_program_v1`
 - Workspace Surface protocol: `1`
