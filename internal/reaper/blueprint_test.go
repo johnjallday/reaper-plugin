@@ -11,7 +11,8 @@ import (
 )
 
 type reaperPluginBlueprintManifest struct {
-	Blueprints []struct {
+	RequiresHostFeatures []string `json:"requires_host_features"`
+	Blueprints           []struct {
 		ID           string   `json:"id"`
 		Version      int      `json:"version"`
 		Manifest     string   `json:"manifest"`
@@ -36,9 +37,30 @@ type reaperSongTemplate struct {
 			Adapter    string `json:"adapter"`
 		} `json:"requirements"`
 	} `json:"runtime_requirements"`
+	AssistantProgram struct {
+		ID                             string   `json:"id"`
+		StationName                    string   `json:"station_name"`
+		DefaultPrimaryName             string   `json:"default_primary_name"`
+		SuggestionRequiredCapabilities []string `json:"suggestion_required_capabilities"`
+		Roles                          []struct {
+			ID           string   `json:"id"`
+			Label        string   `json:"label"`
+			Primary      bool     `json:"primary"`
+			SystemPrompt string   `json:"system_prompt"`
+			Skills       []string `json:"skills"`
+		} `json:"roles"`
+		Stages []struct {
+			ID                          string `json:"id"`
+			AcceptedCompletionThreshold int    `json:"accepted_completion_threshold"`
+		} `json:"stages"`
+		Reflection struct {
+			MinimumProjects int    `json:"minimum_projects"`
+			Rubric          string `json:"rubric"`
+		} `json:"reflection"`
+	} `json:"assistant_program"`
 }
 
-func TestReaperSongBlueprintV2SeedsConventionsAndPreservesLiveControlDisclosure(t *testing.T) {
+func TestReaperSongBlueprintV3DeclaresSharedProducerProgram(t *testing.T) {
 	root := filepath.Join("..", "..")
 	manifestData, err := os.ReadFile(filepath.Join(root, ".ori-plugin", "plugin.json")) // #nosec G304 -- fixed repository fixture
 	if err != nil {
@@ -48,11 +70,14 @@ func TestReaperSongBlueprintV2SeedsConventionsAndPreservesLiveControlDisclosure(
 	if err := json.Unmarshal(manifestData, &manifest); err != nil {
 		t.Fatal(err)
 	}
+	if !slices.Equal(manifest.RequiresHostFeatures, []string{"assistant_program_v1"}) {
+		t.Fatalf("requires_host_features = %v", manifest.RequiresHostFeatures)
+	}
 	if len(manifest.Blueprints) != 1 {
 		t.Fatalf("blueprints = %+v", manifest.Blueprints)
 	}
 	blueprint := manifest.Blueprints[0]
-	if blueprint.ID != "reaper-song" || blueprint.Version != 2 ||
+	if blueprint.ID != "reaper-song" || blueprint.Version != 3 ||
 		blueprint.Manifest != "blueprints/reaper-song/template.json" ||
 		blueprint.Skeleton != "blueprints/reaper-song/project" ||
 		!slices.Equal(blueprint.Capabilities, []string{"reaper-live-control"}) {
@@ -72,8 +97,30 @@ func TestReaperSongBlueprintV2SeedsConventionsAndPreservesLiveControlDisclosure(
 			t.Errorf("template does not bind %s", skill)
 		}
 	}
-	if len(template.Agents) != 1 || !slices.Contains(template.Agents[0].Tools.Skills, "reaper-project-tidy") {
-		t.Fatalf("producer does not bind tidy skill: %+v", template.Agents)
+	if len(template.Agents) != 0 {
+		t.Fatalf("assistant roster must be hired from the station, got legacy seeds: %+v", template.Agents)
+	}
+	program := template.AssistantProgram
+	if program.ID != "music-producer-assistant" || program.StationName != "Producer Home" || program.DefaultPrimaryName != "Producer" ||
+		!slices.Equal(program.SuggestionRequiredCapabilities, []string{"reaper_live_control"}) {
+		t.Fatalf("assistant program identity = %+v", program)
+	}
+	if len(program.Roles) != 3 || program.Roles[0].ID != "producer" || !program.Roles[0].Primary ||
+		program.Roles[1].ID != "engineer" || program.Roles[2].ID != "songwriter" {
+		t.Fatalf("assistant roles = %+v", program.Roles)
+	}
+	if !slices.Contains(program.Roles[0].Skills, "reaper-project-tidy") ||
+		!strings.Contains(program.Roles[0].SystemPrompt, "required_capabilities: [reaper_live_control]") ||
+		!strings.Contains(program.Roles[1].SystemPrompt, "Return composition") ||
+		!strings.Contains(program.Roles[2].SystemPrompt, "Return mixing") {
+		t.Fatalf("assistant role boundaries or gates are incomplete: %+v", program.Roles)
+	}
+	if len(program.Stages) != 2 || program.Stages[0].ID != "helper" || program.Stages[0].AcceptedCompletionThreshold != 0 ||
+		program.Stages[1].ID != "collaborator" || program.Stages[1].AcceptedCompletionThreshold != 5 {
+		t.Fatalf("assistant stages = %+v", program.Stages)
+	}
+	if program.Reflection.MinimumProjects != 3 || !strings.Contains(program.Reflection.Rubric, "three distinct linked projects") {
+		t.Fatalf("assistant reflection policy = %+v", program.Reflection)
 	}
 	if len(template.RuntimeRequirements.Requirements) != 1 {
 		t.Fatalf("runtime requirements = %+v", template.RuntimeRequirements.Requirements)
