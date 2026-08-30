@@ -1,5 +1,36 @@
 # Release notes
 
+## 0.5.0 — Shared Music Producer Assistant
+
+This release makes the Reaper Song blueprint opt in to Ori's generic shared
+assistant-program host contract. Creating a song links an inert Producer Home;
+the user explicitly hires a named Producer plus bounded Mix Engineer and
+Songwriter roles, then progresses from Helper to Collaborator through accepted
+work only.
+
+### Added
+
+- Blueprint-owned roster prompts, stage copy, reflection rubric, and
+  collaborator suggestion capability requirements.
+- Reaper Song blueprint version 3 with no automatically seeded legacy producer.
+- Explicit `assistant_program_v1` host compatibility requirement so older Ori
+  builds fail closed instead of silently dropping the assistant declaration.
+
+### Safety and compatibility
+
+- Conversation never controls REAPER. Suggested changes enter Action Center and
+  Backlog, then retain ordinary confirmation, readiness, capability, filesystem,
+  runtime, and undo gates.
+- Reflection is host-bounded and read-only; only user-approved learnings can
+  affect later prompts.
+- Plugin/service version: `0.5.0`
+- Reaper Song blueprint version: `3`
+- Required Ori host feature: `assistant_program_v1`
+- Workspace Surface protocol: `1`
+- Service artifact: macOS arm64 only
+- Release SHA-256 and size are pinned in `.ori-plugin/plugin.json`; publication
+  remains a separate, tag-triggered release-owner action.
+
 ## 0.4.0 — Project Tidy
 
 This release adds a propose-first, sound-safe cleanup workflow to plugin-created

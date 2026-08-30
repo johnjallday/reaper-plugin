@@ -72,18 +72,19 @@ Claude/Codex skill use can still follow the documented shell runner path.
 
 ## Ori Workspace Surface development
 
-The first supported service artifact is **macOS arm64**. Version **0.4.0** uses
-Workspace Surface protocol v1 and requires an Ori build that implements that
-protocol. The release artifact is 8,763,458 bytes with SHA-256
-`591d8703f5bebe6339e61f983faa896cd7cf82dce4d2915b2fb7dab6df096778`.
-The manifest downloads those exact bytes from the `v0.4.0` GitHub release.
+The first supported service artifact is **macOS arm64**. Version **0.5.0** uses
+Workspace Surface protocol v1 and requires an Ori build that implements both
+that protocol and the `assistant_program_v1` host feature. The release artifact
+is 8,763,458 bytes with SHA-256
+`ad4680d371024d43e2264c00b1a2e2a5a532343d31073e3754a94662bea2cb9d`.
+The manifest downloads those exact bytes from the `v0.5.0` GitHub release.
 Build and verify them reproducibly with:
 
 ```bash
 make artifact-local
 make test
 make test-ui
-make release-package VERSION=v0.4.0
+make release-package VERSION=v0.5.0
 ```
 
 The build pins Go 1.25.0, disables VCS stamping, uses `-trimpath`, and clears the
