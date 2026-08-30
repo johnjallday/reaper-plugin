@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "name": "reaper-plugin",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "protocol": {
     "min": 1,
     "max": 1
@@ -225,9 +225,9 @@
           "arch": "arm64",
           "source": {
             "kind": "https",
-            "url": "https://github.com/johnjallday/reaper-plugin/releases/download/v0.4.0/reaper-plugin_v0.4.0_darwin_arm64"
+            "url": "https://github.com/johnjallday/reaper-plugin/releases/download/v0.4.1/reaper-plugin_v0.4.1_darwin_arm64"
           },
-          "sha256": "591d8703f5bebe6339e61f983faa896cd7cf82dce4d2915b2fb7dab6df096778",
+          "sha256": "269ace4af1e07b0641d4c80fdef1715457dcebdf7d97de9fae2363458f02b793",
           "size": 8763458
         }
       ],
@@ -3242,12 +3242,15 @@
   "blueprints": [
     {
       "id": "reaper-song",
-      "version": 2,
+      "version": 3,
       "manifest": "blueprints/reaper-song/template.json",
       "skeleton": "blueprints/reaper-song/project",
       "capabilities": [
         "reaper-live-control"
       ]
     }
+  ],
+  "requires_host_features": [
+    "assistant_program_v1"
   ]
 }
