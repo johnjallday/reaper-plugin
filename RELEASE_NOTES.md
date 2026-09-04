@@ -1,5 +1,37 @@
 # Release notes
 
+## 0.5.0 candidate — Specialist setup and scoped assistants
+
+This unpublished candidate adds the inert contracts required by Ori's generic
+specialist setup journey. Reaper Song blueprint v4 supports separately reviewed
+new-project and attach-existing flows while keeping all filesystem selection,
+containment, workspace creation, and mutations in the host.
+
+### Added
+
+- Exact `new_project` and `existing_project` connection modes, with attach
+  discovery constrained to `.rpp` entries and starter tasks filtered by mode.
+- Assistant Program schema v2 role scope: one required Home Music Portfolio
+  Manager; required per-project Producer, Mix Engineer, and Songwriter; and one
+  optional Home Sample Library Manager associated with `sample_library`.
+- Required `specialist_setup_journey_v1` host feature alongside the existing
+  Assistant Program feature, so unsupported Ori builds fail before install.
+
+### Safety and compatibility
+
+- The plugin declaration remains data only. It contains no picker, scanner,
+  absolute path, command, route, setup action, or authority grant.
+- Existing-project connection does not write Ori metadata into the selected
+  folder and does not imply live control, staffing, indexing, or task execution.
+- Plugin/service version: `0.5.0`
+- Reaper Song blueprint version: `4`
+- Workspace Surface protocol: `1`
+- Candidate artifact: macOS arm64, `8,763,458` bytes
+- Candidate SHA-256: `ad4680d371024d43e2264c00b1a2e2a5a532343d31073e3754a94662bea2cb9d`
+- The candidate is not tagged or published. A human release owner must publish
+  the exact reviewed commit and asset before production installation is
+  available.
+
 ## 0.4.1 — Shared Music Producer Assistant
 
 This release makes the Reaper Song blueprint opt in to Ori's generic shared

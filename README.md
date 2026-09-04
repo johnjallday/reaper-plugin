@@ -72,19 +72,25 @@ Claude/Codex skill use can still follow the documented shell runner path.
 
 ## Ori Workspace Surface development
 
-The first supported service artifact is **macOS arm64**. Version **0.4.1** uses
+The first supported service artifact is **macOS arm64**. Version **0.5.0** uses
 Workspace Surface protocol v1 and requires an Ori build that implements both
-that protocol and the `assistant_program_v1` host feature. The release artifact
-is 8,763,458 bytes with SHA-256
+`assistant_program_v1` and `specialist_setup_journey_v1`. Reaper Song blueprint
+v4 declares host-owned new/existing project connection modes, `.rpp` selection
+constraints, mode-filtered starter tasks, and independently scoped Home/project
+roles; none of that inert metadata selects a picker, scanner, path, or adapter.
+
+The reviewed candidate artifact is 8,763,458 bytes with SHA-256
 `ad4680d371024d43e2264c00b1a2e2a5a532343d31073e3754a94662bea2cb9d`.
-The manifest downloads those exact bytes from the `v0.4.1` GitHub release.
-Build and verify them reproducibly with:
+The manifest targets those exact bytes at the future `v0.5.0` GitHub release.
+That tag and asset are not published by candidate preparation, so production
+installation remains unavailable until a human release owner publishes them.
+Build and verify the candidate reproducibly with:
 
 ```bash
 make artifact-local
 make test
 make test-ui
-make release-package VERSION=v0.4.1
+make release-package VERSION=v0.5.0
 ```
 
 The build pins Go 1.25.0, disables VCS stamping, uses `-trimpath`, and clears the
