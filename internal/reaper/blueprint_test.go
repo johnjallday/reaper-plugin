@@ -138,7 +138,7 @@ func TestReaperSongBlueprintV4DeclaresConnectionModesAndSharedProducerProgram(t 
 		program.Roles[2].ID != "engineer" || program.Roles[2].Scope != "project" || !program.Roles[2].Required ||
 		program.Roles[3].ID != "songwriter" || program.Roles[3].Scope != "project" || !program.Roles[3].Required ||
 		program.Roles[4].ID != "sample_library_manager" || program.Roles[4].Scope != "home" ||
-		program.Roles[4].Required || program.Roles[4].CapabilityID != "sample_library" {
+		program.Roles[4].Required || program.Roles[4].CapabilityID != "sample-library" {
 		t.Fatalf("assistant scoped roles = %+v", program.Roles)
 	}
 	if !slices.Contains(program.Roles[1].Skills, "reaper-project-tidy") ||
