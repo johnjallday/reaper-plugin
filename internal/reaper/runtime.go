@@ -17,9 +17,15 @@ type HostContext struct {
 	Scopes         []string `json:"scopes,omitempty"`
 }
 
+type RuntimeRepairReview struct {
+	Destination        string `json:"destination"`
+	ManualRegistration string `json:"manual_registration"`
+}
+
 type ReadyResult struct {
-	Ready   bool   `json:"ready"`
-	Summary string `json:"summary"`
+	Ready        bool                 `json:"ready"`
+	Summary      string               `json:"summary"`
+	RepairReview *RuntimeRepairReview `json:"repair_review,omitempty"`
 }
 
 type LiveStatusResult struct {
@@ -28,8 +34,9 @@ type LiveStatusResult struct {
 }
 
 type VerificationResult struct {
-	Verified bool   `json:"verified"`
-	Summary  string `json:"summary"`
+	Verified   bool   `json:"verified"`
+	Summary    string `json:"summary"`
+	ReasonCode string `json:"reason_code,omitempty"`
 }
 
 type RepairResult struct {
@@ -58,15 +65,22 @@ func (p *RuntimeProvider) Prerequisites(ctx context.Context, _ HostContext) Read
 		return ReadyResult{Summary: "Guided REAPER control is unsupported on this platform. File-only work remains available."}
 	}
 	if application.State != ProbeReady {
-		return ReadyResult{Summary: "REAPER is not installed in a supported application location."}
+		return ReadyResult{Summary: "Install REAPER in a supported application location, then check again. Ori does not install or open it automatically."}
 	}
 	web := p.probes.WebRemote.DetectWebRemote(ctx)
 	if web.State != ProbeReady {
-		return ReadyResult{Summary: "REAPER Web Remote is not configured and enabled."}
+		return ReadyResult{Summary: "In REAPER, open Preferences, choose Control/OSC/web, add the Web browser interface, enable it, then check again. Ori does not change REAPER preferences."}
 	}
 	runner := p.probes.Runner.DetectRunner(ctx)
 	if runner.State != ProbeReady {
-		return ReadyResult{Summary: "The Ori REAPER runner is not registered yet."}
+		result := ReadyResult{Summary: "The Ori REAPER runner is not registered yet."}
+		if destination := p.manager.RunnerScriptPath(); destination != "" {
+			result.RepairReview = &RuntimeRepairReview{
+				Destination:        destination,
+				ManualRegistration: "After staging, open REAPER's Action List, load the staged script, and run it once. Staging alone does not prove registration.",
+			}
+		}
+		return result
 	}
 	return ReadyResult{Ready: true, Summary: "REAPER, Web Remote, and the registered runner are available."}
 }
@@ -96,16 +110,19 @@ func (p *RuntimeProvider) LiveStatus(ctx context.Context, host HostContext) Live
 }
 
 func (p *RuntimeProvider) Verify(ctx context.Context, host HostContext) VerificationResult {
-	if p == nil || p.probes.WebRemote == nil || p.probes.Runner == nil || p.probes.Transport == nil || p.probes.Verifier == nil || !validHostProject(host.ProjectEntry) {
-		return VerificationResult{Summary: "The REAPER connection could not be verified."}
+	if p == nil || p.probes.WebRemote == nil || p.probes.Runner == nil || p.probes.Transport == nil || p.probes.Verifier == nil {
+		return VerificationResult{Summary: "The REAPER connection could not be verified.", ReasonCode: "verification_unavailable"}
+	}
+	if !validHostProject(host.ProjectEntry) {
+		return VerificationResult{Summary: "The workspace's authoritative REAPER project is unavailable.", ReasonCode: "unsafe_project"}
 	}
 	if ready := p.Prerequisites(ctx, host); !ready.Ready {
-		return VerificationResult{Summary: ready.Summary}
+		return VerificationResult{Summary: ready.Summary, ReasonCode: "prerequisite_missing"}
 	}
 	web := p.probes.WebRemote.DetectWebRemote(ctx)
 	transport := p.probes.Transport.CheckTransport(ctx, web)
 	if transport.State != TransportAvailable {
-		return VerificationResult{Summary: "REAPER is offline or its Web Remote interface is unavailable."}
+		return VerificationResult{Summary: "REAPER is offline or its Web Remote interface is unavailable.", ReasonCode: "offline"}
 	}
 	if transport.Port > 0 {
 		web.Port = transport.Port
@@ -114,7 +131,7 @@ func (p *RuntimeProvider) Verify(ctx context.Context, host HostContext) Verifica
 		ExpectedProject: host.ProjectEntry, WebRemote: web, Runner: p.probes.Runner.DetectRunner(ctx), Timeout: 6 * time.Second,
 	})
 	if result.State != VerificationSucceeded {
-		return VerificationResult{Summary: verificationSummary(result.State)}
+		return VerificationResult{Summary: verificationSummary(result.State), ReasonCode: verificationReasonCode(result.State)}
 	}
 	return VerificationResult{Verified: true, Summary: "The trusted REAPER connection test matched this workspace project."}
 }
@@ -138,6 +155,23 @@ func (p *RuntimeProvider) Repair(ctx context.Context, host HostContext) RepairRe
 func validHostProject(path string) bool {
 	path = strings.TrimSpace(path)
 	return filepath.IsAbs(path) && strings.HasSuffix(strings.ToLower(path), ".rpp")
+}
+
+func verificationReasonCode(state string) string {
+	switch state {
+	case VerificationWrongProject:
+		return "wrong_project"
+	case VerificationProjectMissing:
+		return "no_project"
+	case VerificationTimedOut:
+		return "timeout"
+	case VerificationPermissionDenied:
+		return "unsafe_exchange"
+	case VerificationRunnerFailed:
+		return "runner_failed"
+	default:
+		return "invalid_response"
+	}
 }
 
 func verificationSummary(state string) string {

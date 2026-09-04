@@ -19,6 +19,16 @@ func (m *Manager) OriDir() string {
 	home, _ := os.UserHomeDir()
 	return filepath.Join(home, ".ori-reaper")
 }
+func (m *Manager) RunnerScriptPath() string {
+	if m == nil {
+		return ""
+	}
+	dir := filepath.Clean(expandHome(m.ScriptsDir))
+	if !filepath.IsAbs(dir) || dir == "." {
+		return ""
+	}
+	return filepath.Join(dir, runnerScriptName)
+}
 func (m *Manager) InboxPath() string    { return filepath.Join(m.OriDir(), "inbox.lua") }
 func (m *Manager) RunnerIDPath() string { return filepath.Join(m.OriDir(), "runner.id") }
 func (m *Manager) statusPath() string   { return filepath.Join(m.OriDir(), "last_status.txt") }
@@ -46,7 +56,7 @@ func (m *Manager) InstallRunner() (string, error) {
 	if err != nil || !info.IsDir() || info.Mode()&os.ModeSymlink != 0 {
 		return "", ErrRunnerUnavailable
 	}
-	dest := filepath.Join(dir, runnerScriptName)
+	dest := m.RunnerScriptPath()
 	if existing, statErr := os.Lstat(dest); statErr == nil && (existing.Mode()&os.ModeSymlink != 0 || !existing.Mode().IsRegular()) {
 		return "", ErrRunnerUnavailable
 	}
