@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "name": "reaper-plugin",
-  "version": "0.4.1",
+  "version": "0.5.0",
   "protocol": {
     "min": 1,
     "max": 1
@@ -225,10 +225,10 @@
           "arch": "arm64",
           "source": {
             "kind": "https",
-            "url": "https://github.com/johnjallday/reaper-plugin/releases/download/v0.4.1/reaper-plugin_v0.4.1_darwin_arm64"
+            "url": "https://github.com/johnjallday/reaper-plugin/releases/download/v0.5.0/reaper-plugin_v0.5.0_darwin_arm64"
           },
-          "sha256": "269ace4af1e07b0641d4c80fdef1715457dcebdf7d97de9fae2363458f02b793",
-          "size": 8763458
+          "sha256": "2bbf6b77418119cb21e827a407c8d5886e3effdb593ec0ad274e20d7d69c2ca9",
+          "size": 8780098
         }
       ],
       "operations": [
@@ -339,6 +339,24 @@
               "summary": {
                 "type": "string",
                 "maxLength": 500
+              },
+              "repair_review": {
+                "type": "object",
+                "properties": {
+                  "destination": {
+                    "type": "string",
+                    "maxLength": 512
+                  },
+                  "manual_registration": {
+                    "type": "string",
+                    "maxLength": 500
+                  }
+                },
+                "required": [
+                  "destination",
+                  "manual_registration"
+                ],
+                "additionalProperties": false
               }
             },
             "required": [
@@ -369,6 +387,24 @@
               "summary": {
                 "type": "string",
                 "maxLength": 500
+              },
+              "repair_review": {
+                "type": "object",
+                "properties": {
+                  "destination": {
+                    "type": "string",
+                    "maxLength": 512
+                  },
+                  "manual_registration": {
+                    "type": "string",
+                    "maxLength": 500
+                  }
+                },
+                "required": [
+                  "destination",
+                  "manual_registration"
+                ],
+                "additionalProperties": false
               }
             },
             "required": [
@@ -429,6 +465,10 @@
               "summary": {
                 "type": "string",
                 "maxLength": 500
+              },
+              "reason_code": {
+                "type": "string",
+                "maxLength": 64
               }
             },
             "required": [
@@ -3242,7 +3282,7 @@
   "blueprints": [
     {
       "id": "reaper-song",
-      "version": 3,
+      "version": 4,
       "manifest": "blueprints/reaper-song/template.json",
       "skeleton": "blueprints/reaper-song/project",
       "capabilities": [
@@ -3251,6 +3291,7 @@
     }
   ],
   "requires_host_features": [
-    "assistant_program_v1"
+    "assistant_program_v1",
+    "specialist_setup_journey_v1"
   ]
 }

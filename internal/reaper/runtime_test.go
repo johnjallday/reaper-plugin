@@ -2,6 +2,7 @@ package reaper
 
 import (
 	"context"
+	"strings"
 	"testing"
 )
 
@@ -38,7 +39,7 @@ func readyRuntimeProbe() *runtimeProbe {
 }
 
 func runtimeProviderWith(probe *runtimeProbe) *RuntimeProvider {
-	return NewRuntimeProvider(&Manager{}, ProbeSet{Application: probe, WebRemote: probe, Runner: probe, Transport: probe, Verifier: probe})
+	return NewRuntimeProvider(&Manager{ScriptsDir: "/trusted/reaper-scripts"}, ProbeSet{Application: probe, WebRemote: probe, Runner: probe, Transport: probe, Verifier: probe})
 }
 
 func TestRuntimeProviderChecksInjectedDomainFactsAndHostProject(t *testing.T) {
@@ -59,6 +60,38 @@ func TestRuntimeProviderChecksInjectedDomainFactsAndHostProject(t *testing.T) {
 	}
 	if probe.target.ExpectedProject != host.ProjectEntry || probe.target.WebRemote.Port != 2308 {
 		t.Fatalf("verification target = %+v", probe.target)
+	}
+}
+
+func TestRuntimeProviderProjectsExactRunnerReviewWithoutClaimingRegistration(t *testing.T) {
+	probe := readyRuntimeProbe()
+	probe.runner.State = ProbeMissing
+	result := runtimeProviderWith(probe).Prerequisites(context.Background(), HostContext{})
+	if result.Ready || result.RepairReview == nil || result.RepairReview.Destination != "/trusted/reaper-scripts/ori-reaper-runner.lua" {
+		t.Fatalf("runner review = %+v", result)
+	}
+	if !strings.Contains(result.RepairReview.ManualRegistration, "Action List") || !strings.Contains(result.RepairReview.ManualRegistration, "does not prove registration") {
+		t.Fatalf("runner registration review = %+v", result.RepairReview)
+	}
+}
+
+func TestRuntimeProviderReturnsBoundedVerificationReasons(t *testing.T) {
+	for _, test := range []struct {
+		state string
+		reason string
+	}{
+		{VerificationWrongProject, "wrong_project"},
+		{VerificationProjectMissing, "no_project"},
+		{VerificationTimedOut, "timeout"},
+		{VerificationPermissionDenied, "unsafe_exchange"},
+		{VerificationRunnerFailed, "runner_failed"},
+	} {
+		probe := readyRuntimeProbe()
+		probe.verification.State = test.state
+		result := runtimeProviderWith(probe).Verify(context.Background(), HostContext{ProjectEntry: "/trusted/Song.rpp"})
+		if result.Verified || result.ReasonCode != test.reason || result.Summary == "" {
+			t.Fatalf("verify %q = %+v", test.state, result)
+		}
 	}
 }
 

@@ -35,7 +35,7 @@ func ApplyServiceHomeOverride() error {
 	if err != nil || !filepath.IsAbs(absolute) {
 		return fmt.Errorf("REAPER service home is invalid")
 	}
-	info, err := os.Lstat(absolute) // #nosec G304 -- explicit operator environment, checked before process use
+	info, err := os.Lstat(absolute) // #nosec G304 G703 -- explicit operator environment, checked before process use
 	if err != nil || !info.IsDir() || info.Mode()&os.ModeSymlink != 0 {
 		return fmt.Errorf("REAPER service home is unsafe")
 	}

@@ -16,5 +16,5 @@ set -- $declared
 [ "$actual_sha" = "$1" ] || { echo "artifact digest mismatch" >&2; exit 1; }
 [ "$actual_size" = "$2" ] || { echo "artifact size mismatch" >&2; exit 1; }
 [ "$(stat -f '%Lp' "$artifact")" = 755 ] || { echo "artifact mode must be 0755 before packaging" >&2; exit 1; }
-"./$artifact" version | grep -qx '0.4.1' || { echo "artifact CLI version contract changed unexpectedly" >&2; exit 1; }
+"./$artifact" version | grep -qx '0.5.0' || { echo "artifact CLI version contract changed unexpectedly" >&2; exit 1; }
 printf 'verified %s bytes sha256=%s\n' "$actual_size" "$actual_sha"

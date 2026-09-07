@@ -34,6 +34,10 @@ jobs:
         run: node --test ui/**/*.test.js
       - name: Package verified release asset
         run: ./scripts/package-release.sh "$GITHUB_REF_NAME"
+      - name: Check binary vulnerabilities
+        run: |
+          go install golang.org/x/vuln/cmd/govulncheck@v1.3.0
+          govulncheck -mode=binary "dist/reaper-plugin_${GITHUB_REF_NAME}_darwin_arm64"
       - name: Publish GitHub release
         env:
           GH_TOKEN: ${{ github.token }}

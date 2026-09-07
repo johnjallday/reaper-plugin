@@ -1,5 +1,52 @@
 # Release notes
 
+## 0.5.0 — Specialist setup and scoped assistants
+
+This release adds the inert contracts required by Ori's generic
+specialist setup journey. Reaper Song blueprint v4 supports separately reviewed
+new-project and attach-existing flows while keeping all filesystem selection,
+containment, workspace creation, and mutations in the host.
+
+### Added
+
+- Exact `new_project` and `existing_project` connection modes, with attach
+  discovery constrained to `.rpp` entries and starter tasks filtered by mode.
+- Assistant Program schema v2 role scope: one required Home Music Portfolio
+  Manager; required per-project Producer, Mix Engineer, and Songwriter; and one
+  optional Home Sample Library Manager associated with `sample_library`.
+- Required `specialist_setup_journey_v1` host feature alongside the existing
+  Assistant Program feature, so unsupported Ori builds fail before install.
+- Runtime prerequisite/readiness disclosure names the exact staged runner
+  destination and required manual Action List registration. Staging does not
+  count as registration or live verification.
+- Bounded verification reason codes distinguish offline, wrong/missing project,
+  timeout, unsafe exchange, runner failure, and invalid response.
+
+### Safety and compatibility
+
+- The plugin declaration remains data only. It contains no picker, scanner,
+  absolute path, command, route, setup action, or authority grant.
+- Existing-project connection does not write Ori metadata into the selected
+  folder and does not imply live control, staffing, indexing, or task execution.
+- Build toolchain: Go `1.25.13`, replacing the original candidate's Go 1.25.0
+  standard library. CI and release publishing check the actual binary with
+  `govulncheck`, in addition to tests and artifact identity checks.
+- Plugin/service version: `0.5.0`
+- Reaper Song blueprint version: `4`
+- Workspace Surface protocol: `1`
+- Release artifact: macOS arm64, `8,780,098` bytes
+- Release SHA-256: `2bbf6b77418119cb21e827a407c8d5886e3effdb593ec0ad274e20d7d69c2ca9`
+- Publication does not unlock Ori's reviewed installation gate. Ori still needs
+  a separate final-source-pin and enablement change after remote-byte verification.
+- Live REAPER control has not been revalidated for this version against a real
+  session. Publication was authorized with that limitation outstanding;
+  deterministic tests and local installation do not replace separately approved
+  disposable-project live validation or grant application access.
+- The current scoped-team host browser suite passes 11/11. The older coordinated
+  command remains 3/4: one host test expects obsolete shared-roster behavior.
+  That test still needs reconciliation; this release does not claim it passed.
+  See [release preparation](docs/release-v0.5.0.md) for the complete evidence.
+
 ## 0.4.1 — Shared Music Producer Assistant
 
 This release makes the Reaper Song blueprint opt in to Ori's generic shared

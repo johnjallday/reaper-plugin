@@ -2,7 +2,7 @@
 set -eu
 
 repo_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
-release_toolchain=go1.25.0
+release_toolchain=go1.25.13
 artifact="$repo_root/artifacts/reaper-plugin-darwin-arm64"
 manifest="$repo_root/.ori-plugin/plugin.json"
 mkdir -p "$repo_root/artifacts"

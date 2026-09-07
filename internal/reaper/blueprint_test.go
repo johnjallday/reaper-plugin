@@ -22,6 +22,17 @@ type reaperPluginBlueprintManifest struct {
 }
 
 type reaperSongTemplate struct {
+	ProjectConnection struct {
+		SchemaVersion  int      `json:"schema_version"`
+		SupportedModes []string `json:"supported_modes"`
+		AttachExisting struct {
+			EntryExtensions []string `json:"entry_extensions"`
+		} `json:"attach_existing"`
+	} `json:"project_connection"`
+	StarterTasks []struct {
+		Description     string   `json:"description"`
+		ConnectionModes []string `json:"connection_modes"`
+	} `json:"starter_tasks"`
 	Tools struct {
 		Skills []string `json:"skills"`
 	} `json:"tools"`
@@ -38,6 +49,7 @@ type reaperSongTemplate struct {
 		} `json:"requirements"`
 	} `json:"runtime_requirements"`
 	AssistantProgram struct {
+		SchemaVersion                  int      `json:"schema_version"`
 		ID                             string   `json:"id"`
 		StationName                    string   `json:"station_name"`
 		DefaultPrimaryName             string   `json:"default_primary_name"`
@@ -45,6 +57,9 @@ type reaperSongTemplate struct {
 		Roles                          []struct {
 			ID           string   `json:"id"`
 			Label        string   `json:"label"`
+			Scope        string   `json:"scope"`
+			Required     bool     `json:"required"`
+			CapabilityID string   `json:"capability_id"`
 			Primary      bool     `json:"primary"`
 			SystemPrompt string   `json:"system_prompt"`
 			Skills       []string `json:"skills"`
@@ -60,7 +75,7 @@ type reaperSongTemplate struct {
 	} `json:"assistant_program"`
 }
 
-func TestReaperSongBlueprintV3DeclaresSharedProducerProgram(t *testing.T) {
+func TestReaperSongBlueprintV4DeclaresConnectionModesAndSharedProducerProgram(t *testing.T) {
 	root := filepath.Join("..", "..")
 	manifestData, err := os.ReadFile(filepath.Join(root, ".ori-plugin", "plugin.json")) // #nosec G304 -- fixed repository fixture
 	if err != nil {
@@ -70,14 +85,14 @@ func TestReaperSongBlueprintV3DeclaresSharedProducerProgram(t *testing.T) {
 	if err := json.Unmarshal(manifestData, &manifest); err != nil {
 		t.Fatal(err)
 	}
-	if !slices.Equal(manifest.RequiresHostFeatures, []string{"assistant_program_v1"}) {
+	if !slices.Equal(manifest.RequiresHostFeatures, []string{"assistant_program_v1", "specialist_setup_journey_v1"}) {
 		t.Fatalf("requires_host_features = %v", manifest.RequiresHostFeatures)
 	}
 	if len(manifest.Blueprints) != 1 {
 		t.Fatalf("blueprints = %+v", manifest.Blueprints)
 	}
 	blueprint := manifest.Blueprints[0]
-	if blueprint.ID != "reaper-song" || blueprint.Version != 3 ||
+	if blueprint.ID != "reaper-song" || blueprint.Version != 4 ||
 		blueprint.Manifest != "blueprints/reaper-song/template.json" ||
 		blueprint.Skeleton != "blueprints/reaper-song/project" ||
 		!slices.Equal(blueprint.Capabilities, []string{"reaper-live-control"}) {
@@ -92,6 +107,16 @@ func TestReaperSongBlueprintV3DeclaresSharedProducerProgram(t *testing.T) {
 	if err := json.Unmarshal(templateData, &template); err != nil {
 		t.Fatal(err)
 	}
+	if template.ProjectConnection.SchemaVersion != 1 ||
+		!slices.Equal(template.ProjectConnection.SupportedModes, []string{"new_project", "existing_project"}) ||
+		!slices.Equal(template.ProjectConnection.AttachExisting.EntryExtensions, []string{".rpp"}) {
+		t.Fatalf("project connection declaration = %+v", template.ProjectConnection)
+	}
+	if len(template.StarterTasks) != 2 ||
+		!slices.Equal(template.StarterTasks[0].ConnectionModes, []string{"new_project"}) ||
+		!slices.Equal(template.StarterTasks[1].ConnectionModes, []string{"new_project", "existing_project"}) {
+		t.Fatalf("starter task connection modes = %+v", template.StarterTasks)
+	}
 	for _, skill := range []string{"reaper-session-setup", "reaper-web-remote", "reaper-project-tidy"} {
 		if !slices.Contains(template.Tools.Skills, skill) {
 			t.Errorf("template does not bind %s", skill)
@@ -101,18 +126,25 @@ func TestReaperSongBlueprintV3DeclaresSharedProducerProgram(t *testing.T) {
 		t.Fatalf("assistant roster must be hired from the station, got legacy seeds: %+v", template.Agents)
 	}
 	program := template.AssistantProgram
-	if program.ID != "music-producer-assistant" || program.StationName != "Producer Home" || program.DefaultPrimaryName != "Producer" ||
+	if program.SchemaVersion != 2 || program.ID != "music-producer-assistant" ||
+		program.StationName != "Music Production Home" || program.DefaultPrimaryName != "Portfolio Manager" ||
 		!slices.Equal(program.SuggestionRequiredCapabilities, []string{"reaper_live_control"}) {
 		t.Fatalf("assistant program identity = %+v", program)
 	}
-	if len(program.Roles) != 3 || program.Roles[0].ID != "producer" || !program.Roles[0].Primary ||
-		program.Roles[1].ID != "engineer" || program.Roles[2].ID != "songwriter" {
-		t.Fatalf("assistant roles = %+v", program.Roles)
+	if len(program.Roles) != 5 || program.Roles[0].ID != "portfolio_manager" ||
+		program.Roles[0].Scope != "home" || !program.Roles[0].Required || !program.Roles[0].Primary ||
+		program.Roles[1].ID != "producer" || program.Roles[1].Scope != "project" ||
+		!program.Roles[1].Required || !program.Roles[1].Primary ||
+		program.Roles[2].ID != "engineer" || program.Roles[2].Scope != "project" || !program.Roles[2].Required ||
+		program.Roles[3].ID != "songwriter" || program.Roles[3].Scope != "project" || !program.Roles[3].Required ||
+		program.Roles[4].ID != "sample_library_manager" || program.Roles[4].Scope != "home" ||
+		program.Roles[4].Required || program.Roles[4].CapabilityID != "sample-library" {
+		t.Fatalf("assistant scoped roles = %+v", program.Roles)
 	}
-	if !slices.Contains(program.Roles[0].Skills, "reaper-project-tidy") ||
-		!strings.Contains(program.Roles[0].SystemPrompt, "required_capabilities: [reaper_live_control]") ||
-		!strings.Contains(program.Roles[1].SystemPrompt, "Return composition") ||
-		!strings.Contains(program.Roles[2].SystemPrompt, "Return mixing") {
+	if !slices.Contains(program.Roles[1].Skills, "reaper-project-tidy") ||
+		!strings.Contains(program.Roles[1].SystemPrompt, "required_capabilities: [reaper_live_control]") ||
+		!strings.Contains(program.Roles[2].SystemPrompt, "Return composition") ||
+		!strings.Contains(program.Roles[3].SystemPrompt, "Return mixing") {
 		t.Fatalf("assistant role boundaries or gates are incomplete: %+v", program.Roles)
 	}
 	if len(program.Stages) != 2 || program.Stages[0].ID != "helper" || program.Stages[0].AcceptedCompletionThreshold != 0 ||
