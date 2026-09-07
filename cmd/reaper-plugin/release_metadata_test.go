@@ -36,6 +36,29 @@ func TestReleaseBuildPinsTheModulePatchToolchain(t *testing.T) {
 	}
 }
 
+func TestReleaseWorkflowsCheckCommittedBytesBeforePublication(t *testing.T) {
+	for _, name := range []string{"ci.yml", "release.yml"} {
+		t.Run(name, func(t *testing.T) {
+			data, err := os.ReadFile("../../.github/workflows/" + name) // #nosec G304 -- fixed workflow files
+			if err != nil {
+				t.Fatal(err)
+			}
+			text := string(data)
+			packaging := strings.Index(text, "./scripts/package-release.sh")
+			scanning := strings.Index(text, "govulncheck -mode=binary")
+			if packaging < 0 || scanning < packaging {
+				t.Fatal("check the committed manifest with the release packager before scanning its binary")
+			}
+			if strings.Contains(text, "continue-on-error:") || strings.Contains(text, "|| true") {
+				t.Fatal("release-validation failures must not be ignored")
+			}
+			if name == "release.yml" && strings.Index(text, "gh release create") < scanning {
+				t.Fatal("publication must follow successful packaging and scanning")
+			}
+		})
+	}
+}
+
 func TestCurrentReleaseMetadataMatchesServiceAndDocs(t *testing.T) {
 	data, err := os.ReadFile("../../.ori-plugin/plugin.json")
 	if err != nil {
