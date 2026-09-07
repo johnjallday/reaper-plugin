@@ -79,11 +79,11 @@ v4 declares host-owned new/existing project connection modes, `.rpp` selection
 constraints, mode-filtered starter tasks, and independently scoped Home/project
 roles; none of that inert metadata selects a picker, scanner, path, or adapter.
 
-The release candidate artifact is 8,780,098 bytes with SHA-256
+The `v0.5.0` artifact is 8,780,098 bytes with SHA-256
 `2bbf6b77418119cb21e827a407c8d5886e3effdb593ec0ad274e20d7d69c2ca9`.
-The manifest targets those exact bytes at the future `v0.5.0` GitHub release.
-That tag and asset are not published by candidate preparation, so production
-installation remains unavailable until a human release owner publishes them.
+The manifest pins those exact bytes at the `v0.5.0` GitHub release URL.
+Publication alone does not unlock Ori's reviewed installation gate: the host
+needs a separate final-source-pin and enablement change after remote verification.
 Build and verify the candidate reproducibly with:
 
 ```bash
@@ -96,7 +96,7 @@ make release-package VERSION=v0.5.0
 Packaging is local and does not publish. Pushing a `v*` tag triggers the release
 workflow and uploads the verified binary plus its checksum; that requires a
 separate release-owner approval. See [release preparation](docs/release-v0.5.0.md)
-for the validation record, remaining live-test gate, and subsequent Ori unlock.
+for the validation record, outstanding live-test limitation, and subsequent Ori unlock.
 
 The build pins Go 1.25.13, disables VCS stamping, uses `-trimpath`, and clears the
 build ID; repeating it from unchanged Go source produces identical bytes across

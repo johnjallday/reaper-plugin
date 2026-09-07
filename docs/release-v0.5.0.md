@@ -1,8 +1,10 @@
 # v0.5.0 release preparation
 
-This is a source-review candidate, **not publication approval**. Ori's production
-reviewed-integration registry remains `ReleaseReady: false`. No real REAPER
-session was controlled during this release-preparation pass.
+The release owner has now authorized squash-merge and `v0.5.0` publication.
+The live-validation and stale host-test limitations below remain outstanding;
+publication approval does not make those checks pass or grant application access.
+Ori's production reviewed-integration registry remains `ReleaseReady: false`.
+No real REAPER session was controlled during this release-preparation pass.
 
 ## Candidate identity
 
@@ -87,14 +89,15 @@ correct rerun used fresh `reaper-demo.sh serve` state, which explicitly preinsta
 the development copy, and all 11 domain cases passed. Compiler/linker warnings
 from `go-m1cpu`/macOS were non-failing and retained in the local logs.
 
-## Remaining release boundaries
+## Publication and follow-up boundaries
 
 1. Review and merge this plugin source PR. Record the final immutable source
    commit; a squash merge changes it. CI must pass on the reviewed source.
 2. Reconcile the stale coordinated host browser test. Obtain separate approval
-   before live testing against a disposable REAPER project. The live-smoke
-   scripts can change the real app and `$HOME/.ori-reaper`; deterministic tests
-   above do not replace that validation.
+   before live testing against a disposable REAPER project. These remain open
+   follow-ups, not completed checks. The live-smoke scripts can change the real
+   app and `$HOME/.ori-reaper`; deterministic tests above do not replace that
+   validation.
 3. After release review and explicit human publication approval, use the existing
    tag workflow. **Pushing any `v*` tag is the publication boundary**, not a dry
    run. Local `make release-package VERSION=v0.5.0` creates files only.

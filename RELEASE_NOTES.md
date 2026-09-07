@@ -1,8 +1,8 @@
 # Release notes
 
-## 0.5.0 candidate — Specialist setup and scoped assistants
+## 0.5.0 — Specialist setup and scoped assistants
 
-This unpublished candidate adds the inert contracts required by Ori's generic
+This release adds the inert contracts required by Ori's generic
 specialist setup journey. Reaper Song blueprint v4 supports separately reviewed
 new-project and attach-existing flows while keeping all filesystem selection,
 containment, workspace creation, and mutations in the host.
@@ -34,15 +34,18 @@ containment, workspace creation, and mutations in the host.
 - Plugin/service version: `0.5.0`
 - Reaper Song blueprint version: `4`
 - Workspace Surface protocol: `1`
-- Candidate artifact: macOS arm64, `8,780,098` bytes
-- Candidate SHA-256: `2bbf6b77418119cb21e827a407c8d5886e3effdb593ec0ad274e20d7d69c2ca9`
-- The candidate is not tagged or published. A human release owner must publish
-  the exact reviewed commit and asset before production installation is
-  available.
-- Live REAPER control has not been revalidated for this candidate against a real
-  session. A separately approved disposable-project smoke test remains a
-  release gate; deterministic tests and local artifact installation do not
-  replace that evidence. See [release preparation](docs/release-v0.5.0.md).
+- Release artifact: macOS arm64, `8,780,098` bytes
+- Release SHA-256: `2bbf6b77418119cb21e827a407c8d5886e3effdb593ec0ad274e20d7d69c2ca9`
+- Publication does not unlock Ori's reviewed installation gate. Ori still needs
+  a separate final-source-pin and enablement change after remote-byte verification.
+- Live REAPER control has not been revalidated for this version against a real
+  session. Publication was authorized with that limitation outstanding;
+  deterministic tests and local installation do not replace separately approved
+  disposable-project live validation or grant application access.
+- The current scoped-team host browser suite passes 11/11. The older coordinated
+  command remains 3/4: one host test expects obsolete shared-roster behavior.
+  That test still needs reconciliation; this release does not claim it passed.
+  See [release preparation](docs/release-v0.5.0.md) for the complete evidence.
 
 ## 0.4.1 — Shared Music Producer Assistant
 
