@@ -24,3 +24,7 @@ jobs:
       - run: node --test ui/**/*.test.js
       - run: ./scripts/build-local-artifact.sh
       - run: ./scripts/verify-artifact.sh
+      - name: Check binary vulnerabilities
+        run: |
+          go install golang.org/x/vuln/cmd/govulncheck@v1.3.0
+          govulncheck -mode=binary artifacts/reaper-plugin-darwin-arm64

@@ -16,6 +16,11 @@ containment, workspace creation, and mutations in the host.
   optional Home Sample Library Manager associated with `sample_library`.
 - Required `specialist_setup_journey_v1` host feature alongside the existing
   Assistant Program feature, so unsupported Ori builds fail before install.
+- Runtime prerequisite/readiness disclosure names the exact staged runner
+  destination and required manual Action List registration. Staging does not
+  count as registration or live verification.
+- Bounded verification reason codes distinguish offline, wrong/missing project,
+  timeout, unsafe exchange, runner failure, and invalid response.
 
 ### Safety and compatibility
 
@@ -23,14 +28,21 @@ containment, workspace creation, and mutations in the host.
   absolute path, command, route, setup action, or authority grant.
 - Existing-project connection does not write Ori metadata into the selected
   folder and does not imply live control, staffing, indexing, or task execution.
+- Build toolchain: Go `1.25.13`, replacing the original candidate's Go 1.25.0
+  standard library. CI and release publishing check the actual binary with
+  `govulncheck`, in addition to tests and artifact identity checks.
 - Plugin/service version: `0.5.0`
 - Reaper Song blueprint version: `4`
 - Workspace Surface protocol: `1`
-- Candidate artifact: macOS arm64, `8,763,458` bytes
-- Candidate SHA-256: `ad4680d371024d43e2264c00b1a2e2a5a532343d31073e3754a94662bea2cb9d`
+- Candidate artifact: macOS arm64, `8,780,098` bytes
+- Candidate SHA-256: `2bbf6b77418119cb21e827a407c8d5886e3effdb593ec0ad274e20d7d69c2ca9`
 - The candidate is not tagged or published. A human release owner must publish
   the exact reviewed commit and asset before production installation is
   available.
+- Live REAPER control has not been revalidated for this candidate against a real
+  session. A separately approved disposable-project smoke test remains a
+  release gate; deterministic tests and local artifact installation do not
+  replace that evidence. See [release preparation](docs/release-v0.5.0.md).
 
 ## 0.4.1 — Shared Music Producer Assistant
 
