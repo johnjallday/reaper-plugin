@@ -70,33 +70,58 @@ Ori capability-scoped Codex tasks keep arbitrary localhost access disabled and
 call exact brokered `tidy.survey` / `tidy.apply_selection` operations. Portable
 Claude/Codex skill use can still follow the documented shell runner path.
 
+## Plugin-owned guided setup
+
+The plugin now carries the complete inert `reaper_setup` quest in
+[`.ori-plugin/plugin.json`](.ori-plugin/plugin.json). Reaper Song references it
+with `"setup_quest": "reaper_setup"`. On an Ori build with setup-quest support,
+Plugins, Templates, the workspace picker, and the accepted assistant alias
+resume the same saved setup; no assistant acceptance is needed for the first
+three entry points.
+
+Ori still owns the UI and all execution: reviewed installation, group creation
+or reuse, optional REAPER preparation, and workspace creation/import. The
+existing `setup_wizard` continues after workspace creation. File-only mode,
+project-specific live permissions, exact-project verification, staffing scopes,
+and confirmation boundaries are unchanged. Merely opening setup grants nothing.
+
+Quest schema/version **1** and all five step IDs are unchanged from Ori's
+compatibility declaration. This is an ownership extraction, not a new workflow
+or a reset of progress. Quest declarations are read-only in Ori; user-authored
+quest editing is not part of this plugin change.
+
 ## Ori Workspace Surface development
 
-The first supported service artifact is **macOS arm64**. Version **0.5.0** uses
-Workspace Surface protocol v1 and requires an Ori build that implements both
-`assistant_program_v1` and `specialist_setup_journey_v1`. Reaper Song blueprint
-v4 declares host-owned new/existing project connection modes, `.rpp` selection
-constraints, mode-filtered starter tasks, and independently scoped Home/project
-roles; none of that inert metadata selects a picker, scanner, path, or adapter.
+The first supported service artifact is **macOS arm64**. Version **0.5.1**
+uses Workspace Surface protocol v1 and requires an Ori build with
+`assistant_program_v1`, `specialist_setup_journey_v1`, and `setup_quests_v1`
+([Ori PR #466](https://github.com/johnjallday/ori-agent/pull/466)). Older hosts
+must refuse the new contract. Reaper Song blueprint v5 adds only the quest
+reference: its new/existing project connection modes, `.rpp` selection,
+mode-filtered starter tasks and independently scoped Home/project roles remain
+unchanged. No quest field selects an executable, picker, path, or permission.
 
-The `v0.5.0` artifact is 8,780,098 bytes with SHA-256
-`2bbf6b77418119cb21e827a407c8d5886e3effdb593ec0ad274e20d7d69c2ca9`.
-The manifest pins those exact bytes at the `v0.5.0` GitHub release URL.
-Publication alone does not unlock Ori's reviewed installation gate: the host
-needs a separate final-source-pin and enablement change after remote verification.
-Build and verify the candidate reproducibly with:
+The `v0.5.1` artifact is 8,780,098 bytes with SHA-256
+`baeca80db6b156c25207784355d3c2a4717169533f02d85d543e4ea7a5dd6633`.
+The manifest pins those bytes at the `v0.5.1` release URL. A local build alone is
+not proof of the remote asset. Publication does not unlock Ori's reviewed
+installation gate: the host-support PR is still open at release preparation,
+and a later host pin update requires review of the final source and remote
+bytes. Existing installed plugins are not rewritten.
+Build and verify the artifact reproducibly with:
 
 ```bash
 make artifact-local
 make test
 make test-ui
-make release-package VERSION=v0.5.0
+make release-package VERSION=v0.5.1
 ```
 
 Packaging is local and does not publish. Pushing a `v*` tag triggers the release
 workflow and uploads the verified binary plus its checksum; that requires a
-separate release-owner approval. See [release preparation](docs/release-v0.5.0.md)
-for the validation record, outstanding live-test limitation, and subsequent Ori unlock.
+separate release-owner approval. See [quest migration](docs/setup-quest-migration.md)
+for the ownership/resume test, validation boundaries, and remaining rollout steps.
+The older [v0.5.0 record](docs/release-v0.5.0.md) describes that historical release.
 
 The build pins Go 1.25.13, disables VCS stamping, uses `-trimpath`, and clears the
 build ID; repeating it from unchanged Go source produces identical bytes across

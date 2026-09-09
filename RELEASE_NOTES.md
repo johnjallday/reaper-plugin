@@ -1,5 +1,29 @@
 # Release notes
 
+## 0.5.1 — Plugin-owned setup quest
+
+- The plugin manifest now owns `reaper_setup`; Reaper Song blueprint **v5**
+  references it with `setup_quest`. Ori renders the quest and retains execution
+  authority, confirmations, group reuse, and workspace creation/import.
+- Require `setup_quests_v1` in addition to both existing host features. Older Ori
+  builds must refuse rather than silently ignore the quest.
+- Preserve quest schema/version **1**, all five step IDs and display copy, and
+  the entire post-workspace template aside from its new reference. Existing
+  wizard, file-only mode, live-control disclosures, project connection, roles,
+  and starter tasks are unchanged.
+- Plugin/service version: **0.5.1**; protocol **1**, macOS arm64 only.
+- Release artifact: **8,780,098 bytes**; SHA-256
+  `baeca80db6b156c25207784355d3c2a4717169533f02d85d543e4ea7a5dd6633`.
+- Publication does not update installed plugins, grant project access, or
+  unlock Ori's reviewed-install gate. This version requires the host support in
+  [Ori PR #466](https://github.com/johnjallday/ori-agent/pull/466), followed by a
+  reviewed-source/artifact pin update in Ori. That host PR remains open at
+  release preparation, with its README Contract check unresolved. Older hosts
+  must not install this version; existing v0.5.0 users retain compatibility
+  setup. No live REAPER validation is claimed.
+
+See [migration and verification](docs/setup-quest-migration.md).
+
 ## 0.5.0 — Specialist setup and scoped assistants
 
 This release adds the inert contracts required by Ori's generic

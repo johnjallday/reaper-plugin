@@ -1,6 +1,5 @@
 {
   "name": "Reaper Song",
-  "setup_quest": "reaper_setup",
   "description": "A REAPER project scaffold with plugin-backed setup, verified live control, actions, scripts, and agent operations.",
   "icon": "\ud83c\udfb5",
   "behavior_profile": "general",

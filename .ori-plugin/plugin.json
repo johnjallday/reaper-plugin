@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "name": "reaper-plugin",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "protocol": {
     "min": 1,
     "max": 1
@@ -225,9 +225,9 @@
           "arch": "arm64",
           "source": {
             "kind": "https",
-            "url": "https://github.com/johnjallday/reaper-plugin/releases/download/v0.5.0/reaper-plugin_v0.5.0_darwin_arm64"
+            "url": "https://github.com/johnjallday/reaper-plugin/releases/download/v0.5.1/reaper-plugin_v0.5.1_darwin_arm64"
           },
-          "sha256": "2bbf6b77418119cb21e827a407c8d5886e3effdb593ec0ad274e20d7d69c2ca9",
+          "sha256": "baeca80db6b156c25207784355d3c2a4717169533f02d85d543e4ea7a5dd6633",
           "size": 8780098
         }
       ],
@@ -3282,7 +3282,7 @@
   "blueprints": [
     {
       "id": "reaper-song",
-      "version": 4,
+      "version": 5,
       "manifest": "blueprints/reaper-song/template.json",
       "skeleton": "blueprints/reaper-song/project",
       "capabilities": [
@@ -3292,6 +3292,57 @@
   ],
   "requires_host_features": [
     "assistant_program_v1",
-    "specialist_setup_journey_v1"
+    "specialist_setup_journey_v1",
+    "setup_quests_v1"
+  ],
+  "setup_quests": [
+    {
+      "schema_version": 1,
+      "version": 1,
+      "id": "reaper_setup",
+      "title": "Set up REAPER",
+      "description": "Connect a REAPER project and choose how Ori can help.",
+      "integration_key": "ori_reaper",
+      "expected_blueprint_id": "reaper-song",
+      "expected_assistant_program_id": "music-producer-assistant",
+      "workspace_launch": {
+        "group_title": "Build Your Music Production Group",
+        "group_name": "Music Production",
+        "runtime_title": "Set Up REAPER",
+        "runtime_instructions": "Open REAPER, then Preferences \u2192 Control/OSC/web. Add the Web browser interface and enable it. Check setup when you are ready. If the Ori runner is not registered yet, you can finish it from the workspace's live-control setup. No project access is granted here; the correct project must still be verified after creation."
+      },
+      "steps": [
+        {
+          "id": "integration",
+          "kind": "integration_install",
+          "title": "Install Ori REAPER Plugin",
+          "description": "Ori's REAPER integration is a local integration for Ori, not an audio plug-in, VST, effect, or instrument. It will not appear in REAPER's FX browser."
+        },
+        {
+          "id": "project",
+          "kind": "project_connect",
+          "title": "Connect a project",
+          "description": "Connect one existing REAPER project or create a new one after review."
+        },
+        {
+          "id": "workspace",
+          "kind": "workspace_setup",
+          "title": "Choose how Ori works",
+          "description": "Choose File-only or Ori-assisted REAPER through the project setup flow."
+        },
+        {
+          "id": "staffing",
+          "kind": "assistant_program_staffing",
+          "title": "Add your studio team",
+          "description": "Add one Home portfolio role and an independent team for this project."
+        },
+        {
+          "id": "summary",
+          "kind": "summary",
+          "title": "Review setup",
+          "description": "Review what is installed, connected, staffed, selected, and still optional."
+        }
+      ]
+    }
   ]
 }
