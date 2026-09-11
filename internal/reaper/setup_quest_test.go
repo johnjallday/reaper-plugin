@@ -65,16 +65,19 @@ func TestPluginOwnsUnchangedSetupQuestV1(t *testing.T) {
 	}
 }
 
-func TestQuestExtractionLeavesPostWorkspaceTemplateUnchanged(t *testing.T) {
+func TestQuestExtractionAndGroupContractLeaveOtherTemplateFieldsUnchanged(t *testing.T) {
 	template := readQuestDocument(t, "../../blueprints/reaper-song/template.json")
 	var reference string
 	if err := json.Unmarshal(template["setup_quest"], &reference); err != nil || reference != "reaper_setup" {
 		t.Fatalf("template must reference its owner's exact quest: %q (%v)", reference, err)
 	}
 	delete(template, "setup_quest")
-	// Blueprint v4 from published plugin v0.5.0, source 1f494db5. Every other
-	// field stays unchanged: wizard, file-only mode, scopes, prompts, permissions,
-	// project connection, authoritative .rpp entry, and normal starter tasks.
+	delete(template, "group_requirement")
+	delete(template, "standalone_composition")
+	// Blueprint v4 from published plugin v0.5.0, source 1f494db5. The quest
+	// reference and v6 group declarations are the only later top-level additions;
+	// wizard, file-only mode, grouped scopes/prompts, permissions, project
+	// connection, authoritative .rpp entry, and normal starter tasks stay fixed.
 	baseline := readQuestDocument(t, "testdata/setup-quest-migration/template-v4.json")
 	assertQuestJSONEqual(t, template, baseline)
 }
