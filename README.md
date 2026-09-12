@@ -92,29 +92,41 @@ quest editing is not part of this plugin change.
 
 ## Ori Workspace Surface development
 
-The first supported service artifact is **macOS arm64**. Version **0.5.1**
-uses Workspace Surface protocol v1 and requires an Ori build with
-`assistant_program_v1`, `specialist_setup_journey_v1`, and `setup_quests_v1`
-([Ori PR #466](https://github.com/johnjallday/ori-agent/pull/466)). Older hosts
-must refuse the new contract. Reaper Song blueprint v5 adds only the quest
-reference: its new/existing project connection modes, `.rpp` selection,
-mode-filtered starter tasks and independently scoped Home/project roles remain
-unchanged. No quest field selects an executable, picker, path, or permission.
+The first supported service artifact is **macOS arm64**. Candidate version
+**0.5.2** uses Workspace Surface protocol v1 and requires an Ori build with
+`assistant_program_v1`, `specialist_setup_journey_v1`, `setup_quests_v1`, and
+`template_group_requirements_v1`. Older hosts must refuse this contract rather
+than ignore its placement rules.
 
-The `v0.5.1` artifact is 8,780,098 bytes with SHA-256
-`baeca80db6b156c25207784355d3c2a4717169533f02d85d543e4ea7a5dd6633`.
-The manifest pins those bytes at the `v0.5.1` release URL. A local build alone is
-not proof of the remote asset. Publication does not unlock Ori's reviewed
-installation gate: the host-support PR is still open at release preparation,
-and a later host pin update requires review of the final source and remote
-bytes. Existing installed plugins are not rewritten.
+Reaper Song blueprint v6 declares Music Production Home as a **Required** group
+with reviewed create-or-reuse behavior. The declaration names only the stable
+`music-producer-assistant` program; Ori resolves the current user, plugin owner,
+and exact Home. Folder names and ordinary parentage grant no Assistant Program
+membership or project authority. Creating from the plugin original reviews the
+fixed Required destination. **Customize** creates a source-linked variant where
+a user may select None or Recommended; its validated standalone composition
+keeps the one `.rpp` project, project-local Producer/Mix Engineer/Songwriter,
+starter tasks, File-only mode, optional live-control setup, and exact-project
+safeguards, while creating no Home, portfolio, shared stage, link, or Home role.
+
+This is a clean-start contract. Existing Ori REAPER workspaces are not adopted,
+regrouped, reset, or migrated by name. Connect a fresh external `.rpp` folder
+through the reviewed existing-project flow; its files stay in place and grouping
+still grants no filesystem or runtime permission.
+
+The local `v0.5.2` candidate artifact is 8,780,098 bytes with SHA-256
+`999dda3764c85487329322bbf7df775fb389316b9c8e4320bf8dd62c5fa91987`.
+The manifest names the future `v0.5.2` release URL, but local deterministic bytes
+are not proof that a remote asset exists or is reachable. Publication and Ori's
+reviewed source/artifact pin update are separate approvals; existing installed
+plugins and reviewed pins are not rewritten by this candidate.
 Build and verify the artifact reproducibly with:
 
 ```bash
 make artifact-local
 make test
 make test-ui
-make release-package VERSION=v0.5.1
+make release-package VERSION=v0.5.2
 ```
 
 Packaging is local and does not publish. Pushing a `v*` tag triggers the release

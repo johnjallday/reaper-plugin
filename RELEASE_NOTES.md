@@ -1,5 +1,29 @@
 # Release notes
 
+## 0.5.2 — Reviewed template group requirements
+
+- Reaper Song blueprint **v6** declares a Required Music Production Home using
+  strict `group_requirement` v1 with reviewed `offer_create` behavior and the
+  stable `music-producer-assistant` target.
+- Add strict `standalone_composition` v1 prompts for the project-local Producer,
+  Mix Engineer, and Songwriter. Source-linked None or Recommended variants keep
+  project files, tasks, skills, runtime modes, and exact-project controls while
+  removing Home, portfolio, shared-stage, cross-project, and Home-role claims.
+- Require `template_group_requirements_v1`; older Ori hosts must refuse the
+  candidate rather than silently bypass placement review.
+- Preserve `reaper_setup` v1, its five steps, the post-workspace setup wizard,
+  File-only behavior, live-control gates, `.rpp` selection, and external-folder
+  containment. Existing Ori REAPER records are not inferred, adopted, or reset.
+- Plugin/service version: **0.5.2**; Reaper Song blueprint **v6**; protocol **1**;
+  macOS arm64 only.
+- Local deterministic candidate artifact: **8,780,098 bytes**; SHA-256
+  `999dda3764c85487329322bbf7df775fb389316b9c8e4320bf8dd62c5fa91987`.
+- No remote artifact reachability, publication, reviewed Ori pin update, install,
+  or live REAPER validation is claimed. Those are separate approvals and
+  evidence boundaries.
+
+See [template group contract and verification](docs/template-group-requirements-v0.5.2.md).
+
 ## 0.5.1 — Plugin-owned setup quest
 
 - The plugin manifest now owns `reaper_setup`; Reaper Song blueprint **v5**

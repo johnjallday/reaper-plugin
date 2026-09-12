@@ -22,6 +22,20 @@ type reaperPluginBlueprintManifest struct {
 }
 
 type reaperSongTemplate struct {
+	GroupRequirement struct {
+		SchemaVersion      int    `json:"schema_version"`
+		Policy             string `json:"policy"`
+		AssistantProgramID string `json:"assistant_program_id"`
+		MissingHome        string `json:"missing_home"`
+		DefaultHomeName    string `json:"default_home_name"`
+	} `json:"group_requirement"`
+	StandaloneComposition struct {
+		SchemaVersion int `json:"schema_version"`
+		ProjectRoles  []struct {
+			RoleID       string `json:"role_id"`
+			SystemPrompt string `json:"system_prompt"`
+		} `json:"project_roles"`
+	} `json:"standalone_composition"`
 	ProjectConnection struct {
 		SchemaVersion  int      `json:"schema_version"`
 		SupportedModes []string `json:"supported_modes"`
@@ -75,7 +89,7 @@ type reaperSongTemplate struct {
 	} `json:"assistant_program"`
 }
 
-func TestReaperSongBlueprintV5PreservesConnectionModesAndScopedProducerProgram(t *testing.T) {
+func TestReaperSongBlueprintV6RequiresReviewedHomeAndDeclaresStandaloneCustomization(t *testing.T) {
 	root := filepath.Join("..", "..")
 	manifestData, err := os.ReadFile(filepath.Join(root, ".ori-plugin", "plugin.json")) // #nosec G304 -- fixed repository fixture
 	if err != nil {
@@ -85,14 +99,14 @@ func TestReaperSongBlueprintV5PreservesConnectionModesAndScopedProducerProgram(t
 	if err := json.Unmarshal(manifestData, &manifest); err != nil {
 		t.Fatal(err)
 	}
-	if !slices.Equal(manifest.RequiresHostFeatures, []string{"assistant_program_v1", "specialist_setup_journey_v1", "setup_quests_v1"}) {
+	if !slices.Equal(manifest.RequiresHostFeatures, []string{"assistant_program_v1", "specialist_setup_journey_v1", "setup_quests_v1", "template_group_requirements_v1"}) {
 		t.Fatalf("requires_host_features = %v", manifest.RequiresHostFeatures)
 	}
 	if len(manifest.Blueprints) != 1 {
 		t.Fatalf("blueprints = %+v", manifest.Blueprints)
 	}
 	blueprint := manifest.Blueprints[0]
-	if blueprint.ID != "reaper-song" || blueprint.Version != 5 ||
+	if blueprint.ID != "reaper-song" || blueprint.Version != 6 ||
 		blueprint.Manifest != "blueprints/reaper-song/template.json" ||
 		blueprint.Skeleton != "blueprints/reaper-song/project" ||
 		!slices.Equal(blueprint.Capabilities, []string{"reaper-live-control"}) {
@@ -106,6 +120,26 @@ func TestReaperSongBlueprintV5PreservesConnectionModesAndScopedProducerProgram(t
 	var template reaperSongTemplate
 	if err := json.Unmarshal(templateData, &template); err != nil {
 		t.Fatal(err)
+	}
+	if template.GroupRequirement.SchemaVersion != 1 || template.GroupRequirement.Policy != "required" ||
+		template.GroupRequirement.AssistantProgramID != "music-producer-assistant" || template.GroupRequirement.MissingHome != "offer_create" ||
+		template.GroupRequirement.DefaultHomeName != "Music Production Home" {
+		t.Fatalf("group requirement = %+v", template.GroupRequirement)
+	}
+	if template.StandaloneComposition.SchemaVersion != 1 || len(template.StandaloneComposition.ProjectRoles) != 3 {
+		t.Fatalf("standalone composition = %+v", template.StandaloneComposition)
+	}
+	for index, roleID := range []string{"producer", "engineer", "songwriter"} {
+		role := template.StandaloneComposition.ProjectRoles[index]
+		if role.RoleID != roleID || !strings.Contains(role.SystemPrompt, "this one REAPER") ||
+			!strings.Contains(role.SystemPrompt, "no Home") && !strings.Contains(role.SystemPrompt, "no Assistant Program Home") {
+			t.Fatalf("standalone role %q is not project-local: %+v", roleID, role)
+		}
+		for _, forbidden := range []string{"linked projects", "Music Production Home", "Collaborator stage"} {
+			if strings.Contains(role.SystemPrompt, forbidden) {
+				t.Fatalf("standalone role %q claims grouped scope: %q", roleID, role.SystemPrompt)
+			}
+		}
 	}
 	if template.ProjectConnection.SchemaVersion != 1 ||
 		!slices.Equal(template.ProjectConnection.SupportedModes, []string{"new_project", "existing_project"}) ||
