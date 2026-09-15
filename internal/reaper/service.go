@@ -162,7 +162,7 @@ func (s *Service) Runtime() *RuntimeProvider {
 }
 
 func (s *Service) Info() ServiceInfo {
-	return ServiceInfo{Name: "reaper-plugin", Version: "0.5.2", ProtocolVersion: ServiceProtocolVersion, Healthy: s != nil}
+	return ServiceInfo{Name: "reaper-plugin", Version: "0.6.0", ProtocolVersion: ServiceProtocolVersion, Healthy: s != nil}
 }
 
 func (s *Service) Station(ctx context.Context, host HostContext) StationResult {

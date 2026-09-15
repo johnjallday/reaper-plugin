@@ -136,3 +136,61 @@ required before production rollout.
 - Existing v0.5.0 users continue through labeled host compatibility until they
   explicitly update. Do not rewrite their installed declarations or remove the
   compatibility bootstrap as part of source extraction.
+
+## 0.6.0 addendum: install step moved to Ori
+
+This addendum supersedes the five-step contract above for 0.6.0. The sections
+above remain the record of the 0.5.1 extraction.
+
+### What changed
+
+Ori's `setup-quest-install-split` feature splits guided setup in two:
+
+1. **Install quest, owned by Ori.** Ori generates `install_ori_reaper` from its
+   reviewed-integration registry: install the plugin, then a ready summary that
+   continues into this plugin's quest. It is the only guidance shown before the
+   plugin is installed.
+2. **Setup quest, owned by this plugin.** `reaper_setup` version **2** declares
+   four steps in the `project_setup` order: `project`, `workspace`, `staffing`,
+   `summary`. It is listed only once the plugin is installed, and Ori re-checks
+   the integration on every read. If the plugin is later disabled or removed,
+   the quest shows the integration problem and offers the install quest.
+
+The `integration` step and the `runtime_title` and `runtime_instructions`
+launch fields are removed. Every other field, step ID and display string is the
+v1 declaration unchanged; `TestPluginOwnsFourStepSetupQuestV2` derives the
+expected declaration from the frozen v1 fixture to prove that.
+
+The Web Remote preparation screen is gone from Ori, along with its
+acknowledgement gate. The workspace `setup_wizard` `runtime_readiness` step is
+the one place live control is set up and verified.
+
+### Compatibility
+
+- The manifest requires `setup_quests_v2` and no longer declares
+  `setup_quests_v1`. An Ori build without `setup_quests_v2` refuses 0.6.0.
+- An Ori build with `setup_quests_v2` retires `setup_quests_v1` and the host
+  compatibility copy, so installed 0.5.x plugins fail closed there until
+  updated.
+- Quest progress does not migrate from version 1 to version 2: the step count
+  changes, and Ori's compiled migrations require equal step counts. Ori offers
+  "Start over", which deletes only setup progress. Groups, projects, teams and
+  plugins are untouched, so those steps read as complete on the fresh run.
+
+### Validation record — 2026-09-15
+
+Run from this plugin checkout with live-test opt-ins absent:
+
+| Check | Result |
+| --- | --- |
+| `env -u ORI_REAPER_LIVE_PROJECT GOWORK=off go test -race -count=1 ./...` | Both packages passed |
+| `GOWORK=off go vet ./...` | Passed |
+| `make test-ui` | 16 passed |
+| `GOWORK=off make artifact-local` | 8,780,098 bytes, SHA-256 `4def4fec14ecf083b0358c686c608514d4b9afff99dd810f1184213312770119` |
+| `scripts/verify-artifact.sh` | Digest, size, mode and CLI version `0.6.0` verified |
+
+`scripts/verify-ori-quest.py` checks the 0.5.1 compatibility-to-plugin root
+reuse, which a `setup_quests_v2` host no longer has; it was not run for 0.6.0.
+No `v*` tag was created or pushed and no release package was published. Remote
+asset verification, Ori's reviewed pin update to 0.6.0 and blueprint 7, and live
+REAPER validation remain separate steps.

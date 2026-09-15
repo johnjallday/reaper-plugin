@@ -89,7 +89,7 @@ type reaperSongTemplate struct {
 	} `json:"assistant_program"`
 }
 
-func TestReaperSongBlueprintV6RequiresReviewedHomeAndDeclaresStandaloneCustomization(t *testing.T) {
+func TestReaperSongBlueprintV7RequiresReviewedHomeAndDeclaresStandaloneCustomization(t *testing.T) {
 	root := filepath.Join("..", "..")
 	manifestData, err := os.ReadFile(filepath.Join(root, ".ori-plugin", "plugin.json")) // #nosec G304 -- fixed repository fixture
 	if err != nil {
@@ -99,14 +99,14 @@ func TestReaperSongBlueprintV6RequiresReviewedHomeAndDeclaresStandaloneCustomiza
 	if err := json.Unmarshal(manifestData, &manifest); err != nil {
 		t.Fatal(err)
 	}
-	if !slices.Equal(manifest.RequiresHostFeatures, []string{"assistant_program_v1", "specialist_setup_journey_v1", "setup_quests_v1", "template_group_requirements_v1"}) {
+	if !slices.Equal(manifest.RequiresHostFeatures, []string{"assistant_program_v1", "specialist_setup_journey_v1", "setup_quests_v2", "template_group_requirements_v1"}) {
 		t.Fatalf("requires_host_features = %v", manifest.RequiresHostFeatures)
 	}
 	if len(manifest.Blueprints) != 1 {
 		t.Fatalf("blueprints = %+v", manifest.Blueprints)
 	}
 	blueprint := manifest.Blueprints[0]
-	if blueprint.ID != "reaper-song" || blueprint.Version != 6 ||
+	if blueprint.ID != "reaper-song" || blueprint.Version != 7 ||
 		blueprint.Manifest != "blueprints/reaper-song/template.json" ||
 		blueprint.Skeleton != "blueprints/reaper-song/project" ||
 		!slices.Equal(blueprint.Capabilities, []string{"reaper-live-control"}) {
