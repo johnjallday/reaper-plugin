@@ -19,7 +19,7 @@ import (
 	"github.com/johnjallday/reaper-plugin/internal/reaper"
 )
 
-const version = "0.5.2"
+const version = "0.6.0"
 
 // command maps a user-facing subcommand to a reaper.Manager operation.
 type command struct {

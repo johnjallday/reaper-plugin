@@ -1,5 +1,28 @@
 # Release notes
 
+## 0.6.0 — Four-step setup quest
+
+- `reaper_setup` is now quest version **2** with four steps: `project`,
+  `workspace`, `staffing`, `summary`. The `integration` step is removed because
+  Ori generates its own install quest from its reviewed registry and hands off
+  to this quest once the plugin is installed.
+- `workspace_launch` keeps only `group_title` and `group_name`. The runtime
+  preparation screen is gone; the workspace `setup_wizard` is the one place
+  live control is set up and verified.
+- Require `setup_quests_v2` instead of `setup_quests_v1`. Ori hosts without
+  `setup_quests_v2` refuse this manifest, and hosts with it refuse 0.5.x.
+- Saved progress on quest version 1 does not migrate. Ori offers "Start over";
+  the existing group, project and team read as complete on the fresh run.
+- Plugin/service version: **0.6.0**; Reaper Song blueprint **v7**; protocol
+  **1**; macOS arm64 only. The blueprint template, `setup_wizard`, group
+  requirement and standalone composition are unchanged.
+- Local deterministic candidate artifact: **8,780,098 bytes**; SHA-256
+  `4def4fec14ecf083b0358c686c608514d4b9afff99dd810f1184213312770119`.
+- No publication, remote artifact reachability, reviewed Ori pin update, or live
+  REAPER validation is claimed. Those are separate approvals.
+
+See [migration and verification](docs/setup-quest-migration.md#060-addendum-install-step-moved-to-ori).
+
 ## 0.5.2 — Reviewed template group requirements
 
 - Reaper Song blueprint **v6** declares a Required Music Production Home using

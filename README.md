@@ -79,26 +79,33 @@ Plugins, Templates, the workspace picker, and the accepted assistant alias
 resume the same saved setup; no assistant acceptance is needed for the first
 three entry points.
 
-Ori still owns the UI and all execution: reviewed installation, group creation
-or reuse, optional REAPER preparation, and workspace creation/import. The
-existing `setup_wizard` continues after workspace creation. File-only mode,
-project-specific live permissions, exact-project verification, staffing scopes,
-and confirmation boundaries are unchanged. Merely opening setup grants nothing.
+Ori still owns the UI and all execution: group creation or reuse and workspace
+creation/import. Installing the plugin is no longer a step of this quest: Ori
+generates its own "Install Ori REAPER Plugin" quest from its reviewed registry
+and hands off to `reaper_setup` once the plugin is installed. The existing
+`setup_wizard` continues after workspace creation and is the one place live
+control is set up and verified. File-only mode, project-specific live
+permissions, exact-project verification, staffing scopes, and confirmation
+boundaries are unchanged. Merely opening setup grants nothing.
 
-Quest schema/version **1** and all five step IDs are unchanged from Ori's
-compatibility declaration. This is an ownership extraction, not a new workflow
-or a reset of progress. Quest declarations are read-only in Ori; user-authored
-quest editing is not part of this plugin change.
+Quest schema **1**, version **2** has four steps: `project`, `workspace`,
+`staffing`, `summary`. Its launch copy names only the group screen. Saved
+progress on the older five-step version does not migrate; Ori offers "Start
+over", and the group, project and team read as complete again because they
+exist. Quest declarations are read-only in Ori.
 
 ## Ori Workspace Surface development
 
 The first supported service artifact is **macOS arm64**. Candidate version
-**0.5.2** uses Workspace Surface protocol v1 and requires an Ori build with
-`assistant_program_v1`, `specialist_setup_journey_v1`, `setup_quests_v1`, and
+**0.6.0** uses Workspace Surface protocol v1 and requires an Ori build with
+`assistant_program_v1`, `specialist_setup_journey_v1`, `setup_quests_v2`, and
 `template_group_requirements_v1`. Older hosts must refuse this contract rather
-than ignore its placement rules.
+than ignore its placement rules. An Ori build that knows only
+`setup_quests_v1` refuses 0.6.0, and an Ori build with `setup_quests_v2`
+refuses 0.5.x.
 
-Reaper Song blueprint v6 declares Music Production Home as a **Required** group
+Reaper Song blueprint v7 (the v6 group contract, now paired with quest
+version 2) declares Music Production Home as a **Required** group
 with reviewed create-or-reuse behavior. The declaration names only the stable
 `music-producer-assistant` program; Ori resolves the current user, plugin owner,
 and exact Home. Folder names and ordinary parentage grant no Assistant Program
@@ -114,9 +121,9 @@ regrouped, reset, or migrated by name. Connect a fresh external `.rpp` folder
 through the reviewed existing-project flow; its files stay in place and grouping
 still grants no filesystem or runtime permission.
 
-The local `v0.5.2` candidate artifact is 8,780,098 bytes with SHA-256
-`999dda3764c85487329322bbf7df775fb389316b9c8e4320bf8dd62c5fa91987`.
-The manifest names the future `v0.5.2` release URL, but local deterministic bytes
+The local `v0.6.0` candidate artifact is 8,780,098 bytes with SHA-256
+`4def4fec14ecf083b0358c686c608514d4b9afff99dd810f1184213312770119`.
+The manifest names the future `v0.6.0` release URL, but local deterministic bytes
 are not proof that a remote asset exists or is reachable. Publication and Ori's
 reviewed source/artifact pin update are separate approvals; existing installed
 plugins and reviewed pins are not rewritten by this candidate.
@@ -126,7 +133,7 @@ Build and verify the artifact reproducibly with:
 make artifact-local
 make test
 make test-ui
-make release-package VERSION=v0.5.2
+make release-package VERSION=v0.6.0
 ```
 
 Packaging is local and does not publish. Pushing a `v*` tag triggers the release
