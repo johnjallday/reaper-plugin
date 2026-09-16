@@ -97,11 +97,11 @@ exist. Quest declarations are read-only in Ori.
 ## Ori Workspace Surface development
 
 The first supported service artifact is **macOS arm64**. Candidate version
-**0.6.0** uses Workspace Surface protocol v1 and requires an Ori build with
+**0.6.1** uses Workspace Surface protocol v1 and requires an Ori build with
 `assistant_program_v1`, `specialist_setup_journey_v1`, `setup_quests_v2`, and
 `template_group_requirements_v1`. Older hosts must refuse this contract rather
 than ignore its placement rules. An Ori build that knows only
-`setup_quests_v1` refuses 0.6.0, and an Ori build with `setup_quests_v2`
+`setup_quests_v1` refuses 0.6.x, and an Ori build with `setup_quests_v2`
 refuses 0.5.x.
 
 Reaper Song blueprint v7 (the v6 group contract, now paired with quest
@@ -115,15 +115,17 @@ a user may select None or Recommended; its validated standalone composition
 keeps the one `.rpp` project, project-local Producer/Mix Engineer/Songwriter,
 starter tasks, File-only mode, optional live-control setup, and exact-project
 safeguards, while creating no Home, portfolio, shared stage, link, or Home role.
+Its roles declare no `type`: Ori retired the agent Type field and ignores the
+key, and every host that accepts this contract already does.
 
 This is a clean-start contract. Existing Ori REAPER workspaces are not adopted,
 regrouped, reset, or migrated by name. Connect a fresh external `.rpp` folder
 through the reviewed existing-project flow; its files stay in place and grouping
 still grants no filesystem or runtime permission.
 
-The local `v0.6.0` candidate artifact is 8,780,098 bytes with SHA-256
-`4def4fec14ecf083b0358c686c608514d4b9afff99dd810f1184213312770119`.
-The manifest names the future `v0.6.0` release URL, but local deterministic bytes
+The local `v0.6.1` candidate artifact is 8,780,098 bytes with SHA-256
+`88c7dfd5ebf6a855ae41994a080c2339f392514f68ff47366463b5a84c5eb8c8`.
+The manifest names the future `v0.6.1` release URL, but local deterministic bytes
 are not proof that a remote asset exists or is reachable. Publication and Ori's
 reviewed source/artifact pin update are separate approvals; existing installed
 plugins and reviewed pins are not rewritten by this candidate.
@@ -133,7 +135,7 @@ Build and verify the artifact reproducibly with:
 make artifact-local
 make test
 make test-ui
-make release-package VERSION=v0.6.0
+make release-package VERSION=v0.6.1
 ```
 
 Packaging is local and does not publish. Pushing a `v*` tag triggers the release

@@ -1,5 +1,26 @@
 # Release notes
 
+## 0.6.1 — Drop the retired role type
+
+- Reaper Song blueprint roles no longer declare `"type"`. Ori retired the agent
+  Type field (johnjallday/ori-agent#490) and ignores the key, so the five
+  `assistant_program.roles[]` entries drop it. Nothing else in the template
+  changes, and the blueprint stays **v7**. Closes #9.
+- Every Ori host that accepts this manifest already ignores the key: 0.6.x
+  requires `setup_quests_v2`, which Ori first shipped after #490. Role staffing,
+  models, and prompts are unchanged on those hosts.
+- A test now fails if any role or agent declares `type` again, and the v4
+  migration comparison accounts for the removal without rewriting its frozen
+  fixture.
+- Plugin/service version: **0.6.1**; Reaper Song blueprint **v7**; protocol
+  **1**; macOS arm64 only. Requirements and the setup quest are unchanged.
+- Local deterministic candidate artifact: **8,780,098 bytes**; SHA-256
+  `88c7dfd5ebf6a855ae41994a080c2339f392514f68ff47366463b5a84c5eb8c8`. Only the
+  embedded version string differs from 0.6.0; the binary does not embed the
+  blueprint.
+- No publication, remote artifact reachability, reviewed Ori pin update, or live
+  REAPER validation is claimed. Those are separate approvals.
+
 ## 0.6.0 — Four-step setup quest
 
 - `reaper_setup` is now quest version **2** with four steps: `project`,

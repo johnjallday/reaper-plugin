@@ -111,8 +111,40 @@ func TestQuestExtractionAndGroupContractLeaveOtherTemplateFieldsUnchanged(t *tes
 	// reference and v6 group declarations are the only later top-level additions;
 	// wizard, file-only mode, grouped scopes/prompts, permissions, project
 	// connection, authoritative .rpp entry, and normal starter tasks stay fixed.
+	// The one later removal is the retired role "type" key (0.6.1), so it is
+	// dropped from the frozen baseline rather than rewriting the fixture.
 	baseline := readQuestDocument(t, "testdata/setup-quest-migration/template-v4.json")
+	baseline["assistant_program"] = withoutRetiredRoleType(t, baseline["assistant_program"])
 	assertQuestJSONEqual(t, template, baseline)
+}
+
+// withoutRetiredRoleType removes the "type" key Ori retired
+// (johnjallday/ori-agent#490) from every assistant_program role, and fails if
+// the baseline carried none: the removal must be the only difference it hides.
+func withoutRetiredRoleType(t *testing.T, raw json.RawMessage) json.RawMessage {
+	t.Helper()
+	var program map[string]any
+	if err := json.Unmarshal(raw, &program); err != nil {
+		t.Fatal(err)
+	}
+	roles, _ := program["roles"].([]any)
+	removed := 0
+	for _, entry := range roles {
+		if role, ok := entry.(map[string]any); ok {
+			if _, has := role["type"]; has {
+				delete(role, "type")
+				removed++
+			}
+		}
+	}
+	if removed == 0 {
+		t.Fatal("baseline assistant_program roles carry no retired type key; this adjustment is stale")
+	}
+	data, err := json.Marshal(program)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return data
 }
 
 // questV2FromV1 derives the expected version 2 declaration from the frozen v1
