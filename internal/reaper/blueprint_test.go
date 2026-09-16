@@ -242,3 +242,37 @@ func instantiateBlueprintFixture(t *testing.T, source, destination, name string)
 		t.Fatal(err)
 	}
 }
+
+// Ori retired the agent Type field (johnjallday/ori-agent#490) and only keeps
+// accepting the key so older manifests still decode. Declaring it again would
+// hold Ori to that compatibility shim, so no role or agent may carry it. The
+// check reads raw JSON because the typed fixture structs silently drop unknown
+// keys.
+func TestReaperSongBlueprintDeclaresNoRetiredAgentType(t *testing.T) {
+	data, err := os.ReadFile(filepath.Join("..", "..", "blueprints", "reaper-song", "template.json")) // #nosec G304 -- fixed repository fixture
+	if err != nil {
+		t.Fatal(err)
+	}
+	var template struct {
+		Agents           []map[string]json.RawMessage `json:"agents"`
+		AssistantProgram struct {
+			Roles []map[string]json.RawMessage `json:"roles"`
+		} `json:"assistant_program"`
+	}
+	if err := json.Unmarshal(data, &template); err != nil {
+		t.Fatal(err)
+	}
+	if len(template.AssistantProgram.Roles) == 0 {
+		t.Fatal("assistant_program.roles is empty; the guard would pass vacuously")
+	}
+	for _, role := range template.AssistantProgram.Roles {
+		if _, ok := role["type"]; ok {
+			t.Errorf("assistant_program role %s still declares the retired \"type\" key", role["id"])
+		}
+	}
+	for index, agent := range template.Agents {
+		if _, ok := agent["type"]; ok {
+			t.Errorf("agents[%d] still declares the retired \"type\" key", index)
+		}
+	}
+}
