@@ -5,6 +5,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"regexp"
 	"slices"
 	"strings"
 	"testing"
@@ -45,8 +46,31 @@ type reaperSongTemplate struct {
 	} `json:"project_connection"`
 	StarterTasks []struct {
 		Description     string   `json:"description"`
+		Details         string   `json:"details"`
 		ConnectionModes []string `json:"connection_modes"`
 	} `json:"starter_tasks"`
+	ProjectEntry struct {
+		RelativePath string `json:"relative_path"`
+	} `json:"project_entry"`
+	Inputs struct {
+		SchemaVersion int      `json:"schema_version"`
+		Title         string   `json:"title"`
+		ApplyTo       []string `json:"apply_to"`
+		Fields        []struct {
+			ID      string          `json:"id"`
+			Label   string          `json:"label"`
+			Type    string          `json:"type"`
+			Unit    string          `json:"unit"`
+			Min     float64         `json:"min"`
+			Max     float64         `json:"max"`
+			Step    float64         `json:"step"`
+			Default json.RawMessage `json:"default"`
+			Options []struct {
+				Value string `json:"value"`
+				Label string `json:"label"`
+			} `json:"options"`
+		} `json:"fields"`
+	} `json:"inputs"`
 	Tools struct {
 		Skills []string `json:"skills"`
 	} `json:"tools"`
@@ -89,7 +113,7 @@ type reaperSongTemplate struct {
 	} `json:"assistant_program"`
 }
 
-func TestReaperSongBlueprintV7RequiresReviewedHomeAndDeclaresStandaloneCustomization(t *testing.T) {
+func TestReaperSongBlueprintV8RequiresReviewedHomeAndDeclaresStandaloneCustomization(t *testing.T) {
 	root := filepath.Join("..", "..")
 	manifestData, err := os.ReadFile(filepath.Join(root, ".ori-plugin", "plugin.json")) // #nosec G304 -- fixed repository fixture
 	if err != nil {
@@ -99,14 +123,17 @@ func TestReaperSongBlueprintV7RequiresReviewedHomeAndDeclaresStandaloneCustomiza
 	if err := json.Unmarshal(manifestData, &manifest); err != nil {
 		t.Fatal(err)
 	}
-	if !slices.Equal(manifest.RequiresHostFeatures, []string{"assistant_program_v1", "specialist_setup_journey_v1", "setup_quests_v2", "template_group_requirements_v1"}) {
+	// blueprint_inputs_v1 is the release gate for the typed inputs below: an
+	// Ori build without it decodes this template strictly and would reject the
+	// whole blueprint, so it must refuse the release before installing.
+	if !slices.Equal(manifest.RequiresHostFeatures, []string{"assistant_program_v1", "specialist_setup_journey_v1", "setup_quests_v2", "template_group_requirements_v1", "blueprint_inputs_v1"}) {
 		t.Fatalf("requires_host_features = %v", manifest.RequiresHostFeatures)
 	}
 	if len(manifest.Blueprints) != 1 {
 		t.Fatalf("blueprints = %+v", manifest.Blueprints)
 	}
 	blueprint := manifest.Blueprints[0]
-	if blueprint.ID != "reaper-song" || blueprint.Version != 7 ||
+	if blueprint.ID != "reaper-song" || blueprint.Version != 8 ||
 		blueprint.Manifest != "blueprints/reaper-song/template.json" ||
 		blueprint.Skeleton != "blueprints/reaper-song/project" ||
 		!slices.Equal(blueprint.Capabilities, []string{"reaper-live-control"}) {
@@ -151,6 +178,7 @@ func TestReaperSongBlueprintV7RequiresReviewedHomeAndDeclaresStandaloneCustomiza
 		!slices.Equal(template.StarterTasks[1].ConnectionModes, []string{"new_project", "existing_project"}) {
 		t.Fatalf("starter task connection modes = %+v", template.StarterTasks)
 	}
+	assertSessionInputsDeclaration(t, root, template)
 	for _, skill := range []string{"reaper-session-setup", "reaper-web-remote", "reaper-project-tidy"} {
 		if !slices.Contains(template.Tools.Skills, skill) {
 			t.Errorf("template does not bind %s", skill)
@@ -273,6 +301,81 @@ func TestReaperSongBlueprintDeclaresNoRetiredAgentType(t *testing.T) {
 	for index, agent := range template.Agents {
 		if _, ok := agent["type"]; ok {
 			t.Errorf("agents[%d] still declares the retired \"type\" key", index)
+		}
+	}
+}
+
+// assertSessionInputsDeclaration pins the v8 contract: the two values the
+// blueprint asks for at creation, the one file they reach, and the tokens that
+// file actually uses. Nothing here may become free text — a user's answer ends
+// up inside the session file, so "number in a range" and "one of these
+// options" are the whole of the safety argument.
+func assertSessionInputsDeclaration(t *testing.T, root string, template reaperSongTemplate) {
+	t.Helper()
+	inputs := template.Inputs
+	if inputs.SchemaVersion != 1 || inputs.Title != "Session settings" {
+		t.Fatalf("inputs declaration = %+v", inputs)
+	}
+	// Only the scaffolded session file is rewritten, and it is the same file the
+	// blueprint already names as its project entry.
+	if !slices.Equal(inputs.ApplyTo, []string{"{{name}}.rpp"}) ||
+		template.ProjectEntry.RelativePath != "{{name}}.rpp" {
+		t.Fatalf("apply_to = %v, project entry = %q", inputs.ApplyTo, template.ProjectEntry.RelativePath)
+	}
+	if len(inputs.Fields) != 2 {
+		t.Fatalf("fields = %+v", inputs.Fields)
+	}
+
+	tempo := inputs.Fields[0]
+	if tempo.ID != "tempo" || tempo.Label != "Tempo" || tempo.Type != "number" || tempo.Unit != "BPM" ||
+		tempo.Min != 40 || tempo.Max != 240 || tempo.Step != 1 || string(tempo.Default) != "120" ||
+		len(tempo.Options) != 0 {
+		t.Fatalf("tempo field = %+v", tempo)
+	}
+
+	signature := inputs.Fields[1]
+	if signature.ID != "time_signature" || signature.Label != "Time signature" ||
+		signature.Type != "select" || string(signature.Default) != `"4 4"` || len(signature.Options) != 3 {
+		t.Fatalf("time signature field = %+v", signature)
+	}
+	// The option values are written verbatim into the session file's TEMPO
+	// line, so they must be the beats/unit pair REAPER expects, not the display
+	// text a person reads.
+	for index, want := range [][2]string{{"4 4", "4/4"}, {"3 4", "3/4"}, {"6 8", "6/8"}} {
+		option := signature.Options[index]
+		if option.Value != want[0] || option.Label != want[1] {
+			t.Fatalf("option %d = %+v, want %v", index, option, want)
+		}
+	}
+
+	scaffold, err := os.ReadFile(filepath.Join(root, "blueprints", "reaper-song", "project", "{{name}}.rpp")) // #nosec G304 -- fixed repository fixture
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(scaffold), "TEMPO {{input.tempo}} {{input.time_signature}}") {
+		t.Fatalf("the scaffold does not use the declared tokens:\n%s", scaffold)
+	}
+	// A token no field declares would survive into the created project, so the
+	// blueprint must use only ids it declared.
+	declared := map[string]bool{}
+	for _, field := range inputs.Fields {
+		declared[field.ID] = true
+	}
+	for _, token := range regexp.MustCompile(`\{\{input\.([^}]*)\}\}`).FindAllStringSubmatch(string(scaffold), -1) {
+		if !declared[token[1]] {
+			t.Fatalf("the scaffold uses {{input.%s}}, which no field declares", token[1])
+		}
+	}
+
+	// Requirement 47: the first starter task no longer states the session's
+	// tempo as a fact, still offers the key, and substitutes no values.
+	details := template.StarterTasks[0].Details
+	if strings.Contains(details, "120 BPM") || strings.Contains(details, "{{input.") {
+		t.Fatalf("the starter task asserts creation values or carries a token:\n%s", details)
+	}
+	for _, phrase := range []string{"chose when the workspace was created", "key"} {
+		if !strings.Contains(details, phrase) {
+			t.Fatalf("the starter task does not mention %q:\n%s", phrase, details)
 		}
 	}
 }

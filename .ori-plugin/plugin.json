@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "name": "reaper-plugin",
-  "version": "0.6.1",
+  "version": "0.7.0",
   "protocol": {
     "min": 1,
     "max": 1
@@ -225,9 +225,9 @@
           "arch": "arm64",
           "source": {
             "kind": "https",
-            "url": "https://github.com/johnjallday/reaper-plugin/releases/download/v0.6.1/reaper-plugin_v0.6.1_darwin_arm64"
+            "url": "https://github.com/johnjallday/reaper-plugin/releases/download/v0.7.0/reaper-plugin_v0.7.0_darwin_arm64"
           },
-          "sha256": "88c7dfd5ebf6a855ae41994a080c2339f392514f68ff47366463b5a84c5eb8c8",
+          "sha256": "b0f63e5e13607c74294995e8ccbd7802a40baf10b473d4a00d3c5a3a7bf29b29",
           "size": 8780098
         }
       ],
@@ -3282,7 +3282,7 @@
   "blueprints": [
     {
       "id": "reaper-song",
-      "version": 7,
+      "version": 8,
       "manifest": "blueprints/reaper-song/template.json",
       "skeleton": "blueprints/reaper-song/project",
       "capabilities": [
@@ -3294,7 +3294,8 @@
     "assistant_program_v1",
     "specialist_setup_journey_v1",
     "setup_quests_v2",
-    "template_group_requirements_v1"
+    "template_group_requirements_v1",
+    "blueprint_inputs_v1"
   ],
   "setup_quests": [
     {
