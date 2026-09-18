@@ -97,14 +97,23 @@ exist. Quest declarations are read-only in Ori.
 ## Ori Workspace Surface development
 
 The first supported service artifact is **macOS arm64**. Candidate version
-**0.6.1** uses Workspace Surface protocol v1 and requires an Ori build with
-`assistant_program_v1`, `specialist_setup_journey_v1`, `setup_quests_v2`, and
-`template_group_requirements_v1`. Older hosts must refuse this contract rather
-than ignore its placement rules. An Ori build that knows only
-`setup_quests_v1` refuses 0.6.x, and an Ori build with `setup_quests_v2`
-refuses 0.5.x.
+**0.7.0** uses Workspace Surface protocol v1 and requires an Ori build with
+`assistant_program_v1`, `specialist_setup_journey_v1`, `setup_quests_v2`,
+`template_group_requirements_v1`, and `blueprint_inputs_v1`. Older hosts must
+refuse this contract rather than ignore its placement rules. An Ori build that
+knows only `setup_quests_v1` refuses 0.6.x, an Ori build with `setup_quests_v2`
+refuses 0.5.x, and an Ori build without `blueprint_inputs_v1` refuses 0.7.x —
+it would reject the whole blueprint manifest on sight, because a host that does
+not know the `inputs` block decodes the template strictly and fails.
 
-Reaper Song blueprint v7 (the v6 group contract, now paired with quest
+Reaper Song blueprint v8 asks for **Tempo** (40–240 BPM, default 120) and
+**Time signature** (4/4, 3/4, or 6/8, default 4/4) in Ori's Create Workspace
+Details step, and writes them into the scaffolded session file's `TEMPO` line.
+There is no free-text input, and substitution reaches only the one file the
+blueprint listed in `inputs.apply_to`. Musical key stays out of creation: the
+first starter task offers it, and the `.rpp` format has no key field anyway.
+
+Blueprint v8 (the v6 group contract, paired with quest
 version 2) declares Music Production Home as a **Required** group
 with reviewed create-or-reuse behavior. The declaration names only the stable
 `music-producer-assistant` program; Ori resolves the current user, plugin owner,
@@ -123,9 +132,9 @@ regrouped, reset, or migrated by name. Connect a fresh external `.rpp` folder
 through the reviewed existing-project flow; its files stay in place and grouping
 still grants no filesystem or runtime permission.
 
-The local `v0.6.1` candidate artifact is 8,780,098 bytes with SHA-256
-`88c7dfd5ebf6a855ae41994a080c2339f392514f68ff47366463b5a84c5eb8c8`.
-The manifest names the future `v0.6.1` release URL, but local deterministic bytes
+The local `v0.7.0` candidate artifact is 8,780,098 bytes with SHA-256
+`b0f63e5e13607c74294995e8ccbd7802a40baf10b473d4a00d3c5a3a7bf29b29`.
+The manifest names the future `v0.7.0` release URL, but local deterministic bytes
 are not proof that a remote asset exists or is reachable. Publication and Ori's
 reviewed source/artifact pin update are separate approvals; existing installed
 plugins and reviewed pins are not rewritten by this candidate.
@@ -135,7 +144,7 @@ Build and verify the artifact reproducibly with:
 make artifact-local
 make test
 make test-ui
-make release-package VERSION=v0.6.1
+make release-package VERSION=v0.7.0
 ```
 
 Packaging is local and does not publish. Pushing a `v*` tag triggers the release

@@ -70,7 +70,7 @@ func TestContributionDeclaresGrantGatedAgentOperationsWithoutPortableMCP(t *test
 	if err := json.Unmarshal(data, &manifest); err != nil {
 		t.Fatal(err)
 	}
-	if manifest.Name != "reaper-plugin" || manifest.Version != "0.6.1" || len(manifest.Capabilities) != 1 {
+	if manifest.Name != "reaper-plugin" || manifest.Version != "0.7.0" || len(manifest.Capabilities) != 1 {
 		t.Fatalf("manifest = %+v", manifest)
 	}
 	operations := map[string]bool{}

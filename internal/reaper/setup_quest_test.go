@@ -2,6 +2,7 @@ package reaper
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"reflect"
 	"slices"
@@ -107,15 +108,64 @@ func TestQuestExtractionAndGroupContractLeaveOtherTemplateFieldsUnchanged(t *tes
 	delete(template, "setup_quest")
 	delete(template, "group_requirement")
 	delete(template, "standalone_composition")
+	delete(template, "inputs")
 	// Blueprint v4 from published plugin v0.5.0, source 1f494db5. The quest
-	// reference and v6 group declarations are the only later top-level additions;
-	// wizard, file-only mode, grouped scopes/prompts, permissions, project
-	// connection, authoritative .rpp entry, and normal starter tasks stay fixed.
-	// The one later removal is the retired role "type" key (0.6.1), so it is
-	// dropped from the frozen baseline rather than rewriting the fixture.
+	// reference, the v6 group declarations, and the v8 `inputs` block are the
+	// only later top-level additions; wizard, file-only mode, grouped
+	// scopes/prompts, permissions, project connection, and the authoritative
+	// .rpp entry stay fixed.
+	//
+	// Two later edits are reconciled against the frozen fixture rather than
+	// rewriting it: the retired role "type" key (0.6.1) is dropped from the
+	// baseline, and the first starter task's prose (0.7.0) is taken from the
+	// current template — but only after proving that prose is the only thing
+	// that moved.
 	baseline := readQuestDocument(t, "testdata/setup-quest-migration/template-v4.json")
 	baseline["assistant_program"] = withoutRetiredRoleType(t, baseline["assistant_program"])
+	baseline["starter_tasks"] = withRewordedFirstStarterTask(t, baseline["starter_tasks"], template["starter_tasks"])
 	assertQuestJSONEqual(t, template, baseline)
+}
+
+// withRewordedFirstStarterTask copies the current first starter task's details
+// onto the frozen baseline, after checking that its details are the only field
+// that changed. Requirement 47 reworded that task because the session is now
+// created with the tempo and time signature the user chose; everything else
+// about the task — what it is, what it requires, when it runs — must be
+// exactly what v4 froze, and this fails if any of it moved.
+func withRewordedFirstStarterTask(t *testing.T, baselineRaw, currentRaw json.RawMessage) json.RawMessage {
+	t.Helper()
+	var baseline, current []map[string]any
+	if err := json.Unmarshal(baselineRaw, &baseline); err != nil {
+		t.Fatal(err)
+	}
+	if err := json.Unmarshal(currentRaw, &current); err != nil {
+		t.Fatal(err)
+	}
+	if len(baseline) == 0 || len(current) != len(baseline) {
+		t.Fatalf("starter task count changed: baseline %d, current %d", len(baseline), len(current))
+	}
+	first, currentFirst := baseline[0], current[0]
+	if len(first) != len(currentFirst) {
+		t.Fatalf("the first starter task gained or lost a field: %v vs %v", first, currentFirst)
+	}
+	for key, want := range first {
+		if key == "details" {
+			continue
+		}
+		if fmt.Sprint(currentFirst[key]) != fmt.Sprint(want) {
+			t.Fatalf("the reword changed %q: %v → %v", key, want, currentFirst[key])
+		}
+	}
+	details, ok := currentFirst["details"].(string)
+	if !ok || details == first["details"] {
+		t.Fatal("the first starter task's details are unchanged; this adjustment is stale")
+	}
+	first["details"] = details
+	data, err := json.Marshal(baseline)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return data
 }
 
 // withoutRetiredRoleType removes the "type" key Ori retired

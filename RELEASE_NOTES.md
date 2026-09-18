@@ -1,5 +1,34 @@
 # Release notes
 
+## 0.7.0 — Ask for tempo and time signature at creation
+
+- Reaper Song declares Ori's new `inputs` block: **Tempo** (number, 40–240,
+  step 1, default 120, unit BPM) and **Time signature** (select `4 4` / `3 4` /
+  `6 8`, default `4 4`). Ori's Create Workspace Details step asks for them, and
+  the scaffold's `TEMPO 120 4 4` line becomes
+  `TEMPO {{input.tempo}} {{input.time_signature}}`. The blueprint goes to **v8**.
+- There is no free-text input, and `inputs.apply_to` names only
+  `{{name}}.rpp`, so nothing a user types can reach any other scaffolded file.
+  Musical key is deliberately not an input — the `.rpp` format has no key field.
+- The first starter task is reworded: it states the session was created with the
+  tempo and time signature chosen at creation, tells the agent to read them from
+  the file rather than assert them, and still offers to set the key and to
+  change anything else. No values are substituted into task text.
+- `requires_host_features` gains **`blueprint_inputs_v1`**. This is the release
+  gate: an Ori build without it decodes the blueprint manifest strictly, would
+  reject the whole template on sight, and now refuses the release before
+  installing instead. **Do not publish this release until an Ori release
+  contains blueprint-declared inputs.**
+- Plugin/service version: **0.7.0**; Reaper Song blueprint **v8**; protocol
+  **1**; macOS arm64 only. Requirements and the setup quest are unchanged, and
+  Ori's reviewed `MinimumBlueprintVersion` (7) still admits v8.
+- Local deterministic candidate artifact: **8,780,098 bytes**; SHA-256
+  `b0f63e5e13607c74294995e8ccbd7802a40baf10b473d4a00d3c5a3a7bf29b29`. Only the
+  embedded version string differs from 0.6.1; the binary does not embed the
+  blueprint.
+- No publication, remote artifact reachability, reviewed Ori pin update, or live
+  REAPER validation is claimed. Those are separate approvals.
+
 ## 0.6.1 — Drop the retired role type
 
 - Reaper Song blueprint roles no longer declare `"type"`. Ori retired the agent

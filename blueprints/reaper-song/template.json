@@ -15,6 +15,45 @@
     "relative_path": "{{name}}.rpp",
     "open_after_create_default": true
   },
+  "inputs": {
+    "schema_version": 1,
+    "title": "Session settings",
+    "apply_to": [
+      "{{name}}.rpp"
+    ],
+    "fields": [
+      {
+        "id": "tempo",
+        "label": "Tempo",
+        "type": "number",
+        "min": 40,
+        "max": 240,
+        "step": 1,
+        "default": 120,
+        "unit": "BPM"
+      },
+      {
+        "id": "time_signature",
+        "label": "Time signature",
+        "type": "select",
+        "default": "4 4",
+        "options": [
+          {
+            "value": "4 4",
+            "label": "4/4"
+          },
+          {
+            "value": "3 4",
+            "label": "3/4"
+          },
+          {
+            "value": "6 8",
+            "label": "6/8"
+          }
+        ]
+      }
+    ]
+  },
   "tags": [
     "music",
     "reaper"
@@ -28,7 +67,7 @@
       "file_fallback_for": [
         "reaper_live_control"
       ],
-      "details": "## Created defaults\nThe project scaffold already created the workspace's one authoritative REAPER session file, `<project name>.rpp`, in the workspace project folder. It is set to 120 BPM in 4/4, with no tracks yet. Treat that existing scaffolded file as the song project and never create or initialize a second .rpp file.\n\n## Questions to ask\nTell the user what was created, then ask whether they want to change:\n- Tempo (BPM)\n- Musical key\nIf they are happy with the defaults, confirm and finish without changing anything.\n\n## Validation\n- Tempo must be between 40 and 240 BPM. If the user asks for something outside that range, say why and ask again.\n- Accept any conventional key spelling (e.g. \"A minor\", \"F# major\").\n\n## How to apply changes\nPrefer the reaper-session-setup skill only after live REAPER state and the required control interface are verified. An operating-system open request only asks the default application to open the project file; it does not prove that REAPER has finished opening it or that Web Remote is ready. If live control cannot be verified, say what is unavailable and ask the user to open or wait for REAPER, or enable the required Web Remote interface. Do not claim that live changes were applied.\n\nBefore falling back to direct file edits, explain that live REAPER state could not be verified and ask for the user's explicit confirmation. If they confirm, edit only the existing authoritative .rpp file (the tempo lives on its `TEMPO <bpm> 4 4` line), never create another project, and clearly describe the result as a file change rather than a verified live-session change. Record the chosen key in your summary (and in the session notes if asked) \u2014 the .rpp format has no key field.\n\n## When to do this\nThis is normal post-setup work, not part of setup. It is never completed automatically: adjusting tempo, key, tracks, or arrangement is something you actually do with the user, and reporting it as done because setup finished would be false.",
+      "details": "## What was created\nThe project scaffold already created the workspace's one authoritative REAPER session file, `<project name>.rpp`, in the workspace project folder. It was created with the tempo and time signature the user chose when the workspace was created, and has no tracks yet. Those values are already in the file — do not ask for them again as if they were unset, and never create or initialize a second .rpp file.\n\nRead the tempo and time signature from the session file before you describe them. Never state a specific tempo or time signature you have not read.\n\n## Questions to ask\nTell the user what was created, then offer to set the musical key, which is not part of workspace creation and is not stored in the session file. Offer to change anything else about the session too — tempo, time signature, tracks — but only if they want to; the values chosen at creation are already applied. If they are happy as it stands, confirm and finish without changing anything.\n\n## Validation\n- Tempo must be between 40 and 240 BPM. If the user asks for something outside that range, say why and ask again.\n- Accept any conventional key spelling (e.g. \"A minor\", \"F# major\").\n\n## How to apply changes\nPrefer the reaper-session-setup skill only after live REAPER state and the required control interface are verified. An operating-system open request only asks the default application to open the project file; it does not prove that REAPER has finished opening it or that Web Remote is ready. If live control cannot be verified, say what is unavailable and ask the user to open or wait for REAPER, or enable the required Web Remote interface. Do not claim that live changes were applied.\n\nBefore falling back to direct file edits, explain that live REAPER state could not be verified and ask for the user's explicit confirmation. If they confirm, edit only the existing authoritative .rpp file (the tempo and time signature share its `TEMPO <bpm> <beats> <unit>` line), never create another project, and clearly describe the result as a file change rather than a verified live-session change. Record the chosen key in your summary (and in the session notes if asked) \u2014 the .rpp format has no key field.\n\n## When to do this\nThis is normal post-setup work, not part of setup. It is never completed automatically: adjusting tempo, key, tracks, or arrangement is something you actually do with the user, and reporting it as done because setup finished would be false.",
       "connection_modes": [
         "new_project"
       ]
