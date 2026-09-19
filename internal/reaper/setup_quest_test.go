@@ -6,6 +6,7 @@ import (
 	"os"
 	"reflect"
 	"slices"
+	"strings"
 	"testing"
 )
 
@@ -22,14 +23,15 @@ func readQuestDocument(t *testing.T, path string) map[string]json.RawMessage {
 	return document
 }
 
-func TestPluginOwnsFourStepSetupQuestV2(t *testing.T) {
+func TestPluginOwnsProjectOnlySetupQuestV3(t *testing.T) {
 	manifest := readQuestDocument(t, "../../.ori-plugin/plugin.json")
 	var features []string
 	if err := json.Unmarshal(manifest["requires_host_features"], &features); err != nil {
 		t.Fatal(err)
 	}
-	// setup_quests_v2 is the four-step contract. A host that knows only v1 must
-	// refuse this manifest rather than misread it, and v1 is no longer declared.
+	// setup_quests_v2 is the four-step host contract. Quest declaration v3
+	// changes only the project-team staffing copy after Home ownership moved to
+	// Music Project Management; a host that knows only setup_quests_v1 refuses it.
 	if !slices.Contains(features, "setup_quests_v2") || slices.Contains(features, "setup_quests_v1") {
 		t.Fatalf("quest feature must be exactly setup_quests_v2: %v", features)
 	}
@@ -37,17 +39,18 @@ func TestPluginOwnsFourStepSetupQuestV2(t *testing.T) {
 	if err := json.Unmarshal(manifest["setup_quests"], &quests); err != nil || len(quests) != 1 {
 		t.Fatalf("expected one plugin-owned quest: %v (%v)", quests, err)
 	}
-	// Ori's generated install quest now owns installing the plugin, and the
-	// workspace Setup Wizard owns live-control readiness. Version 2 is the v1
-	// declaration (Ori PR #466, commit 1846c497) with exactly those two parts
-	// removed; every other field, step ID and display string is unchanged.
+	// Ori's generated install quest owns installation, and the workspace Setup
+	// Wizard owns live-control readiness. Derive v3 from the frozen v1 fixture so
+	// every field except that prior v2 extraction and the staffing copy is pinned.
 	baseline := readQuestDocument(t, "testdata/setup-quest-migration/quest-v1.json")
-	assertQuestJSONEqual(t, quests[0], questV2FromV1(t, baseline))
+	assertQuestJSONEqual(t, quests[0], questV3FromV1(t, baseline))
 
 	var shape struct {
 		Steps []struct {
-			ID   string `json:"id"`
-			Kind string `json:"kind"`
+			ID          string `json:"id"`
+			Kind        string `json:"kind"`
+			Title       string `json:"title"`
+			Description string `json:"description"`
 		} `json:"steps"`
 		WorkspaceLaunch map[string]string `json:"workspace_launch"`
 	}
@@ -70,6 +73,10 @@ func TestPluginOwnsFourStepSetupQuestV2(t *testing.T) {
 			t.Fatalf("step %d = %+v, want %v", index, step, wantSteps[index])
 		}
 	}
+	staffing := shape.Steps[2]
+	if staffing.Title != "Add this project's studio team" || !strings.Contains(staffing.Description, "staffed separately by Music Project Management") {
+		t.Fatalf("project-only staffing copy = %+v", staffing)
+	}
 	if len(shape.WorkspaceLaunch) != 2 || shape.WorkspaceLaunch["group_title"] == "" || shape.WorkspaceLaunch["group_name"] == "" {
 		t.Fatalf("workspace_launch must carry only group_title and group_name: %v", shape.WorkspaceLaunch)
 	}
@@ -89,7 +96,7 @@ func TestPluginOwnsFourStepSetupQuestV2(t *testing.T) {
 	if err := json.Unmarshal(data, &identity); err != nil {
 		t.Fatal(err)
 	}
-	if identity.ID != "reaper_setup" || identity.Version != 2 || identity.SchemaVersion != 1 ||
+	if identity.ID != "reaper_setup" || identity.Version != 3 || identity.SchemaVersion != 1 ||
 		identity.IntegrationKey != "ori_reaper" || identity.ExpectedBlueprintID != "reaper-song" ||
 		identity.ExpectedAssistantProgramID != "music-producer-assistant" {
 		t.Fatalf("quest migration changed durable identity: %+v", identity)
@@ -108,20 +115,17 @@ func TestQuestExtractionAndGroupContractLeaveOtherTemplateFieldsUnchanged(t *tes
 	delete(template, "setup_quest")
 	delete(template, "group_requirement")
 	delete(template, "standalone_composition")
+	delete(template, "assistant_project")
 	delete(template, "inputs")
 	// Blueprint v4 from published plugin v0.5.0, source 1f494db5. The quest
-	// reference, the v6 group declarations, and the v8 `inputs` block are the
-	// only later top-level additions; wizard, file-only mode, grouped
-	// scopes/prompts, permissions, project connection, and the authoritative
-	// .rpp entry stay fixed.
-	//
-	// Two later edits are reconciled against the frozen fixture rather than
-	// rewriting it: the retired role "type" key (0.6.1) is dropped from the
-	// baseline, and the first starter task's prose (0.7.0) is taken from the
-	// current template — but only after proving that prose is the only thing
-	// that moved.
+	// reference, split group/project declarations, and v8 inputs are the later
+	// top-level additions. The old combined assistant_program is deliberately
+	// excluded because v9 transfers that authority to the independent package.
+	// Wizard, file-only mode, permissions, project connection, and the
+	// authoritative .rpp entry remain fixed. The first starter task's 0.7.0 prose
+	// is reconciled only after proving that its details are the sole change.
 	baseline := readQuestDocument(t, "testdata/setup-quest-migration/template-v4.json")
-	baseline["assistant_program"] = withoutRetiredRoleType(t, baseline["assistant_program"])
+	delete(baseline, "assistant_program")
 	baseline["starter_tasks"] = withRewordedFirstStarterTask(t, baseline["starter_tasks"], template["starter_tasks"])
 	assertQuestJSONEqual(t, template, baseline)
 }
@@ -168,45 +172,16 @@ func withRewordedFirstStarterTask(t *testing.T, baselineRaw, currentRaw json.Raw
 	return data
 }
 
-// withoutRetiredRoleType removes the "type" key Ori retired
-// (johnjallday/ori-agent#490) from every assistant_program role, and fails if
-// the baseline carried none: the removal must be the only difference it hides.
-func withoutRetiredRoleType(t *testing.T, raw json.RawMessage) json.RawMessage {
-	t.Helper()
-	var program map[string]any
-	if err := json.Unmarshal(raw, &program); err != nil {
-		t.Fatal(err)
-	}
-	roles, _ := program["roles"].([]any)
-	removed := 0
-	for _, entry := range roles {
-		if role, ok := entry.(map[string]any); ok {
-			if _, has := role["type"]; has {
-				delete(role, "type")
-				removed++
-			}
-		}
-	}
-	if removed == 0 {
-		t.Fatal("baseline assistant_program roles carry no retired type key; this adjustment is stale")
-	}
-	data, err := json.Marshal(program)
-	if err != nil {
-		t.Fatal(err)
-	}
-	return data
-}
-
-// questV2FromV1 derives the expected version 2 declaration from the frozen v1
-// fixture: version 2, no integration_install step, and launch copy reduced to
-// the group fields.
-func questV2FromV1(t *testing.T, v1 map[string]json.RawMessage) map[string]json.RawMessage {
+// questV3FromV1 derives the expected version 3 declaration from the frozen v1
+// fixture: no integration_install step, launch copy reduced to group fields,
+// and staffing copy limited to this project's team.
+func questV3FromV1(t *testing.T, v1 map[string]json.RawMessage) map[string]json.RawMessage {
 	t.Helper()
 	result := make(map[string]json.RawMessage, len(v1))
 	for key, raw := range v1 {
 		result[key] = raw
 	}
-	result["version"] = json.RawMessage(`2`)
+	result["version"] = json.RawMessage(`3`)
 
 	var steps []map[string]any
 	if err := json.Unmarshal(v1["steps"], &steps); err != nil {
@@ -216,7 +191,14 @@ func questV2FromV1(t *testing.T, v1 map[string]json.RawMessage) map[string]json.
 		t.Fatalf("v1 fixture is not the five-step declaration: %v", steps)
 	}
 	var err error
-	if result["steps"], err = json.Marshal(steps[1:]); err != nil {
+	steps = steps[1:]
+	for _, step := range steps {
+		if step["id"] == "staffing" {
+			step["title"] = "Add this project's studio team"
+			step["description"] = "Add the project-local Producer, Mix Engineer, and Songwriter. Music Production Home roles are staffed separately by Music Project Management."
+		}
+	}
+	if result["steps"], err = json.Marshal(steps); err != nil {
 		t.Fatal(err)
 	}
 

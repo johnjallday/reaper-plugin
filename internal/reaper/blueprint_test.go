@@ -26,7 +26,7 @@ type reaperSongTemplate struct {
 	GroupRequirement struct {
 		SchemaVersion      int    `json:"schema_version"`
 		Policy             string `json:"policy"`
-		AssistantProgramID string `json:"assistant_program_id"`
+		AssistantProjectID string `json:"assistant_project_id"`
 		MissingHome        string `json:"missing_home"`
 		DefaultHomeName    string `json:"default_home_name"`
 	} `json:"group_requirement"`
@@ -86,34 +86,29 @@ type reaperSongTemplate struct {
 			Adapter    string `json:"adapter"`
 		} `json:"requirements"`
 	} `json:"runtime_requirements"`
-	AssistantProgram struct {
-		SchemaVersion                  int      `json:"schema_version"`
-		ID                             string   `json:"id"`
-		StationName                    string   `json:"station_name"`
-		DefaultPrimaryName             string   `json:"default_primary_name"`
-		SuggestionRequiredCapabilities []string `json:"suggestion_required_capabilities"`
-		Roles                          []struct {
+	AssistantProject struct {
+		SchemaVersion int    `json:"schema_version"`
+		Version       int    `json:"version"`
+		ID            string `json:"id"`
+		Home          struct {
+			ProviderPluginID  string `json:"provider_plugin_id"`
+			ProgramID         string `json:"program_id"`
+			HomeSchemaVersion int    `json:"home_schema_version"`
+			MinHomeVersion    int    `json:"min_home_version"`
+			MaxHomeVersion    int    `json:"max_home_version"`
+		} `json:"home"`
+		Roles []struct {
 			ID           string   `json:"id"`
 			Label        string   `json:"label"`
-			Scope        string   `json:"scope"`
 			Required     bool     `json:"required"`
-			CapabilityID string   `json:"capability_id"`
 			Primary      bool     `json:"primary"`
 			SystemPrompt string   `json:"system_prompt"`
 			Skills       []string `json:"skills"`
 		} `json:"roles"`
-		Stages []struct {
-			ID                          string `json:"id"`
-			AcceptedCompletionThreshold int    `json:"accepted_completion_threshold"`
-		} `json:"stages"`
-		Reflection struct {
-			MinimumProjects int    `json:"minimum_projects"`
-			Rubric          string `json:"rubric"`
-		} `json:"reflection"`
-	} `json:"assistant_program"`
+	} `json:"assistant_project"`
 }
 
-func TestReaperSongBlueprintV8RequiresReviewedHomeAndDeclaresStandaloneCustomization(t *testing.T) {
+func TestReaperSongBlueprintV9ReferencesIndependentHomeAndDeclaresStandaloneCustomization(t *testing.T) {
 	root := filepath.Join("..", "..")
 	manifestData, err := os.ReadFile(filepath.Join(root, ".ori-plugin", "plugin.json")) // #nosec G304 -- fixed repository fixture
 	if err != nil {
@@ -123,17 +118,17 @@ func TestReaperSongBlueprintV8RequiresReviewedHomeAndDeclaresStandaloneCustomiza
 	if err := json.Unmarshal(manifestData, &manifest); err != nil {
 		t.Fatal(err)
 	}
-	// blueprint_inputs_v1 is the release gate for the typed inputs below: an
-	// Ori build without it decodes this template strictly and would reject the
-	// whole blueprint, so it must refuse the release before installing.
-	if !slices.Equal(manifest.RequiresHostFeatures, []string{"assistant_program_v1", "specialist_setup_journey_v1", "setup_quests_v2", "template_group_requirements_v1", "blueprint_inputs_v1"}) {
+	// independent_program_homes_v1 is the release gate for assistant_project;
+	// blueprint_inputs_v1 remains the gate for the typed inputs below. A host
+	// missing either feature must refuse this contribution before registration.
+	if !slices.Equal(manifest.RequiresHostFeatures, []string{"independent_program_homes_v1", "specialist_setup_journey_v1", "setup_quests_v2", "template_group_requirements_v1", "blueprint_inputs_v1"}) {
 		t.Fatalf("requires_host_features = %v", manifest.RequiresHostFeatures)
 	}
 	if len(manifest.Blueprints) != 1 {
 		t.Fatalf("blueprints = %+v", manifest.Blueprints)
 	}
 	blueprint := manifest.Blueprints[0]
-	if blueprint.ID != "reaper-song" || blueprint.Version != 8 ||
+	if blueprint.ID != "reaper-song" || blueprint.Version != 9 ||
 		blueprint.Manifest != "blueprints/reaper-song/template.json" ||
 		blueprint.Skeleton != "blueprints/reaper-song/project" ||
 		!slices.Equal(blueprint.Capabilities, []string{"reaper-live-control"}) {
@@ -148,12 +143,12 @@ func TestReaperSongBlueprintV8RequiresReviewedHomeAndDeclaresStandaloneCustomiza
 	if err := json.Unmarshal(templateData, &template); err != nil {
 		t.Fatal(err)
 	}
-	if template.GroupRequirement.SchemaVersion != 1 || template.GroupRequirement.Policy != "required" ||
-		template.GroupRequirement.AssistantProgramID != "music-producer-assistant" || template.GroupRequirement.MissingHome != "offer_create" ||
+	if template.GroupRequirement.SchemaVersion != 2 || template.GroupRequirement.Policy != "required" ||
+		template.GroupRequirement.AssistantProjectID != "reaper-song-team" || template.GroupRequirement.MissingHome != "offer_create" ||
 		template.GroupRequirement.DefaultHomeName != "Music Production Home" {
 		t.Fatalf("group requirement = %+v", template.GroupRequirement)
 	}
-	if template.StandaloneComposition.SchemaVersion != 1 || len(template.StandaloneComposition.ProjectRoles) != 3 {
+	if template.StandaloneComposition.SchemaVersion != 2 || len(template.StandaloneComposition.ProjectRoles) != 3 {
 		t.Fatalf("standalone composition = %+v", template.StandaloneComposition)
 	}
 	for index, roleID := range []string{"producer", "engineer", "songwriter"} {
@@ -187,34 +182,22 @@ func TestReaperSongBlueprintV8RequiresReviewedHomeAndDeclaresStandaloneCustomiza
 	if len(template.Agents) != 0 {
 		t.Fatalf("assistant roster must be hired from the station, got legacy seeds: %+v", template.Agents)
 	}
-	program := template.AssistantProgram
-	if program.SchemaVersion != 2 || program.ID != "music-producer-assistant" ||
-		program.StationName != "Music Production Home" || program.DefaultPrimaryName != "Portfolio Manager" ||
-		!slices.Equal(program.SuggestionRequiredCapabilities, []string{"reaper_live_control"}) {
-		t.Fatalf("assistant program identity = %+v", program)
+	project := template.AssistantProject
+	if project.SchemaVersion != 1 || project.Version != 1 || project.ID != "reaper-song-team" ||
+		project.Home.ProviderPluginID != "music-project-management" || project.Home.ProgramID != "music-producer-assistant" ||
+		project.Home.HomeSchemaVersion != 1 || project.Home.MinHomeVersion != 1 || project.Home.MaxHomeVersion != 1 {
+		t.Fatalf("assistant project identity = %+v", project)
 	}
-	if len(program.Roles) != 5 || program.Roles[0].ID != "portfolio_manager" ||
-		program.Roles[0].Scope != "home" || !program.Roles[0].Required || !program.Roles[0].Primary ||
-		program.Roles[1].ID != "producer" || program.Roles[1].Scope != "project" ||
-		!program.Roles[1].Required || !program.Roles[1].Primary ||
-		program.Roles[2].ID != "engineer" || program.Roles[2].Scope != "project" || !program.Roles[2].Required ||
-		program.Roles[3].ID != "songwriter" || program.Roles[3].Scope != "project" || !program.Roles[3].Required ||
-		program.Roles[4].ID != "sample_library_manager" || program.Roles[4].Scope != "home" ||
-		program.Roles[4].Required || program.Roles[4].CapabilityID != "sample-library" {
-		t.Fatalf("assistant scoped roles = %+v", program.Roles)
+	if len(project.Roles) != 3 || project.Roles[0].ID != "producer" || !project.Roles[0].Required || !project.Roles[0].Primary ||
+		project.Roles[1].ID != "engineer" || !project.Roles[1].Required || project.Roles[1].Primary ||
+		project.Roles[2].ID != "songwriter" || !project.Roles[2].Required || project.Roles[2].Primary {
+		t.Fatalf("assistant project roles = %+v", project.Roles)
 	}
-	if !slices.Contains(program.Roles[1].Skills, "reaper-project-tidy") ||
-		!strings.Contains(program.Roles[1].SystemPrompt, "required_capabilities: [reaper_live_control]") ||
-		!strings.Contains(program.Roles[2].SystemPrompt, "Return composition") ||
-		!strings.Contains(program.Roles[3].SystemPrompt, "Return mixing") {
-		t.Fatalf("assistant role boundaries or gates are incomplete: %+v", program.Roles)
-	}
-	if len(program.Stages) != 2 || program.Stages[0].ID != "helper" || program.Stages[0].AcceptedCompletionThreshold != 0 ||
-		program.Stages[1].ID != "collaborator" || program.Stages[1].AcceptedCompletionThreshold != 5 {
-		t.Fatalf("assistant stages = %+v", program.Stages)
-	}
-	if program.Reflection.MinimumProjects != 3 || !strings.Contains(program.Reflection.Rubric, "three distinct linked projects") {
-		t.Fatalf("assistant reflection policy = %+v", program.Reflection)
+	if !slices.Contains(project.Roles[0].Skills, "reaper-project-tidy") ||
+		!strings.Contains(project.Roles[0].SystemPrompt, "required_capabilities: [reaper_live_control]") ||
+		!strings.Contains(project.Roles[1].SystemPrompt, "Return composition") ||
+		!strings.Contains(project.Roles[2].SystemPrompt, "Return mixing") {
+		t.Fatalf("assistant role boundaries or gates are incomplete: %+v", project.Roles)
 	}
 	if len(template.RuntimeRequirements.Requirements) != 1 {
 		t.Fatalf("runtime requirements = %+v", template.RuntimeRequirements.Requirements)
@@ -276,26 +259,45 @@ func instantiateBlueprintFixture(t *testing.T, source, destination, name string)
 // hold Ori to that compatibility shim, so no role or agent may carry it. The
 // check reads raw JSON because the typed fixture structs silently drop unknown
 // keys.
-func TestReaperSongBlueprintDeclaresNoRetiredAgentType(t *testing.T) {
+func TestReaperSongBlueprintOwnsOnlyProjectRolesAndDeclaresNoRetiredAgentType(t *testing.T) {
 	data, err := os.ReadFile(filepath.Join("..", "..", "blueprints", "reaper-song", "template.json")) // #nosec G304 -- fixed repository fixture
 	if err != nil {
 		t.Fatal(err)
 	}
+	var raw map[string]json.RawMessage
+	if err := json.Unmarshal(data, &raw); err != nil {
+		t.Fatal(err)
+	}
+	if _, combined := raw["assistant_program"]; combined {
+		t.Fatal("REAPER still owns a combined Assistant Program")
+	}
 	var template struct {
 		Agents           []map[string]json.RawMessage `json:"agents"`
-		AssistantProgram struct {
+		AssistantProject struct {
 			Roles []map[string]json.RawMessage `json:"roles"`
-		} `json:"assistant_program"`
+		} `json:"assistant_project"`
 	}
 	if err := json.Unmarshal(data, &template); err != nil {
 		t.Fatal(err)
 	}
-	if len(template.AssistantProgram.Roles) == 0 {
-		t.Fatal("assistant_program.roles is empty; the guard would pass vacuously")
+	if len(template.AssistantProject.Roles) != 3 {
+		t.Fatalf("assistant_project.roles = %+v", template.AssistantProject.Roles)
 	}
-	for _, role := range template.AssistantProgram.Roles {
-		if _, ok := role["type"]; ok {
-			t.Errorf("assistant_program role %s still declares the retired \"type\" key", role["id"])
+	for _, role := range template.AssistantProject.Roles {
+		for _, forbidden := range []string{"type", "scope", "capability_id"} {
+			if _, ok := role[forbidden]; ok {
+				t.Errorf("assistant_project role %s declares forbidden %q", role["id"], forbidden)
+			}
+		}
+		if id := string(role["id"]); id == `"portfolio_manager"` || id == `"sample_library_manager"` {
+			t.Errorf("REAPER still claims Home role %s", id)
+		}
+		var skills []string
+		if err := json.Unmarshal(role["skills"], &skills); err != nil && len(role["skills"]) != 0 {
+			t.Fatalf("role %s skills: %v", role["id"], err)
+		}
+		if slices.Contains(skills, "music-project-management") {
+			t.Errorf("REAPER role %s bundles the Home provider skill", role["id"])
 		}
 	}
 	for index, agent := range template.Agents {

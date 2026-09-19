@@ -1,5 +1,41 @@
 # Release notes
 
+## 0.8.0 — Connect projects to the independent Music Production Home
+
+- Reaper Song blueprint **v9** replaces its combined `assistant_program` with
+  project-owned `assistant_project` schema 1, version 1. REAPER now owns only
+  the required project-local Producer, Mix Engineer, and Songwriter under team
+  ID `reaper-song-team`.
+- The project declaration references provider `music-project-management`, Home
+  program `music-producer-assistant`, Home schema/version 1. Music Project
+  Management reciprocally authorizes exactly `reaper-plugin` / `reaper-song` /
+  `reaper-song-team` schema/version 1. Either package may be installed first;
+  grouped creation fails closed until both compatible providers are enabled.
+- REAPER no longer declares Portfolio Manager, Sample Library Manager, Home
+  stages/reflection/defaults, or the `music-project-management` skill. Existing
+  combined workspaces keep their recorded legacy owner and are not adopted,
+  migrated, relinked, reset, or renamed.
+- `group_requirement` and `standalone_composition` move to schema 2 and bind the
+  local project-team ID. The Required grouped path retains reviewed Home
+  create/reuse. The supported customized standalone path retains only the three
+  project roles, `.rpp` skeleton, typed tempo/time-signature inputs, starter
+  tasks, File-only mode, and optional verified live control.
+- Quest schema 1 advances to version **3** without changing its four step IDs.
+  Staffing copy now names only this project's team and directs Home staffing to
+  Music Project Management. Older saved quest progress is preserved but requires
+  the existing explicit Start over flow; no workspace or project data is deleted.
+- Require `independent_program_homes_v1` instead of the combined
+  `assistant_program_v1`. The existing setup, group-requirement, blueprint-input,
+  Workspace Surface, runtime, capability, and confirmation contracts remain.
+- Plugin/service version: **0.8.0**; Reaper Song blueprint **v9**; protocol
+  **1**; macOS arm64 only. Local deterministic candidate artifact: **8,780,098 bytes**;
+  SHA-256
+  `1f5ab0f061bddb739461ececc088900ec8f4cee47154ea631bb05ebfdfdad08e`.
+- No push, PR, tag, release, remote artifact reachability, reviewed Ori pin
+  update, real installation, model-backed execution, or live REAPER validation
+  is claimed. A compatible Ori release and separately published Music Project
+  Management package must precede any compatible REAPER release.
+
 ## 0.7.0 — Ask for tempo and time signature at creation
 
 - Reaper Song declares Ori's new `inputs` block: **Tempo** (number, 40–240,

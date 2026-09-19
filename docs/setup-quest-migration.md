@@ -194,3 +194,34 @@ reuse, which a `setup_quests_v2` host no longer has; it was not run for 0.6.0.
 No `v*` tag was created or pushed and no release package was published. Remote
 asset verification, Ori's reviewed pin update to 0.6.0 and blueprint 7, and live
 REAPER validation remain separate steps.
+
+## 0.8.0 addendum: Home ownership moved to Music Project Management
+
+Quest schema 1 advances from declaration version 2 to **3**. The four durable
+step IDs and kinds stay `project`, `workspace`, `staffing`, `summary`; only the
+staffing title and description change. They now name the project-local Producer,
+Mix Engineer, and Songwriter and state that Music Production Home roles are
+staffed separately by Music Project Management.
+
+The blueprint change is intentionally larger and separately versioned as v9:
+REAPER's combined `assistant_program` is replaced by project-only
+`assistant_project` `reaper-song-team`, which references the independent Home.
+This is fresh-setup ownership separation, not migration of an existing Home or
+quest receipt. Ori has no compiled version-2-to-3 quest migration, so a saved
+older quest is shown as incompatible until the user explicitly chooses the
+existing Start over action. That action resets setup progress only; plugin,
+Home, workspace, project, root, team, task, and external `.rpp` data remain.
+
+`scripts/verify-ori-quest.py` checks a fresh version-3 quest against the real
+host in disposable state. It verifies that the plugin-owned quest appears only
+after installation, opens and dismisses without creating a Home, project, mode,
+role, assistant acceptance, capability, or REAPER access, and leaves the native
+service disabled. Existing-version incompatibility remains covered by Ori's
+setup-journey migration tests. Combined candidate acceptance is owned by Ori's
+isolated music/REAPER demo, not by this quest check.
+
+Release order is a compatible Ori host, then the independently published Music
+Project Management package, then REAPER 0.8.0, followed only later by a reviewed
+registry/floor update based on verified published bytes. Local candidates are
+not release evidence. No live REAPER check is implied by manifest, quest, or
+browser acceptance.
