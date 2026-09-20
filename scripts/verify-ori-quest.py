@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Check real Ori quest ownership/resume in a disposable, disabled installation.
+"""Check real Ori quest ownership/version safety in a disposable, disabled installation.
 
 Run through scripts/with-local-artifact.sh. Requires a quest-capable Ori binary
 and lsof. Never uses an existing Ori URL/profile, enables the service, sets the
@@ -76,15 +76,16 @@ def verify(binary, repo, manifest, lsof):
 
                 def catalog_quest():
                     quests = [q for q in request("/api/setup-quests")["quests"]
-                              if q["plugin_id"] == "reaper-plugin" and q["id"] == "reaper_setup"]
+                              if q.get("plugin_id") == "reaper-plugin" and q.get("id") == "reaper_setup"]
                     require(len(quests) == 1, "expected one exact REAPER quest")
                     return quests[0]
 
                 def assert_gated(journey):
-                    integration = next(s for s in journey["steps"] if s["id"] == "integration")
-                    require(integration["status"] != "complete", "unreviewed candidate passed installation")
-                    require(not integration.get("integration", {}).get("verified", False),
-                            "candidate incorrectly became release-verified")
+                    require([s["id"] for s in journey["steps"]] ==
+                            ["project", "workspace", "staffing", "summary"],
+                            "candidate did not expose the exact four project setup steps")
+                    require(not any(s["status"] == "complete" for s in journey["steps"]),
+                            "opening setup completed an unreviewed consequence")
                     # The explicitly confirmed install may record its observed
                     # plugin/version. It must not create a group, project or mode.
                     receipts = journey["receipts"]
@@ -96,14 +97,11 @@ def verify(binary, repo, manifest, lsof):
                         require(value == expected, "unexpected installation receipt " + key)
 
                 require(not request("/api/plugins")["plugins"], "test profile was not empty")
-                require(catalog_quest()["ownership"] == "host_compatibility", "bootstrap was not compatibility data")
-                before = request(root)["setup_journey"]
-                before = request(root + "/open", {"if_revision": before["state_revision"],
-                                                  "idempotency_key": "migration-open"})["setup_journey"]
-                before = request(root + "/dismiss", {"if_revision": before["state_revision"],
-                                                     "idempotency_key": "migration-dismiss"})["setup_journey"]
-                assert_gated(before)
-                print("PASS: compatibility progress opened/dismissed without resource creation")
+                preinstall = request("/api/setup-quests")["quests"]
+                require(not any(q.get("plugin_id") == "reaper-plugin" and
+                                q.get("id") == "reaper_setup" for q in preinstall),
+                        "plugin-owned quest appeared before installation")
+                print("PASS: empty profile exposes no plugin-owned REAPER setup quest")
 
                 preview = request("/api/plugins/install", {"source": str(repo), "confirm": False})
                 require(preview["trust"]["Name"] == "reaper-plugin", "wrong preview owner")
@@ -118,17 +116,16 @@ def verify(binary, repo, manifest, lsof):
                 require(quest["title"] == manifest["setup_quests"][0]["title"], "wrong declaration copy")
                 print("PASS: real plugin manifest/blueprint resolved; catalog ownership=plugin")
 
-                after = request(root)["setup_journey"]
-                for key in ("run_id", "root_run_id", "first_opened_at", "last_dismissed_at", "dismissed"):
-                    require(after.get(key) == before.get(key), "migration changed saved " + key)
-                require(not after.get("declaration_incompatible", False), "unchanged quest needs a migration")
-                assert_gated(after)
-                resumed = request(root + "/open", {"if_revision": after["state_revision"],
-                                                   "idempotency_key": "migration-resume"})["setup_journey"]
-                require(resumed["run_id"] == before["run_id"] and not resumed["dismissed"], "resume duplicated progress")
-                require(resumed["first_opened_at"] == before["first_opened_at"], "resume rewrote first-open time")
-                assert_gated(resumed)
-                print("PASS: same progress/timestamps resumed; no group/project/mode receipts; reviewed-install gate intact")
+                fresh = request(root)["setup_journey"]
+                require(not fresh.get("declaration_incompatible", False),
+                        "fresh quest v3 was unexpectedly incompatible")
+                fresh = request(root + "/open", {"if_revision": fresh["state_revision"],
+                                                 "idempotency_key": "fresh-v3-open"})["setup_journey"]
+                fresh = request(root + "/dismiss", {"if_revision": fresh["state_revision"],
+                                                    "idempotency_key": "fresh-v3-dismiss"})["setup_journey"]
+                assert_gated(fresh)
+                require(fresh.get("dismissed", False), "fresh quest did not retain its dismissal")
+                print("PASS: fresh v3 progress opened/dismissed; no Home/project/mode receipt synthesized")
 
                 try:
                     request("/api/personal-assistant/setup-journey")

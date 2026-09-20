@@ -88,53 +88,59 @@ control is set up and verified. File-only mode, project-specific live
 permissions, exact-project verification, staffing scopes, and confirmation
 boundaries are unchanged. Merely opening setup grants nothing.
 
-Quest schema **1**, version **2** has four steps: `project`, `workspace`,
-`staffing`, `summary`. Its launch copy names only the group screen. Saved
-progress on the older five-step version does not migrate; Ori offers "Start
-over", and the group, project and team read as complete again because they
-exist. Quest declarations are read-only in Ori.
+Quest schema **1**, version **3** has four steps: `project`, `workspace`,
+`staffing`, `summary`. Its launch copy names only the group screen, and staffing
+names only this project's Producer, Mix Engineer, and Songwriter. Music
+Production Home roles are staffed separately by Music Project Management. Saved
+progress on an older quest version does not migrate; Ori offers "Start over",
+and existing groups, projects, and teams are preserved and read again. Quest
+declarations are read-only in Ori.
 
 ## Ori Workspace Surface development
 
 The first supported service artifact is **macOS arm64**. Candidate version
-**0.7.0** uses Workspace Surface protocol v1 and requires an Ori build with
-`assistant_program_v1`, `specialist_setup_journey_v1`, `setup_quests_v2`,
-`template_group_requirements_v1`, and `blueprint_inputs_v1`. Older hosts must
-refuse this contract rather than ignore its placement rules. An Ori build that
-knows only `setup_quests_v1` refuses 0.6.x, an Ori build with `setup_quests_v2`
-refuses 0.5.x, and an Ori build without `blueprint_inputs_v1` refuses 0.7.x —
-it would reject the whole blueprint manifest on sight, because a host that does
-not know the `inputs` block decodes the template strictly and fails.
+**0.8.0** uses Workspace Surface protocol v1 and requires an Ori build with
+`independent_program_homes_v1`, `specialist_setup_journey_v1`,
+`setup_quests_v2`, `template_group_requirements_v1`, and
+`blueprint_inputs_v1`. Older hosts must refuse this contract rather than ignore
+its ownership or placement rules. An Ori build without
+`independent_program_homes_v1` cannot safely resolve the separately owned Home,
+and an Ori build without `blueprint_inputs_v1` would reject the typed `inputs`
+block. Both conditions therefore fail before partial registration.
 
-Reaper Song blueprint v8 asks for **Tempo** (40–240 BPM, default 120) and
+Reaper Song blueprint v9 retains the v8 **Tempo** (40–240 BPM, default 120) and
 **Time signature** (4/4, 3/4, or 6/8, default 4/4) in Ori's Create Workspace
 Details step, and writes them into the scaffolded session file's `TEMPO` line.
 There is no free-text input, and substitution reaches only the one file the
 blueprint listed in `inputs.apply_to`. Musical key stays out of creation: the
 first starter task offers it, and the `.rpp` format has no key field anyway.
 
-Blueprint v8 (the v6 group contract, paired with quest
-version 2) declares Music Production Home as a **Required** group
-with reviewed create-or-reuse behavior. The declaration names only the stable
-`music-producer-assistant` program; Ori resolves the current user, plugin owner,
-and exact Home. Folder names and ordinary parentage grant no Assistant Program
-membership or project authority. Creating from the plugin original reviews the
-fixed Required destination. **Customize** creates a source-linked variant where
-a user may select None or Recommended; its validated standalone composition
-keeps the one `.rpp` project, project-local Producer/Mix Engineer/Songwriter,
-starter tasks, File-only mode, optional live-control setup, and exact-project
-safeguards, while creating no Home, portfolio, shared stage, link, or Home role.
-Its roles declare no `type`: Ori retired the agent Type field and ignores the
-key, and every host that accepts this contract already does.
+Blueprint v9 and quest version 3 separate ownership. REAPER declares only
+`reaper-song-team`: the project-local Producer, Mix Engineer, and Songwriter. It
+references the independently installed `music-project-management` provider and
+its `music-producer-assistant` Home; the music package reciprocally authorizes
+this exact plugin, `reaper-song` blueprint, team ID, schema, and version. REAPER
+no longer declares Home roles, stages, reflection, Portfolio Manager defaults,
+or the `music-project-management` skill.
+
+Music Production Home remains **Required** for the original grouped blueprint.
+Ori reviews exact create-or-reuse behavior and binds both installed providers;
+folder names and ordinary parentage grant no membership or authority. Either
+package can be installed first, but grouped creation remains unavailable until
+both compatible providers are enabled. **Customize** still permits the supported
+Home-free variant and keeps the one `.rpp` project, project-local team, starter
+tasks, File-only mode, optional live-control setup, and exact-project safeguards
+without creating a Home, portfolio, shared stage, or link. No role declares the
+retired `type` field.
 
 This is a clean-start contract. Existing Ori REAPER workspaces are not adopted,
 regrouped, reset, or migrated by name. Connect a fresh external `.rpp` folder
 through the reviewed existing-project flow; its files stay in place and grouping
 still grants no filesystem or runtime permission.
 
-The local `v0.7.0` candidate artifact is 8,780,098 bytes with SHA-256
-`b0f63e5e13607c74294995e8ccbd7802a40baf10b473d4a00d3c5a3a7bf29b29`.
-The manifest names the future `v0.7.0` release URL, but local deterministic bytes
+The local `v0.8.0` candidate artifact is 8,780,098 bytes with SHA-256
+`1f5ab0f061bddb739461ececc088900ec8f4cee47154ea631bb05ebfdfdad08e`.
+The manifest names the future `v0.8.0` release URL, but local deterministic bytes
 are not proof that a remote asset exists or is reachable. Publication and Ori's
 reviewed source/artifact pin update are separate approvals; existing installed
 plugins and reviewed pins are not rewritten by this candidate.
@@ -144,7 +150,7 @@ Build and verify the artifact reproducibly with:
 make artifact-local
 make test
 make test-ui
-make release-package VERSION=v0.7.0
+make release-package VERSION=v0.8.0
 ```
 
 Packaging is local and does not publish. Pushing a `v*` tag triggers the release
