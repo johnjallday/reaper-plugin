@@ -98,8 +98,10 @@ declarations are read-only in Ori.
 
 ## Ori Workspace Surface development
 
-The first supported service artifact is **macOS arm64**. Candidate version
-**0.8.0** uses Workspace Surface protocol v1 and requires an Ori build with
+The first supported service artifact is **macOS arm64**. Version **0.8.0** uses
+Workspace Surface protocol v1 and requires Music Project Management `v0.1.0`
+plus Ori `v0.0.115` or newer. During the coordinated rollout,
+`v0.0.115-rc.1` is the compatible test host. The required host features are
 `independent_program_homes_v1`, `specialist_setup_journey_v1`,
 `setup_quests_v2`, `template_group_requirements_v1`, and
 `blueprint_inputs_v1`. Older hosts must refuse this contract rather than ignore
@@ -138,12 +140,12 @@ regrouped, reset, or migrated by name. Connect a fresh external `.rpp` folder
 through the reviewed existing-project flow; its files stay in place and grouping
 still grants no filesystem or runtime permission.
 
-The local `v0.8.0` candidate artifact is 8,780,098 bytes with SHA-256
+The `v0.8.0` release artifact is 8,780,098 bytes with SHA-256
 `1f5ab0f061bddb739461ececc088900ec8f4cee47154ea631bb05ebfdfdad08e`.
-The manifest names the future `v0.8.0` release URL, but local deterministic bytes
-are not proof that a remote asset exists or is reachable. Publication and Ori's
-reviewed source/artifact pin update are separate approvals; existing installed
-plugins and reviewed pins are not rewritten by this candidate.
+The tag-triggered release workflow rebuilds and verifies those exact bytes before
+publishing the manifest's `v0.8.0` release URL. Ori's reviewed floor update is a
+separate host release step; existing installed plugins and reviewed pins are not
+rewritten merely because this release exists.
 Build and verify the artifact reproducibly with:
 
 ```bash
@@ -153,10 +155,10 @@ make test-ui
 make release-package VERSION=v0.8.0
 ```
 
-Packaging is local and does not publish. Pushing a `v*` tag triggers the release
-workflow and uploads the verified binary plus its checksum; that requires a
-separate release-owner approval. See [quest migration](docs/setup-quest-migration.md)
-for the ownership/resume test, validation boundaries, and remaining rollout steps.
+Packaging is local and does not publish. Pushing the approved `v0.8.0` tag
+triggers the release workflow and uploads the verified binary plus its checksum.
+See [quest migration](docs/setup-quest-migration.md) for the ownership/resume
+test, validation boundaries, and remaining rollout steps.
 The older [v0.5.0 record](docs/release-v0.5.0.md) describes that historical release.
 
 The build pins Go 1.25.13, disables VCS stamping, uses `-trimpath`, and clears the

@@ -28,13 +28,15 @@
   `assistant_program_v1`. The existing setup, group-requirement, blueprint-input,
   Workspace Surface, runtime, capability, and confirmation contracts remain.
 - Plugin/service version: **0.8.0**; Reaper Song blueprint **v9**; protocol
-  **1**; macOS arm64 only. Local deterministic candidate artifact: **8,780,098 bytes**;
+  **1**; macOS arm64 only. Deterministic release artifact: **8,780,098 bytes**;
   SHA-256
   `1f5ab0f061bddb739461ececc088900ec8f4cee47154ea631bb05ebfdfdad08e`.
-- No push, PR, tag, release, remote artifact reachability, reviewed Ori pin
-  update, real installation, model-backed execution, or live REAPER validation
-  is claimed. A compatible Ori release and separately published Music Project
-  Management package must precede any compatible REAPER release.
+- Require published Music Project Management **v0.1.0** and Ori **v0.0.115** or
+  newer. Ori `v0.0.115-rc.1` is the compatible host used for coordinated
+  pre-stable validation. The reviewed Ori floor update remains a separate host
+  release step.
+- This release does not claim production installation, model-backed execution,
+  automatic migration, or live REAPER validation.
 
 ## 0.7.0 — Ask for tempo and time signature at creation
 
