@@ -108,7 +108,7 @@ type reaperSongTemplate struct {
 	} `json:"assistant_project"`
 }
 
-func TestReaperSongBlueprintV9ReferencesIndependentHomeAndDeclaresStandaloneCustomization(t *testing.T) {
+func TestReaperSongBlueprintV10ReferencesIndependentHomeAndDeclaresStandaloneCustomization(t *testing.T) {
 	root := filepath.Join("..", "..")
 	manifestData, err := os.ReadFile(filepath.Join(root, ".ori-plugin", "plugin.json")) // #nosec G304 -- fixed repository fixture
 	if err != nil {
@@ -128,7 +128,7 @@ func TestReaperSongBlueprintV9ReferencesIndependentHomeAndDeclaresStandaloneCust
 		t.Fatalf("blueprints = %+v", manifest.Blueprints)
 	}
 	blueprint := manifest.Blueprints[0]
-	if blueprint.ID != "reaper-song" || blueprint.Version != 9 ||
+	if blueprint.ID != "reaper-song" || blueprint.Version != 10 ||
 		blueprint.Manifest != "blueprints/reaper-song/template.json" ||
 		blueprint.Skeleton != "blueprints/reaper-song/project" ||
 		!slices.Equal(blueprint.Capabilities, []string{"reaper-live-control"}) {
@@ -148,10 +148,12 @@ func TestReaperSongBlueprintV9ReferencesIndependentHomeAndDeclaresStandaloneCust
 		template.GroupRequirement.DefaultHomeName != "Music Production Home" {
 		t.Fatalf("group requirement = %+v", template.GroupRequirement)
 	}
-	if template.StandaloneComposition.SchemaVersion != 2 || len(template.StandaloneComposition.ProjectRoles) != 3 {
+	// v10 staffs one project role. The standalone variant carries exactly that
+	// role's Home-free prompt and nothing for the retired three-role team.
+	if template.StandaloneComposition.SchemaVersion != 2 || len(template.StandaloneComposition.ProjectRoles) != 1 {
 		t.Fatalf("standalone composition = %+v", template.StandaloneComposition)
 	}
-	for index, roleID := range []string{"producer", "engineer", "songwriter"} {
+	for index, roleID := range []string{"reaper-assistant"} {
 		role := template.StandaloneComposition.ProjectRoles[index]
 		if role.RoleID != roleID || !strings.Contains(role.SystemPrompt, "this one REAPER") ||
 			!strings.Contains(role.SystemPrompt, "no Home") && !strings.Contains(role.SystemPrompt, "no Assistant Program Home") {
@@ -188,16 +190,27 @@ func TestReaperSongBlueprintV9ReferencesIndependentHomeAndDeclaresStandaloneCust
 		project.Home.HomeSchemaVersion != 1 || project.Home.MinHomeVersion != 1 || project.Home.MaxHomeVersion != 1 {
 		t.Fatalf("assistant project identity = %+v", project)
 	}
-	if len(project.Roles) != 3 || project.Roles[0].ID != "producer" || !project.Roles[0].Required || !project.Roles[0].Primary ||
-		project.Roles[1].ID != "engineer" || !project.Roles[1].Required || project.Roles[1].Primary ||
-		project.Roles[2].ID != "songwriter" || !project.Roles[2].Required || project.Roles[2].Primary {
+	// The team keeps schema 1, version 1 so the published Music Project
+	// Management Home (which authorizes team version 1 only) still admits it; the
+	// role set itself is what v10 changes.
+	if len(project.Roles) != 1 || project.Roles[0].ID != "reaper-assistant" || project.Roles[0].Label != "REAPER Assistant" ||
+		!project.Roles[0].Required || !project.Roles[0].Primary {
 		t.Fatalf("assistant project roles = %+v", project.Roles)
 	}
-	if !slices.Contains(project.Roles[0].Skills, "reaper-project-tidy") ||
-		!strings.Contains(project.Roles[0].SystemPrompt, "required_capabilities: [reaper_live_control]") ||
-		!strings.Contains(project.Roles[1].SystemPrompt, "Return composition") ||
-		!strings.Contains(project.Roles[2].SystemPrompt, "Return mixing") {
-		t.Fatalf("assistant role boundaries or gates are incomplete: %+v", project.Roles)
+	// One role owns the whole REAPER scope: the mixing/recording side the Mix
+	// Engineer used to hold and the arrangement side the Songwriter used to hold,
+	// with nobody left to delegate to. The live-control gate is unchanged.
+	assistant := project.Roles[0]
+	if !slices.Contains(assistant.Skills, "reaper-project-tidy") ||
+		!strings.Contains(assistant.SystemPrompt, "required_capabilities: [reaper_live_control]") ||
+		!strings.Contains(assistant.SystemPrompt, "mixing") || !strings.Contains(assistant.SystemPrompt, "arrangement") ||
+		!strings.Contains(assistant.SystemPrompt, "no other project roles") {
+		t.Fatalf("assistant scope or gates are incomplete: %+v", assistant)
+	}
+	for _, retired := range []string{"Producer", "Mix Engineer", "Songwriter"} {
+		if strings.Contains(assistant.SystemPrompt, retired) {
+			t.Fatalf("assistant prompt still refers to the retired team (%q): %q", retired, assistant.SystemPrompt)
+		}
 	}
 	if len(template.RuntimeRequirements.Requirements) != 1 {
 		t.Fatalf("runtime requirements = %+v", template.RuntimeRequirements.Requirements)
@@ -280,7 +293,7 @@ func TestReaperSongBlueprintOwnsOnlyProjectRolesAndDeclaresNoRetiredAgentType(t 
 	if err := json.Unmarshal(data, &template); err != nil {
 		t.Fatal(err)
 	}
-	if len(template.AssistantProject.Roles) != 3 {
+	if len(template.AssistantProject.Roles) != 1 {
 		t.Fatalf("assistant_project.roles = %+v", template.AssistantProject.Roles)
 	}
 	for _, role := range template.AssistantProject.Roles {
@@ -289,8 +302,11 @@ func TestReaperSongBlueprintOwnsOnlyProjectRolesAndDeclaresNoRetiredAgentType(t 
 				t.Errorf("assistant_project role %s declares forbidden %q", role["id"], forbidden)
 			}
 		}
-		if id := string(role["id"]); id == `"portfolio_manager"` || id == `"sample_library_manager"` {
+		switch id := string(role["id"]); id {
+		case `"portfolio_manager"`, `"sample_library_manager"`:
 			t.Errorf("REAPER still claims Home role %s", id)
+		case `"producer"`, `"engineer"`, `"songwriter"`:
+			t.Errorf("REAPER still declares retired project role %s", id)
 		}
 		var skills []string
 		if err := json.Unmarshal(role["skills"], &skills); err != nil && len(role["skills"]) != 0 {
