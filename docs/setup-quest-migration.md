@@ -225,3 +225,30 @@ Project Management package, then REAPER 0.8.0, followed only later by a reviewed
 registry/floor update based on verified published bytes. Local candidates are
 not release evidence. No live REAPER check is implied by manifest, quest, or
 browser acceptance.
+
+## 0.9.0 addendum: one REAPER Assistant per project
+
+Quest schema 1 advances from declaration version 3 to **4**. The four durable
+step IDs and kinds stay `project`, `workspace`, `staffing`, `summary`; only the
+staffing title and description change. They now name the single project-local
+REAPER Assistant and still state that Music Production Home roles are staffed
+separately by Music Project Management.
+
+The blueprint change is separately versioned as v10: `reaper-song-team` declares
+one required, primary role, `reaper-assistant`, in place of Producer, Mix
+Engineer, and Songwriter, and `standalone_composition` carries that one role's
+Home-free prompt. The team ID, schema, and version 1 are unchanged, so the
+published Music Project Management v0.1.0 Home continues to authorize the
+attachment without a Home release. This is fresh-setup staffing, not migration:
+Ori binds an existing linked project to its recorded plugin version and team
+digest, so projects created from v9 keep their recorded three-role owner and are
+not restaffed, relinked, or renamed. As with version 3, Ori has no compiled
+quest migration, so a saved version-3 quest is shown as incompatible until the
+user explicitly chooses Start over; that resets setup progress only.
+
+No host feature is added. The `setup_quests_v2`, `independent_program_homes_v1`,
+`specialist_setup_journey_v1`, `template_group_requirements_v1`, and
+`blueprint_inputs_v1` requirements are the same as 0.8.0, and Ori's reviewed
+floor (0.8.0, blueprint 9) admits this release. Ori's own browser acceptance
+still names the three v9 roles and its reviewed pin still points at 0.8.0; both
+move in a separate Ori change after the published bytes are verified.

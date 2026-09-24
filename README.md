@@ -88,20 +88,20 @@ control is set up and verified. File-only mode, project-specific live
 permissions, exact-project verification, staffing scopes, and confirmation
 boundaries are unchanged. Merely opening setup grants nothing.
 
-Quest schema **1**, version **3** has four steps: `project`, `workspace`,
+Quest schema **1**, version **4** has four steps: `project`, `workspace`,
 `staffing`, `summary`. Its launch copy names only the group screen, and staffing
-names only this project's Producer, Mix Engineer, and Songwriter. Music
-Production Home roles are staffed separately by Music Project Management. Saved
+names only this project's one REAPER Assistant. Music Production Home roles are
+staffed separately by Music Project Management. Saved
 progress on an older quest version does not migrate; Ori offers "Start over",
 and existing groups, projects, and teams are preserved and read again. Quest
 declarations are read-only in Ori.
 
 ## Ori Workspace Surface development
 
-The first supported service artifact is **macOS arm64**. Version **0.8.0** uses
+The first supported service artifact is **macOS arm64**. Version **0.9.0** uses
 Workspace Surface protocol v1 and requires Music Project Management `v0.1.0`
-plus Ori `v0.0.115` or newer. During the coordinated rollout,
-`v0.0.115-rc.1` is the compatible test host. The required host features are
+plus Ori `v0.0.115` or newer, the same hosts as 0.8.0; it adds no host feature
+requirement. The required host features are
 `independent_program_homes_v1`, `specialist_setup_journey_v1`,
 `setup_quests_v2`, `template_group_requirements_v1`, and
 `blueprint_inputs_v1`. Older hosts must refuse this contract rather than ignore
@@ -110,40 +110,46 @@ its ownership or placement rules. An Ori build without
 and an Ori build without `blueprint_inputs_v1` would reject the typed `inputs`
 block. Both conditions therefore fail before partial registration.
 
-Reaper Song blueprint v9 retains the v8 **Tempo** (40–240 BPM, default 120) and
+Reaper Song blueprint v10 retains the v8 **Tempo** (40–240 BPM, default 120) and
 **Time signature** (4/4, 3/4, or 6/8, default 4/4) in Ori's Create Workspace
 Details step, and writes them into the scaffolded session file's `TEMPO` line.
 There is no free-text input, and substitution reaches only the one file the
 blueprint listed in `inputs.apply_to`. Musical key stays out of creation: the
 first starter task offers it, and the `.rpp` format has no key field anyway.
 
-Blueprint v9 and quest version 3 separate ownership. REAPER declares only
-`reaper-song-team`: the project-local Producer, Mix Engineer, and Songwriter. It
-references the independently installed `music-project-management` provider and
-its `music-producer-assistant` Home; the music package reciprocally authorizes
-this exact plugin, `reaper-song` blueprint, team ID, schema, and version. REAPER
-no longer declares Home roles, stages, reflection, Portfolio Manager defaults,
-or the `music-project-management` skill.
+Blueprint v10 and quest version 4 keep the v9 ownership split. REAPER declares
+only `reaper-song-team`: one project-local **REAPER Assistant** that handles
+everything REAPER-related for the project, from session setup, tracks, routing,
+and mixing questions to arrangement planning and Project Tidy. The Producer, Mix
+Engineer, and Songwriter roles of v9 are retired; nothing is delegated between
+roles. The team keeps schema 1, version 1 and still references the
+independently installed `music-project-management` provider and its
+`music-producer-assistant` Home; the music package reciprocally authorizes this
+exact plugin, `reaper-song` blueprint, team ID, schema, and version, so the
+published Home needs no change. REAPER declares no Home roles, stages,
+reflection, Portfolio Manager defaults, or the `music-project-management` skill.
 
 Music Production Home remains **Required** for the original grouped blueprint.
 Ori reviews exact create-or-reuse behavior and binds both installed providers;
 folder names and ordinary parentage grant no membership or authority. Either
 package can be installed first, but grouped creation remains unavailable until
 both compatible providers are enabled. **Customize** still permits the supported
-Home-free variant and keeps the one `.rpp` project, project-local team, starter
-tasks, File-only mode, optional live-control setup, and exact-project safeguards
-without creating a Home, portfolio, shared stage, or link. No role declares the
-retired `type` field.
+Home-free variant and keeps the one `.rpp` project, the project-local REAPER
+Assistant, starter tasks, File-only mode, optional live-control setup, and
+exact-project safeguards without creating a Home, portfolio, shared stage, or
+link. No role declares the retired `type` field.
 
 This is a clean-start contract. Existing Ori REAPER workspaces are not adopted,
-regrouped, reset, or migrated by name. Connect a fresh external `.rpp` folder
+regrouped, reset, or migrated by name, and a project created from blueprint v9
+keeps its recorded Producer, Mix Engineer, and Songwriter rather than being
+restaffed. Connect a fresh external `.rpp` folder
 through the reviewed existing-project flow; its files stay in place and grouping
 still grants no filesystem or runtime permission.
 
-The `v0.8.0` release artifact is 8,780,098 bytes with SHA-256
-`1f5ab0f061bddb739461ececc088900ec8f4cee47154ea631bb05ebfdfdad08e`.
+The `v0.9.0` release artifact is 8,780,098 bytes with SHA-256
+`dd0df90c1735e9a059e61b2aa0c69bc4f128122ffc56d9ed1f3969a261d52ed7`.
 The tag-triggered release workflow rebuilds and verifies those exact bytes before
-publishing the manifest's `v0.8.0` release URL. Ori's reviewed floor update is a
+publishing the manifest's `v0.9.0` release URL. Ori's reviewed floor update is a
 separate host release step; existing installed plugins and reviewed pins are not
 rewritten merely because this release exists.
 Build and verify the artifact reproducibly with:
@@ -152,10 +158,10 @@ Build and verify the artifact reproducibly with:
 make artifact-local
 make test
 make test-ui
-make release-package VERSION=v0.8.0
+make release-package VERSION=v0.9.0
 ```
 
-Packaging is local and does not publish. Pushing the approved `v0.8.0` tag
+Packaging is local and does not publish. Pushing the approved `v0.9.0` tag
 triggers the release workflow and uploads the verified binary plus its checksum.
 See [quest migration](docs/setup-quest-migration.md) for the ownership/resume
 test, validation boundaries, and remaining rollout steps.

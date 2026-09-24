@@ -1,5 +1,46 @@
 # Release notes
 
+## 0.9.0 — One REAPER Assistant per project
+
+- Reaper Song blueprint **v10** replaces the three-role project team with a
+  single required, primary **REAPER Assistant** (role id `reaper-assistant`,
+  role `orchestrator`) that handles everything REAPER-related for the project:
+  session setup, tracks, routing, recording, mixing questions, arrangement and
+  composition planning, and cosmetic Project Tidy. It binds the same
+  `reaper-session-setup` and `reaper-project-tidy` skills the Producer did.
+  Producer, Mix Engineer, and Songwriter are no longer declared, and nothing is
+  delegated between roles.
+- The team keeps ID `reaper-song-team`, schema 1, **version 1**, so the
+  published Music Project Management v0.1.0 Home (which authorizes team version
+  1 only) continues to admit it without a Home release. Ori binds an existing
+  linked project to its recorded plugin version and team digest, so projects
+  created from v9 keep their recorded three-role owner and are not adopted,
+  migrated, restaffed, relinked, or renamed. Create a new project for the
+  single-assistant team.
+- `standalone_composition` schema 2 now carries the one project-local prompt for
+  the Home-free Customize variant. The live-control capability gate, task
+  confirmation, readiness, and file-only boundaries are unchanged.
+- Quest schema 1 advances to version **4** without changing its four step IDs.
+  Staffing copy now names the one REAPER Assistant. Older saved quest progress
+  is preserved but requires the existing explicit Start over flow; no workspace
+  or project data is deleted.
+- Host requirements are unchanged from 0.8.0: `independent_program_homes_v1`,
+  `specialist_setup_journey_v1`, `setup_quests_v2`,
+  `template_group_requirements_v1`, and `blueprint_inputs_v1`. Ori's reviewed
+  floor (plugin 0.8.0, blueprint 9) admits this release; the reviewed pin
+  update and Ori's own browser acceptance, which still name the three v9 roles,
+  are a separate host change.
+- Plugin/service version: **0.9.0**; Reaper Song blueprint **v10**; protocol
+  **1**; macOS arm64 only. Deterministic release artifact: **8,780,098 bytes**;
+  SHA-256
+  `dd0df90c1735e9a059e61b2aa0c69bc4f128122ffc56d9ed1f3969a261d52ed7`. Only the
+  embedded version string differs from 0.8.0; the binary does not embed the
+  blueprint.
+- Require published Music Project Management **v0.1.0** and Ori **v0.0.115** or
+  newer, as before.
+- This release does not claim production installation, model-backed execution,
+  automatic migration, or live REAPER validation.
+
 ## 0.8.0 — Connect projects to the independent Music Production Home
 
 - Reaper Song blueprint **v9** replaces its combined `assistant_program` with

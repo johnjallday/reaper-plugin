@@ -1,6 +1,6 @@
 {
   "name": "reaper-plugin",
-  "version": "0.8.0",
+  "version": "0.9.0",
   "description": "Plugin-backed REAPER live control with a sandboxed Ori workspace surface, private MCP stdio service, skills, and helper CLI.",
   "author": "johnjallday",
   "homepage": "https://github.com/johnjallday/reaper-plugin",

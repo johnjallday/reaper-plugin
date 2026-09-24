@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "name": "reaper-plugin",
-  "version": "0.8.0",
+  "version": "0.9.0",
   "protocol": {
     "min": 1,
     "max": 1
@@ -225,9 +225,9 @@
           "arch": "arm64",
           "source": {
             "kind": "https",
-            "url": "https://github.com/johnjallday/reaper-plugin/releases/download/v0.8.0/reaper-plugin_v0.8.0_darwin_arm64"
+            "url": "https://github.com/johnjallday/reaper-plugin/releases/download/v0.9.0/reaper-plugin_v0.9.0_darwin_arm64"
           },
-          "sha256": "1f5ab0f061bddb739461ececc088900ec8f4cee47154ea631bb05ebfdfdad08e",
+          "sha256": "dd0df90c1735e9a059e61b2aa0c69bc4f128122ffc56d9ed1f3969a261d52ed7",
           "size": 8780098
         }
       ],
@@ -3282,7 +3282,7 @@
   "blueprints": [
     {
       "id": "reaper-song",
-      "version": 9,
+      "version": 10,
       "manifest": "blueprints/reaper-song/template.json",
       "skeleton": "blueprints/reaper-song/project",
       "capabilities": [
@@ -3300,7 +3300,7 @@
   "setup_quests": [
     {
       "schema_version": 1,
-      "version": 3,
+      "version": 4,
       "id": "reaper_setup",
       "title": "Set up REAPER",
       "description": "Connect a REAPER project and choose how Ori can help.",
@@ -3327,8 +3327,8 @@
         {
           "id": "staffing",
           "kind": "assistant_program_staffing",
-          "title": "Add this project's studio team",
-          "description": "Add the project-local Producer, Mix Engineer, and Songwriter. Music Production Home roles are staffed separately by Music Project Management."
+          "title": "Add this project's REAPER assistant",
+          "description": "Add the project-local REAPER Assistant, who handles everything REAPER-related for this project. Music Production Home roles are staffed separately by Music Project Management."
         },
         {
           "id": "summary",

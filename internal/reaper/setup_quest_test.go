@@ -23,15 +23,16 @@ func readQuestDocument(t *testing.T, path string) map[string]json.RawMessage {
 	return document
 }
 
-func TestPluginOwnsProjectOnlySetupQuestV3(t *testing.T) {
+func TestPluginOwnsProjectOnlySetupQuestV4(t *testing.T) {
 	manifest := readQuestDocument(t, "../../.ori-plugin/plugin.json")
 	var features []string
 	if err := json.Unmarshal(manifest["requires_host_features"], &features); err != nil {
 		t.Fatal(err)
 	}
 	// setup_quests_v2 is the four-step host contract. Quest declaration v3
-	// changes only the project-team staffing copy after Home ownership moved to
-	// Music Project Management; a host that knows only setup_quests_v1 refuses it.
+	// changed only the project-team staffing copy after Home ownership moved to
+	// Music Project Management, and v4 changes that copy again for the single
+	// REAPER Assistant; a host that knows only setup_quests_v1 refuses it.
 	if !slices.Contains(features, "setup_quests_v2") || slices.Contains(features, "setup_quests_v1") {
 		t.Fatalf("quest feature must be exactly setup_quests_v2: %v", features)
 	}
@@ -40,10 +41,10 @@ func TestPluginOwnsProjectOnlySetupQuestV3(t *testing.T) {
 		t.Fatalf("expected one plugin-owned quest: %v (%v)", quests, err)
 	}
 	// Ori's generated install quest owns installation, and the workspace Setup
-	// Wizard owns live-control readiness. Derive v3 from the frozen v1 fixture so
+	// Wizard owns live-control readiness. Derive v4 from the frozen v1 fixture so
 	// every field except that prior v2 extraction and the staffing copy is pinned.
 	baseline := readQuestDocument(t, "testdata/setup-quest-migration/quest-v1.json")
-	assertQuestJSONEqual(t, quests[0], questV3FromV1(t, baseline))
+	assertQuestJSONEqual(t, quests[0], questV4FromV1(t, baseline))
 
 	var shape struct {
 		Steps []struct {
@@ -74,7 +75,9 @@ func TestPluginOwnsProjectOnlySetupQuestV3(t *testing.T) {
 		}
 	}
 	staffing := shape.Steps[2]
-	if staffing.Title != "Add this project's studio team" || !strings.Contains(staffing.Description, "staffed separately by Music Project Management") {
+	if staffing.Title != "Add this project's REAPER assistant" || !strings.Contains(staffing.Description, "REAPER Assistant") ||
+		!strings.Contains(staffing.Description, "staffed separately by Music Project Management") ||
+		strings.Contains(staffing.Description, "Songwriter") {
 		t.Fatalf("project-only staffing copy = %+v", staffing)
 	}
 	if len(shape.WorkspaceLaunch) != 2 || shape.WorkspaceLaunch["group_title"] == "" || shape.WorkspaceLaunch["group_name"] == "" {
@@ -96,7 +99,7 @@ func TestPluginOwnsProjectOnlySetupQuestV3(t *testing.T) {
 	if err := json.Unmarshal(data, &identity); err != nil {
 		t.Fatal(err)
 	}
-	if identity.ID != "reaper_setup" || identity.Version != 3 || identity.SchemaVersion != 1 ||
+	if identity.ID != "reaper_setup" || identity.Version != 4 || identity.SchemaVersion != 1 ||
 		identity.IntegrationKey != "ori_reaper" || identity.ExpectedBlueprintID != "reaper-song" ||
 		identity.ExpectedAssistantProgramID != "music-producer-assistant" {
 		t.Fatalf("quest migration changed durable identity: %+v", identity)
@@ -172,16 +175,16 @@ func withRewordedFirstStarterTask(t *testing.T, baselineRaw, currentRaw json.Raw
 	return data
 }
 
-// questV3FromV1 derives the expected version 3 declaration from the frozen v1
+// questV4FromV1 derives the expected version 4 declaration from the frozen v1
 // fixture: no integration_install step, launch copy reduced to group fields,
-// and staffing copy limited to this project's team.
-func questV3FromV1(t *testing.T, v1 map[string]json.RawMessage) map[string]json.RawMessage {
+// and staffing copy limited to this project's one REAPER Assistant.
+func questV4FromV1(t *testing.T, v1 map[string]json.RawMessage) map[string]json.RawMessage {
 	t.Helper()
 	result := make(map[string]json.RawMessage, len(v1))
 	for key, raw := range v1 {
 		result[key] = raw
 	}
-	result["version"] = json.RawMessage(`3`)
+	result["version"] = json.RawMessage(`4`)
 
 	var steps []map[string]any
 	if err := json.Unmarshal(v1["steps"], &steps); err != nil {
@@ -194,8 +197,8 @@ func questV3FromV1(t *testing.T, v1 map[string]json.RawMessage) map[string]json.
 	steps = steps[1:]
 	for _, step := range steps {
 		if step["id"] == "staffing" {
-			step["title"] = "Add this project's studio team"
-			step["description"] = "Add the project-local Producer, Mix Engineer, and Songwriter. Music Production Home roles are staffed separately by Music Project Management."
+			step["title"] = "Add this project's REAPER assistant"
+			step["description"] = "Add the project-local REAPER Assistant, who handles everything REAPER-related for this project. Music Production Home roles are staffed separately by Music Project Management."
 		}
 	}
 	if result["steps"], err = json.Marshal(steps); err != nil {
