@@ -27,3 +27,7 @@ func (unsupportedPlatformProbe) CheckTransport(context.Context, WebRemoteObserva
 func (unsupportedPlatformProbe) VerifyProject(context.Context, VerificationTarget) VerificationObservation {
 	return VerificationObservation{State: VerificationCheckFailed}
 }
+
+func (unsupportedPlatformProbe) ReadProfile(context.Context, bool) ProfileResult {
+	return ProfileResult{App: profileAppName}
+}

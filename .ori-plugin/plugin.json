@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "name": "reaper-plugin",
-  "version": "0.9.0",
+  "version": "0.10.0",
   "protocol": {
     "min": 1,
     "max": 1
@@ -225,10 +225,10 @@
           "arch": "arm64",
           "source": {
             "kind": "https",
-            "url": "https://github.com/johnjallday/reaper-plugin/releases/download/v0.9.0/reaper-plugin_v0.9.0_darwin_arm64"
+            "url": "https://github.com/johnjallday/reaper-plugin/releases/download/v0.10.0/reaper-plugin_v0.10.0_darwin_arm64"
           },
-          "sha256": "dd0df90c1735e9a059e61b2aa0c69bc4f128122ffc56d9ed1f3969a261d52ed7",
-          "size": 8780098
+          "sha256": "7f943fb59dd821b905adde8585e5212998abf433eaa05d47d04f447245aef1d5",
+          "size": 8917842
         }
       ],
       "operations": [
@@ -318,6 +318,92 @@
             "additionalProperties": false
           },
           "max_output_bytes": 65536,
+          "timeout_class": "fast",
+          "policy": "read_only",
+          "scopes": []
+        },
+        {
+          "id": "profile.read",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "include_templates": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "include_templates"
+            ],
+            "additionalProperties": false
+          },
+          "output_schema": {
+            "type": "object",
+            "properties": {
+              "app": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 80
+              },
+              "installed": {
+                "type": "boolean"
+              },
+              "version": {
+                "type": "string",
+                "maxLength": 40
+              },
+              "templates_available": {
+                "type": "boolean"
+              },
+              "templates": {
+                "type": "array",
+                "maxItems": 64,
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 120
+                    },
+                    "kind": {
+                      "type": "string",
+                      "maxLength": 16,
+                      "enum": [
+                        "project",
+                        "track"
+                      ]
+                    },
+                    "file": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 255
+                    },
+                    "modified_at": {
+                      "type": "string",
+                      "maxLength": 40
+                    }
+                  },
+                  "required": [
+                    "name",
+                    "kind",
+                    "file"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "truncated": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "app",
+              "installed",
+              "templates_available",
+              "truncated"
+            ],
+            "additionalProperties": false
+          },
+          "max_output_bytes": 32768,
           "timeout_class": "fast",
           "policy": "read_only",
           "scopes": []
@@ -3295,8 +3381,13 @@
     "specialist_setup_journey_v1",
     "setup_quests_v2",
     "template_group_requirements_v1",
-    "blueprint_inputs_v1"
+    "blueprint_inputs_v1",
+    "home_profile_v1"
   ],
+  "home_profile_facts": {
+    "service_id": "reaper-service",
+    "operation": "profile.read"
+  },
   "setup_quests": [
     {
       "schema_version": 1,

@@ -97,6 +97,7 @@ type platformProber interface {
 	RunnerProbe
 	LiveTransportProbe
 	ProjectVerifier
+	ProfileProbe
 }
 
 type ProbeSet struct {
@@ -105,9 +106,10 @@ type ProbeSet struct {
 	Transport   LiveTransportProbe
 	Runner      RunnerProbe
 	Verifier    ProjectVerifier
+	Profile     ProfileProbe
 }
 
 func NewPlatformProbeSet(roots RunnerRootResolver) ProbeSet {
 	probe := newPlatformProbe(roots)
-	return ProbeSet{Application: probe, WebRemote: probe, Transport: probe, Runner: probe, Verifier: probe}
+	return ProbeSet{Application: probe, WebRemote: probe, Transport: probe, Runner: probe, Verifier: probe, Profile: probe}
 }

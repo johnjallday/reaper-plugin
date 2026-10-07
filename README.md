@@ -98,17 +98,51 @@ declarations are read-only in Ori.
 
 ## Ori Workspace Surface development
 
-The first supported service artifact is **macOS arm64**. Version **0.9.0** uses
-Workspace Surface protocol v1 and requires Music Project Management `v0.1.0`
-plus Ori `v0.0.115` or newer, the same hosts as 0.8.0; it adds no host feature
-requirement. The required host features are
+The first supported service artifact is **macOS arm64**. Version **0.10.0** uses
+Workspace Surface protocol v1 and requires Music Project Management `v0.1.0` or
+newer plus an Ori version that advertises `home_profile_v1`, the one host
+feature this release adds. The required host features are
 `independent_program_homes_v1`, `specialist_setup_journey_v1`,
-`setup_quests_v2`, `template_group_requirements_v1`, and
-`blueprint_inputs_v1`. Older hosts must refuse this contract rather than ignore
+`setup_quests_v2`, `template_group_requirements_v1`, `blueprint_inputs_v1`, and
+`home_profile_v1`. Older hosts must refuse this contract rather than ignore
 its ownership or placement rules. An Ori build without
 `independent_program_homes_v1` cannot safely resolve the separately owned Home,
-and an Ori build without `blueprint_inputs_v1` would reject the typed `inputs`
-block. Both conditions therefore fail before partial registration.
+an Ori build without `blueprint_inputs_v1` would reject the typed `inputs`
+block, and an Ori build without `home_profile_v1` does not know the
+`home_profile_facts` key. Each condition therefore fails before partial
+registration; such a host keeps using 0.9.0.
+
+### Studio facts for a Home profile (`profile.read`)
+
+0.10.0 adds one read-only, machine-level service operation, `profile.read`, and
+names it in the manifest as `home_profile_facts`, so a host can ask "what does
+this computer have of your application?" without knowing which application a
+plugin is for. Its one input is `include_templates`. It answers:
+
+- `app` (`REAPER`), `installed`, and `version`: the release number from the
+  application bundle's own metadata (for example `7.28`);
+- `templates_available`: whether a templates folder exists;
+- only with `include_templates: true`, `templates`: the names of the files
+  directly inside `ProjectTemplates` (`.RPP`) and `TrackTemplates`
+  (`.RTrackTemplate`) of the REAPER resource folder, each with its kind, bare
+  file name and modified time, at most 64 and never more than fits the declared
+  32 KiB answer;
+- `truncated`: the list is not everything. There are more than were returned, a
+  name could not be shown as one plain visible line, a template is a symbolic
+  link, a templates folder has subfolders (their contents are not listed), or a
+  folder could not be read.
+
+The operation looks only at fixed locations: `REAPER.app` in `/Applications` or
+`~/Applications`, and the resource folder of that same installation
+(`~/Library/Application Support/REAPER`, or the folder beside the bundle when a
+`reaper.ini` there makes it portable). Every folder on the way is opened one
+element at a time and must be a real directory, so it follows no symbolic link.
+It opens no template, returns no path, and takes no workspace, project or
+scope. Whether and when it is called is the host's decision: Ori calls it with
+`include_templates: true` only after the Home's owner agreed, on a setup card or
+in the Home's review dialog. Ori's reviewed floor for this plugin stays 0.9.0;
+on 0.9.0 a Home says "Update the REAPER plugin to read templates" and otherwise
+works.
 
 Reaper Song blueprint v10 retains the v8 **Tempo** (40–240 BPM, default 120) and
 **Time signature** (4/4, 3/4, or 6/8, default 4/4) in Ori's Create Workspace
@@ -146,10 +180,10 @@ restaffed. Connect a fresh external `.rpp` folder
 through the reviewed existing-project flow; its files stay in place and grouping
 still grants no filesystem or runtime permission.
 
-The `v0.9.0` release artifact is 8,780,098 bytes with SHA-256
-`dd0df90c1735e9a059e61b2aa0c69bc4f128122ffc56d9ed1f3969a261d52ed7`.
+The `v0.10.0` release artifact is 8,917,842 bytes with SHA-256
+`7f943fb59dd821b905adde8585e5212998abf433eaa05d47d04f447245aef1d5`.
 The tag-triggered release workflow rebuilds and verifies those exact bytes before
-publishing the manifest's `v0.9.0` release URL. Ori's reviewed floor update is a
+publishing the manifest's `v0.10.0` release URL. Ori's reviewed floor update is a
 separate host release step; existing installed plugins and reviewed pins are not
 rewritten merely because this release exists.
 Build and verify the artifact reproducibly with:
@@ -158,10 +192,10 @@ Build and verify the artifact reproducibly with:
 make artifact-local
 make test
 make test-ui
-make release-package VERSION=v0.9.0
+make release-package VERSION=v0.10.0
 ```
 
-Packaging is local and does not publish. Pushing the approved `v0.9.0` tag
+Packaging is local and does not publish. Pushing the approved `v0.10.0` tag
 triggers the release workflow and uploads the verified binary plus its checksum.
 See [quest migration](docs/setup-quest-migration.md) for the ownership/resume
 test, validation boundaries, and remaining rollout steps.

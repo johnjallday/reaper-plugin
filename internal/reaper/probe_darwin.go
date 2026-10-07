@@ -24,6 +24,9 @@ type platformProbe struct {
 	client         *http.Client
 	listeningPorts func(context.Context) []int
 	mu             sync.Mutex
+	// systemApplications replaces the system Applications folder for the
+	// profile read in tests. It is "" in production.
+	systemApplications string
 }
 
 func newPlatformProbe(roots RunnerRootResolver) platformProber {
