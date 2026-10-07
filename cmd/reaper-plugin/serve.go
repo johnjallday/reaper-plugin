@@ -23,6 +23,9 @@ func runService() int {
 	addTool(server, "status.read", "Return bounded REAPER station status.", func(ctx context.Context, input reaper.Envelope[reaper.EmptyInput]) (reaper.StationResult, error) {
 		return service.Station(ctx, input.Context), nil
 	})
+	addTool(server, "profile.read", "Report whether REAPER is installed, its version, and, only when asked, the names of the user's project and track templates.", func(ctx context.Context, input reaper.Envelope[reaper.ProfileInput]) (reaper.ProfileResult, error) {
+		return service.Profile(ctx, input.Input), nil
+	})
 	addTool(server, "runtime.prerequisites", "Check REAPER prerequisites.", func(ctx context.Context, input reaper.Envelope[reaper.EmptyInput]) (reaper.ReadyResult, error) {
 		return service.Runtime().Prerequisites(ctx, input.Context), nil
 	})

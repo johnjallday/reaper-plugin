@@ -121,7 +121,8 @@ func TestReaperSongBlueprintV10ReferencesIndependentHomeAndDeclaresStandaloneCus
 	// independent_program_homes_v1 is the release gate for assistant_project;
 	// blueprint_inputs_v1 remains the gate for the typed inputs below. A host
 	// missing either feature must refuse this contribution before registration.
-	if !slices.Equal(manifest.RequiresHostFeatures, []string{"independent_program_homes_v1", "specialist_setup_journey_v1", "setup_quests_v2", "template_group_requirements_v1", "blueprint_inputs_v1"}) {
+	// home_profile_v1 gates the `home_profile_facts` key the same way (0.10.0).
+	if !slices.Equal(manifest.RequiresHostFeatures, []string{"independent_program_homes_v1", "specialist_setup_journey_v1", "setup_quests_v2", "template_group_requirements_v1", "blueprint_inputs_v1", "home_profile_v1"}) {
 		t.Fatalf("requires_host_features = %v", manifest.RequiresHostFeatures)
 	}
 	if len(manifest.Blueprints) != 1 {

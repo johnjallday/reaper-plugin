@@ -1,5 +1,56 @@
 # Release notes
 
+## 0.10.0 — Studio facts for the Home profile
+
+- New read-only service operation **`profile.read`**, named in the manifest as
+  `home_profile_facts` (`reaper-service` / `profile.read`). A host that shows a
+  Home profile (Ori's "Your studio" card on a Music Production Home) calls it
+  to learn whether REAPER is installed, which version, and, only when it asks
+  with `include_templates: true`, the names of the user's project and track
+  templates.
+- The answer is closed and bounded: `app`, `installed`, `version`,
+  `templates_available`, `templates` (name, kind `project` or `track`, bare file
+  name, modified time; at most 64) and `truncated`. It is machine-level: no
+  workspace, project, grant or scope takes part, and the policy is `read_only`
+  with the `fast` timeout class and a 32 KiB output limit. The service cuts the
+  list to fit that limit itself (long names in scripts that take several bytes
+  per character would otherwise overflow it), so a host never has to refuse an
+  answer whole; its bounds are the manifest's, held together by a test.
+- It reads only fixed locations: `REAPER.app` in `/Applications` or
+  `~/Applications` for installation and version (the bundle's own metadata),
+  and `ProjectTemplates/*.RPP` and `TrackTemplates/*.RTrackTemplate` directly
+  inside the REAPER resource folder of that same installation
+  (`~/Library/Application Support/REAPER`, or the folder beside the bundle when
+  a `reaper.ini` there makes it portable). Every folder on the way is opened
+  one element at a time and must be a real directory, and the one opened must
+  be the one that was looked at, so no symbolic link is followed, not even one
+  put in place during the read. No template is opened and no path is returned.
+- `truncated` means the list is not everything: more than 64 templates, a name
+  that cannot be shown as one plain visible line, a template that is a symbolic
+  link, a subfolder (its templates are not listed), or a folder that could not
+  be read. A folder that exists but cannot be read is never reported as empty.
+- The plugin does not decide when templates are read. Ori calls the operation
+  with `include_templates: true` only after the Home's owner agreed, on a setup
+  card or in the Home's review dialog, and stores only the names.
+- New required host feature **`home_profile_v1`**, which gates the
+  `home_profile_facts` manifest key. An Ori version without it rejects 0.10.0
+  rather than partially registering it and keeps using 0.9.0. Ori's reviewed
+  floor stays plugin 0.9.0 and blueprint 9: on 0.9.0 a Home shows "Update the
+  REAPER plugin to read templates" and otherwise works.
+- Nothing else changes: Reaper Song blueprint **v10**, the single REAPER
+  Assistant, team `reaper-song-team` version 1, quest version 4, surfaces,
+  agent operations and every existing service operation are as in 0.9.0. No
+  workspace, project or Home is migrated.
+- Plugin/service version: **0.10.0**; protocol **1**; macOS arm64 only.
+  Deterministic release artifact: **8,917,842 bytes**; SHA-256
+  `7f943fb59dd821b905adde8585e5212998abf433eaa05d47d04f447245aef1d5`.
+- Works with Music Project Management **v0.1.0** or newer; the "Your studio"
+  card itself comes with Music Project Management **v0.2.0**.
+- This release does not claim production installation, model-backed execution,
+  or live REAPER validation. The operation was exercised against fixture
+  application bundles and resource folders, and through Ori's service runtime
+  in a disposable sandbox with a candidate Ori build.
+
 ## 0.9.0 — One REAPER Assistant per project
 
 - Reaper Song blueprint **v10** replaces the three-role project team with a
