@@ -1,6 +1,6 @@
 module github.com/johnjallday/reaper-plugin
 
-go 1.25.13
+go 1.26.9
 
 require (
 	github.com/modelcontextprotocol/go-sdk v1.7.0

@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "name": "reaper-plugin",
-  "version": "0.10.0",
+  "version": "0.10.1",
   "protocol": {
     "min": 1,
     "max": 1
@@ -225,10 +225,10 @@
           "arch": "arm64",
           "source": {
             "kind": "https",
-            "url": "https://github.com/johnjallday/reaper-plugin/releases/download/v0.10.0/reaper-plugin_v0.10.0_darwin_arm64"
+            "url": "https://github.com/johnjallday/reaper-plugin/releases/download/v0.10.1/reaper-plugin_v0.10.1_darwin_arm64"
           },
-          "sha256": "7f943fb59dd821b905adde8585e5212998abf433eaa05d47d04f447245aef1d5",
-          "size": 8917842
+          "sha256": "6b5de3d9ea5a02ffc30ef022933b2d558a5c1e9fcb57e82b59a57109ec8bb978",
+          "size": 9139986
         }
       ],
       "operations": [
