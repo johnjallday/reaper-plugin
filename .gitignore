@@ -17,5 +17,8 @@ go.work.sum
 # Editor / OS
 .DS_Store
 
+# Agent planning artifacts (checklists, findings, evidence) stay local
+/tasks/
+
 # Claude Code local settings
 .claude/settings.local.json

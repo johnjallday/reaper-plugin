@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(go test *)",
+      "Bash(go vet *)",
+      "Bash(go build *)",
+      "Bash(gofmt -l *)",
+      "Bash(make build)",
+      "Bash(make test)",
+      "Bash(make test-ui)",
+      "Bash(node --test *)",
+      "Bash(npx prettier --check *)",
+      "Bash(./scripts/verify-artifact.sh*)",
+      "Bash(git fetch *)"
+    ]
+  }
+}
