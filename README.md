@@ -98,10 +98,10 @@ declarations are read-only in Ori.
 
 ## Ori Workspace Surface development
 
-The first supported service artifact is **macOS arm64**. Version **0.10.0** uses
+The first supported service artifact is **macOS arm64**. Version **0.10.1** uses
 Workspace Surface protocol v1 and requires Music Project Management `v0.1.0` or
 newer plus an Ori version that advertises `home_profile_v1`, the one host
-feature this release adds. The required host features are
+feature 0.10.0 added. The required host features are
 `independent_program_homes_v1`, `specialist_setup_journey_v1`,
 `setup_quests_v2`, `template_group_requirements_v1`, `blueprint_inputs_v1`, and
 `home_profile_v1`. Older hosts must refuse this contract rather than ignore
@@ -180,10 +180,10 @@ restaffed. Connect a fresh external `.rpp` folder
 through the reviewed existing-project flow; its files stay in place and grouping
 still grants no filesystem or runtime permission.
 
-The `v0.10.0` release artifact is 8,917,842 bytes with SHA-256
-`7f943fb59dd821b905adde8585e5212998abf433eaa05d47d04f447245aef1d5`.
+The `v0.10.1` release artifact is 9,139,986 bytes with SHA-256
+`6b5de3d9ea5a02ffc30ef022933b2d558a5c1e9fcb57e82b59a57109ec8bb978`.
 The tag-triggered release workflow rebuilds and verifies those exact bytes before
-publishing the manifest's `v0.10.0` release URL. Ori's reviewed floor update is a
+publishing the manifest's `v0.10.1` release URL. Ori's reviewed floor update is a
 separate host release step; existing installed plugins and reviewed pins are not
 rewritten merely because this release exists.
 Build and verify the artifact reproducibly with:
@@ -192,16 +192,16 @@ Build and verify the artifact reproducibly with:
 make artifact-local
 make test
 make test-ui
-make release-package VERSION=v0.10.0
+make release-package VERSION=v0.10.1
 ```
 
-Packaging is local and does not publish. Pushing the approved `v0.10.0` tag
+Packaging is local and does not publish. Pushing the approved `v0.10.1` tag
 triggers the release workflow and uploads the verified binary plus its checksum.
 See [quest migration](docs/setup-quest-migration.md) for the ownership/resume
 test, validation boundaries, and remaining rollout steps.
 The older [v0.5.0 record](docs/release-v0.5.0.md) describes that historical release.
 
-The build pins Go 1.25.13, disables VCS stamping, uses `-trimpath`, and clears the
+The build pins Go 1.26.9, disables VCS stamping, uses `-trimpath`, and clears the
 build ID; repeating it from unchanged Go source produces identical bytes across
 maintainer machines and release-metadata commits. Install by Git URL or local path through Ori's Plugins UI or
 `POST /api/plugins/install`, review the complete trust disclosure, confirm, and

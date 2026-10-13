@@ -1,5 +1,24 @@
 # Release notes
 
+## 0.10.1 — Go 1.26.9 toolchain
+
+- The release binary is built with Go **1.26.9** instead of 1.25.13. The Go
+  1.25 line is no longer supported, and `govulncheck` on the 1.25.13 binary
+  reports twelve Go standard-library advisories published on 2026-10-08, all
+  fixed in Go 1.26.9. CI and the tag-driven release workflow both run that scan
+  after packaging, so no release could be cut from the old toolchain. The pin
+  lives in `go.mod`, in `scripts/build-local-artifact.sh` and in the README,
+  held together by `TestReleaseBuildPinsTheModulePatchToolchain`.
+- Nothing else changes: no new operation, manifest key, host feature, blueprint
+  version, quest version, protocol or skill. Reaper Song blueprint stays
+  **v10**, the required host features are those of 0.10.0, and Ori's reviewed
+  floor (plugin 0.9.0, blueprint 9) is unaffected. No workspace, project or
+  Home is migrated.
+- Plugin/service version: **0.10.1**; protocol **1**; macOS arm64 only.
+  Deterministic release artifact: **9,139,986 bytes**; SHA-256
+  `6b5de3d9ea5a02ffc30ef022933b2d558a5c1e9fcb57e82b59a57109ec8bb978`.
+- Works with Music Project Management **v0.1.0** or newer, as 0.10.0 does.
+
 ## 0.10.0 — Studio facts for the Home profile
 
 - New read-only service operation **`profile.read`**, named in the manifest as
