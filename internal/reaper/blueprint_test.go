@@ -121,11 +121,15 @@ func TestReaperSongBlueprintV10ReferencesIndependentHomeAndDeclaresStandaloneCus
 	// independent_program_homes_v1 is the release gate for assistant_project;
 	// blueprint_inputs_v1 remains the gate for the typed inputs below. A host
 	// missing either feature must refuse this contribution before registration.
-	// home_profile_v1 gates the `home_profile_facts` key the same way (0.10.0).
-	if !slices.Equal(manifest.RequiresHostFeatures, []string{"independent_program_homes_v1", "specialist_setup_journey_v1", "setup_quests_v2", "template_group_requirements_v1", "blueprint_inputs_v1", "home_profile_v1"}) {
+	// home_profile_v1 gates the `home_profile_facts` key the same way (0.10.0),
+	// and resource_workspaces_v1 gates the reaper-studio blueprint and the
+	// resource_catalog key (0.11.0).
+	if !slices.Equal(manifest.RequiresHostFeatures, []string{"independent_program_homes_v1", "specialist_setup_journey_v1", "setup_quests_v2", "template_group_requirements_v1", "blueprint_inputs_v1", "home_profile_v1", "resource_workspaces_v1"}) {
 		t.Fatalf("requires_host_features = %v", manifest.RequiresHostFeatures)
 	}
-	if len(manifest.Blueprints) != 1 {
+	// reaper-song stays first; the Studio blueprint (TestStudioResourceCatalog
+	// DeclarationIsTheContractVector) follows it.
+	if len(manifest.Blueprints) != 2 {
 		t.Fatalf("blueprints = %+v", manifest.Blueprints)
 	}
 	blueprint := manifest.Blueprints[0]
