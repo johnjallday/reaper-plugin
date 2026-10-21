@@ -12,6 +12,8 @@ const (
 	maxREAPERConfigBytes   = 2 << 20
 	maxREAPERConfigLines   = 8192
 	maxRunnerIDBytes       = 256
+	maxRunnerVersionBytes  = 16
+	maxRunnerVersion       = 1000000
 	maxProbeResponse       = 64 << 10
 	maxVerificationInbox   = 1 << 20
 	maxWebRemoteInterfaces = 8

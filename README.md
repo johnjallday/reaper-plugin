@@ -98,19 +98,84 @@ declarations are read-only in Ori.
 
 ## Ori Workspace Surface development
 
-The first supported service artifact is **macOS arm64**. Version **0.10.1** uses
+The first supported service artifact is **macOS arm64**. Version **0.11.0** uses
 Workspace Surface protocol v1 and requires Music Project Management `v0.1.0` or
-newer plus an Ori version that advertises `home_profile_v1`, the one host
-feature 0.10.0 added. The required host features are
+newer (`v0.4.0` or newer for REAPER Studio) plus an Ori version that advertises
+`resource_workspaces_v1`, the one host feature 0.11.0 added: the first Ori
+release with REAPER Studio support. The required host features are
 `independent_program_homes_v1`, `specialist_setup_journey_v1`,
-`setup_quests_v2`, `template_group_requirements_v1`, `blueprint_inputs_v1`, and
-`home_profile_v1`. Older hosts must refuse this contract rather than ignore
-its ownership or placement rules. An Ori build without
-`independent_program_homes_v1` cannot safely resolve the separately owned Home,
-an Ori build without `blueprint_inputs_v1` would reject the typed `inputs`
-block, and an Ori build without `home_profile_v1` does not know the
-`home_profile_facts` key. Each condition therefore fails before partial
-registration; such a host keeps using 0.9.0.
+`setup_quests_v2`, `template_group_requirements_v1`, `blueprint_inputs_v1`,
+`home_profile_v1`, and `resource_workspaces_v1`. Older hosts must refuse this
+contract rather than ignore its ownership or placement rules. An Ori build
+without `independent_program_homes_v1` cannot safely resolve the separately
+owned Home, an Ori build without `blueprint_inputs_v1` would reject the typed
+`inputs` block, an Ori build without `home_profile_v1` does not know the
+`home_profile_facts` key, and an Ori build without `resource_workspaces_v1`
+knows neither the `resource_catalog` key nor a resource team. Each condition
+therefore fails before partial registration; such a host keeps using 0.10.1.
+
+### REAPER Studio resource catalog (`studio.sources.read`, `studio.inventory.read`)
+
+0.11.0 adds the plugin side of **REAPER Studio**, a resource workspace that a
+Music Production Home attaches beside its songs (Music Project Management
+0.4.0 declares the attachment). The plugin declares blueprint `reaper-studio`
+v1 with team `reaper-studio-team` v1 (`workspace_kind: "resource"`, one REAPER
+Studio Assistant role, skill `reaper-studio-catalog`, attaching only to an
+existing Home, a skeleton with no project file), a top-level `resource_catalog`
+naming three categories (Templates, Scripts, Audio Plugins) with their kinds
+and facts, and two read-only, machine-level operations:
+
+- `studio.sources.read` reports the installation (a stable `inst_…` id derived
+  from the REAPER resource folder's canonical path and file identity, a label,
+  the per-user or portable layout, the version) and five fixed sources with
+  their state right now: `project_templates`, `track_templates`,
+  `reaper_scripts` (REAPER's Scripts folder) and `ori_scripts`
+  (`~/Ori Scripts/reaper`) are file sources; `audio_plugins` is live. It looks
+  and does not read: an absent folder is `absent`, never created, and no link
+  is followed.
+- **Owner-added folders** (contract §4.5): the Templates and Scripts categories
+  declare `owner_folders`, so the owner can add folders of their own on the
+  Studio page (for example `~/Music/Templates Archive`). Ori sends them in
+  `studio.sources.read` as `folders: [{id, category, path}]` (at most 8, the
+  canonical path, `id` = `folder_` + 16 hex of SHA-256(category ‖ 0 ‖ path)),
+  and the plugin answers each one once, as sent, as a `file` source labelled
+  with the folder's name at its `~` location, with state `ready`, `absent`,
+  `denied` or `unsupported` (a linked folder) from a presence look. A
+  `folder_` page of `studio.inventory.read` carries `folder: {category, path}`
+  and is read with the same walker, kinds by extension (`.rpp`,
+  `.rtracktemplate`; `.lua`, `.eel`, `.py`), facts and skips as the fixed
+  sources, with ids relative to the folder; a page whose folder is missing or
+  is not the folder its id names is `unsupported`. The plugin never answers a
+  folder it was not given, and its own source ids never start with `folder_`.
+- `studio.inventory.read` lists one source page by page (`limit` 1–256, opaque
+  `after:` cursors, at most 256 KiB per page, every skipped item counted on
+  exactly one page). File sources are walked depth-first through the opened
+  folder; scripts carry their language, their registration (from
+  `reaper-kb.ini` rows matched by script path, by absolute path for the
+  library and owner folders), their ReaPack package when `reapack.ini` names
+  the repository (REAPER's Scripts folder only), and a tagged header
+  description. A registration row that points outside REAPER's Scripts folder
+  and the Ori library is counted as `external_registration` on the Scripts
+  source's first page, including a row that points into an owner folder: that
+  page is not told the owner's folders, and the folder's own page reports the
+  script as registered. The
+  plugin list is read live from REAPER's own `EnumInstalledFX` through a new
+  canonical read-only inspector on the audited no-undo runner path, which
+  preserves transport, selection, the open project, its change count and its
+  undo history. A closed REAPER reports `app_closed`; a runner older than this
+  release reports `reader_outdated` (the runner now writes `runner.version`
+  beside `runner.id`); a runner that does not answer reports `reader_missing`.
+  Nothing is installed, staged or registered by the catalog; the existing
+  live-control setup updates the runner.
+
+Ori owns the catalog, the annotations, the review, inspection and withdrawal
+flows, and renders the owner view from the declared words; the plugin ships no
+catalog surface and never sees a catalog or a workspace. An entry means "seen
+during inspection at that time", never licensed, loaded, working or tested.
+The inventory spike behind the live reader decision is recorded in
+[`scripts/spikes/reaper-studio/findings.md`](scripts/spikes/reaper-studio/findings.md).
+`reaper-song` (v10, `reaper-song-team` v1), the `reaper_setup` quest (v4), the
+surfaces and the protocol are unchanged.
 
 ### Studio facts for a Home profile (`profile.read`)
 
@@ -180,10 +245,10 @@ restaffed. Connect a fresh external `.rpp` folder
 through the reviewed existing-project flow; its files stay in place and grouping
 still grants no filesystem or runtime permission.
 
-The `v0.10.1` release artifact is 9,139,986 bytes with SHA-256
-`6b5de3d9ea5a02ffc30ef022933b2d558a5c1e9fcb57e82b59a57109ec8bb978`.
+The `v0.11.0` release artifact is 9,392,066 bytes with SHA-256
+`54207279a082f44f26aba7f2c49a21f494237410a0df386f0faec177a0e87ecf`.
 The tag-triggered release workflow rebuilds and verifies those exact bytes before
-publishing the manifest's `v0.10.1` release URL. Ori's reviewed floor update is a
+publishing the manifest's `v0.11.0` release URL. Ori's reviewed floor update is a
 separate host release step; existing installed plugins and reviewed pins are not
 rewritten merely because this release exists.
 Build and verify the artifact reproducibly with:
@@ -192,16 +257,16 @@ Build and verify the artifact reproducibly with:
 make artifact-local
 make test
 make test-ui
-make release-package VERSION=v0.10.1
+make release-package VERSION=v0.11.0
 ```
 
-Packaging is local and does not publish. Pushing the approved `v0.10.1` tag
+Packaging is local and does not publish. Pushing the approved `v0.11.0` tag
 triggers the release workflow and uploads the verified binary plus its checksum.
 See [quest migration](docs/setup-quest-migration.md) for the ownership/resume
 test, validation boundaries, and remaining rollout steps.
 The older [v0.5.0 record](docs/release-v0.5.0.md) describes that historical release.
 
-The build pins Go 1.26.9, disables VCS stamping, uses `-trimpath`, and clears the
+The build pins Go 1.26.10, disables VCS stamping, uses `-trimpath`, and clears the
 build ID; repeating it from unchanged Go source produces identical bytes across
 maintainer machines and release-metadata commits. Install by Git URL or local path through Ori's Plugins UI or
 `POST /api/plugins/install`, review the complete trust disclosure, confirm, and

@@ -1,0 +1,43 @@
+{
+  "name": "REAPER Studio",
+  "description": "One place for the templates, scripts and audio plugins your REAPER setup already has.",
+  "behavior_profile": "general",
+  "tools": {
+    "skills": [
+      "reaper-studio-catalog"
+    ]
+  },
+  "assistant_project": {
+    "schema_version": 1,
+    "version": 1,
+    "id": "reaper-studio-team",
+    "workspace_kind": "resource",
+    "home": {
+      "provider_plugin_id": "music-project-management",
+      "program_id": "music-producer-assistant",
+      "home_schema_version": 1,
+      "min_home_version": 1,
+      "max_home_version": 1
+    },
+    "roles": [
+      {
+        "id": "reaper-studio-assistant",
+        "label": "REAPER Studio Assistant",
+        "description": "Explains the studio catalog; changes nothing in REAPER.",
+        "required": true,
+        "primary": true,
+        "role": "orchestrator",
+        "system_prompt": "You are the REAPER Studio Assistant for this Home's resource catalog. You explain what the catalog recorded during inspection: project and track templates, Lua, EEL and Python scripts, and the effects and instruments REAPER reported, each as it was seen at the time of its inspection. Answer only from catalog lookups made for the question at hand, retrieve only the entries the question needs, and cite each entry's studio_url. Say when an entry was seen, and say plainly when the catalog may be stale, partial or not yet inspected. Being listed never means a plugin is licensed, loaded, working or tested, or that a script or template has been reviewed or run. You change nothing in REAPER: you never apply a template, run or install a script, load a plugin, or claim that any of this happened. You may suggest a tag, a favourite or a note for an entry, but only the owner saves annotations through the Studio's own controls.",
+        "skills": [
+          "reaper-studio-catalog"
+        ]
+      }
+    ]
+  },
+  "group_requirement": {
+    "schema_version": 2,
+    "policy": "required",
+    "assistant_project_id": "reaper-studio-team",
+    "missing_home": "existing_only"
+  }
+}

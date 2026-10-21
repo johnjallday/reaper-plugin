@@ -49,12 +49,6 @@ func (p *platformProbe) ReadProfile(_ context.Context, includeTemplates bool) Pr
 	return result
 }
 
-func closeRoot(root *os.Root) {
-	if root != nil {
-		_ = root.Close()
-	}
-}
-
 // openHome opens the user's home directory. It is the one place taken as
 // given; everything below it is checked element by element.
 func (p *platformProbe) openHome() *os.Root {
@@ -70,27 +64,6 @@ func (p *platformProbe) openHome() *os.Root {
 		return nil
 	}
 	return root
-}
-
-// openRealPath opens elements below parent one at a time, each a real
-// directory. It returns nil when any of them is missing, is a link or cannot
-// be opened.
-func openRealPath(parent *os.Root, elements ...string) *os.Root {
-	current, owned := parent, false
-	for _, element := range elements {
-		next, _, ok := openRealDir(current, element)
-		if owned {
-			closeRoot(current)
-		}
-		if !ok {
-			return nil
-		}
-		current, owned = next, true
-	}
-	if !owned {
-		return nil
-	}
-	return current
 }
 
 // openSystemApplications opens the system Applications folder, a fixed

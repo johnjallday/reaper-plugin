@@ -47,6 +47,9 @@ type RunnerObservation struct {
 	State     ProbeState `json:"state"`
 	Root      string     `json:"root,omitempty"`
 	CommandID string     `json:"command_id,omitempty"`
+	// Version is what the installed Lua runner last wrote to runner.version;
+	// 0 for a runner older than 0.11.0, which wrote none.
+	Version int `json:"version,omitempty"`
 }
 
 const (
@@ -98,6 +101,7 @@ type platformProber interface {
 	LiveTransportProbe
 	ProjectVerifier
 	ProfileProbe
+	StudioProbe
 }
 
 type ProbeSet struct {
@@ -107,9 +111,10 @@ type ProbeSet struct {
 	Runner      RunnerProbe
 	Verifier    ProjectVerifier
 	Profile     ProfileProbe
+	Studio      StudioProbe
 }
 
 func NewPlatformProbeSet(roots RunnerRootResolver) ProbeSet {
 	probe := newPlatformProbe(roots)
-	return ProbeSet{Application: probe, WebRemote: probe, Transport: probe, Runner: probe, Verifier: probe, Profile: probe}
+	return ProbeSet{Application: probe, WebRemote: probe, Transport: probe, Runner: probe, Verifier: probe, Profile: probe, Studio: probe}
 }

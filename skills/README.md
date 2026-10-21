@@ -20,6 +20,7 @@ brokered tool loop; no private plugin service is attached wholesale.
 | [`reaper-web-remote`](reaper-web-remote/SKILL.md) | Core Web Remote playbook: discover the port, read transport/tracks, run actions and registered ReaScripts by command ID. |
 | [`reaper-session-setup`](reaper-session-setup/SKILL.md) | Insert, name, color, and record-arm tracks to a requested layout (writes + registers a ReaScript, runs it via Web Remote). |
 | [`reaper-project-tidy`](reaper-project-tidy/SKILL.md) | Survey convention-aware cosmetic cleanup, review every proposal row, and apply only checked changes as one REAPER undo step. |
+| [`reaper-studio-catalog`](reaper-studio-catalog/SKILL.md) | Answer questions about a REAPER Studio catalog (templates, scripts, audio plugins) through Ori's catalog lookups, citing entries and keeping observation time and uncertainty. Lookups only; nothing is applied, run or installed. |
 
 ## Prerequisites
 
@@ -36,18 +37,18 @@ copying its folder there. From the repo root:
 
 **Ori**
 ```bash
-cp -R skills/reaper-web-remote skills/reaper-session-setup skills/reaper-project-tidy ~/.agents/skills/
+cp -R skills/reaper-web-remote skills/reaper-session-setup skills/reaper-project-tidy skills/reaper-studio-catalog ~/.agents/skills/
 ```
 Then enable/bind the skill to your REAPER workspace.
 
 **Claude (Code / Desktop)**
 ```bash
-cp -R skills/reaper-web-remote skills/reaper-session-setup skills/reaper-project-tidy ~/.claude/skills/
+cp -R skills/reaper-web-remote skills/reaper-session-setup skills/reaper-project-tidy skills/reaper-studio-catalog ~/.claude/skills/
 ```
 
 **Codex**
 ```bash
-cp -R skills/reaper-web-remote skills/reaper-session-setup skills/reaper-project-tidy ~/.codex/skills/
+cp -R skills/reaper-web-remote skills/reaper-session-setup skills/reaper-project-tidy skills/reaper-studio-catalog ~/.codex/skills/
 ```
 
 > Make sure REAPER is running with the Web Remote interface enabled before you

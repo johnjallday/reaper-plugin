@@ -26,6 +26,12 @@ func runService() int {
 	addTool(server, "profile.read", "Report whether REAPER is installed, its version, and, only when asked, the names of the user's project and track templates.", func(ctx context.Context, input reaper.Envelope[reaper.ProfileInput]) (reaper.ProfileResult, error) {
 		return service.Profile(ctx, input.Input), nil
 	})
+	addTool(server, "studio.sources.read", "Report this computer's REAPER installation and the catalog sources it has, without reading any of them.", func(ctx context.Context, input reaper.Envelope[reaper.StudioSourcesInput]) (reaper.StudioSourcesResult, error) {
+		return service.StudioSources(ctx, input.Input)
+	})
+	addTool(server, "studio.inventory.read", "List one page of one catalog source: templates, scripts, or REAPER's plugin list through the audited read-only inspector.", func(ctx context.Context, input reaper.Envelope[reaper.StudioInventoryInput]) (reaper.StudioInventoryResult, error) {
+		return service.StudioInventory(ctx, input.Input)
+	})
 	addTool(server, "runtime.prerequisites", "Check REAPER prerequisites.", func(ctx context.Context, input reaper.Envelope[reaper.EmptyInput]) (reaper.ReadyResult, error) {
 		return service.Runtime().Prerequisites(ctx, input.Context), nil
 	})

@@ -8,7 +8,9 @@
 
   On every run it:
     1. records its own stable command ID to ~/.ori-reaper/runner.id, so the agent
-       / CLI can discover what to trigger, then
+       / CLI can discover what to trigger, and its own version to
+       ~/.ori-reaper/runner.version, so the plugin can tell an older runner
+       (one without the plugin-list read) from a current one, then
     2. executes the Lua found in ~/.ori-reaper/inbox.lua through either the
        audited no-undo inspector path or the ordinary single-Undo-block path,
        then
@@ -23,10 +25,13 @@ local function home()
   return os.getenv("HOME") or os.getenv("USERPROFILE") or ""
 end
 
-local ori_dir     = home() .. "/.ori-reaper"
-local inbox_path  = ori_dir .. "/inbox.lua"
-local id_path     = ori_dir .. "/runner.id"
-local status_path = ori_dir .. "/last_status.txt"
+local ori_dir      = home() .. "/.ori-reaper"
+local inbox_path   = ori_dir .. "/inbox.lua"
+local id_path      = ori_dir .. "/runner.id"
+local version_path = ori_dir .. "/runner.version"
+local status_path  = ori_dir .. "/last_status.txt"
+-- Bumped whenever the read-only allowlist grows. 2: EnumInstalledFX (0.11.0).
+local runner_version = "2"
 
 -- This exact one-shot header selects the audited inspector path. Ordinary
 -- inbox scripts keep the historical mutation path below. The Go exchange
@@ -39,6 +44,7 @@ local read_only_apis = {
   CountProjectMarkers = true,
   CountTrackMediaItems = true,
   CountTracks = true,
+  EnumInstalledFX = true,
   EnumProjectMarkers3 = true,
   EnumProjects = true,
   GetAppVersion = true,
@@ -155,6 +161,7 @@ else
   trigger_id = tostring(cmd_id)
 end
 write_file(id_path, trigger_id)
+write_file(version_path, runner_version)
 
 -- 2) Load + run the inbox.
 local inf = io.open(inbox_path, "r")

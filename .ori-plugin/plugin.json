@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "name": "reaper-plugin",
-  "version": "0.10.1",
+  "version": "0.11.0",
   "protocol": {
     "min": 1,
     "max": 1
@@ -225,10 +225,10 @@
           "arch": "arm64",
           "source": {
             "kind": "https",
-            "url": "https://github.com/johnjallday/reaper-plugin/releases/download/v0.10.1/reaper-plugin_v0.10.1_darwin_arm64"
+            "url": "https://github.com/johnjallday/reaper-plugin/releases/download/v0.11.0/reaper-plugin_v0.11.0_darwin_arm64"
           },
-          "sha256": "6b5de3d9ea5a02ffc30ef022933b2d558a5c1e9fcb57e82b59a57109ec8bb978",
-          "size": 9139986
+          "sha256": "54207279a082f44f26aba7f2c49a21f494237410a0df386f0faec177a0e87ecf",
+          "size": 9392066
         }
       ],
       "operations": [
@@ -3361,6 +3361,416 @@
           "timeout_class": "fast",
           "policy": "reversible",
           "scopes": []
+        },
+        {
+          "id": "studio.sources.read",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "schema_version": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 1
+              },
+              "folders": {
+                "type": "array",
+                "maxItems": 8,
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "minLength": 23,
+                      "maxLength": 23
+                    },
+                    "category": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 40
+                    },
+                    "path": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 1024
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "category",
+                    "path"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "schema_version"
+            ],
+            "additionalProperties": false
+          },
+          "output_schema": {
+            "type": "object",
+            "properties": {
+              "schema_version": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 1
+              },
+              "installation": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "minLength": 8,
+                    "maxLength": 128
+                  },
+                  "label": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 80
+                  },
+                  "layout": {
+                    "type": "string",
+                    "enum": [
+                      "per_user",
+                      "portable"
+                    ],
+                    "maxLength": 16
+                  },
+                  "app_installed": {
+                    "type": "boolean"
+                  },
+                  "app_version": {
+                    "type": "string",
+                    "maxLength": 40
+                  }
+                },
+                "required": [
+                  "id",
+                  "label",
+                  "layout",
+                  "app_installed"
+                ],
+                "additionalProperties": false
+              },
+              "sources": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 16,
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 40
+                    },
+                    "category": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 40
+                    },
+                    "label": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 60
+                    },
+                    "location": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 512
+                    },
+                    "access": {
+                      "type": "string",
+                      "enum": [
+                        "file",
+                        "live"
+                      ],
+                      "maxLength": 8
+                    },
+                    "state": {
+                      "type": "string",
+                      "enum": [
+                        "ready",
+                        "absent",
+                        "denied",
+                        "unsupported",
+                        "app_closed",
+                        "reader_missing",
+                        "reader_outdated",
+                        "web_remote_off"
+                      ],
+                      "maxLength": 32
+                    },
+                    "detail": {
+                      "type": "string",
+                      "maxLength": 240
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "category",
+                    "label",
+                    "location",
+                    "access",
+                    "state"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "schema_version",
+              "installation",
+              "sources"
+            ],
+            "additionalProperties": false
+          },
+          "max_output_bytes": 32768,
+          "timeout_class": "fast",
+          "policy": "read_only",
+          "scopes": []
+        },
+        {
+          "id": "studio.inventory.read",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "schema_version": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 1
+              },
+              "installation_id": {
+                "type": "string",
+                "minLength": 8,
+                "maxLength": 128
+              },
+              "source_id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 40
+              },
+              "cursor": {
+                "type": "string",
+                "maxLength": 512
+              },
+              "limit": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 256
+              },
+              "folder": {
+                "type": "object",
+                "properties": {
+                  "category": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 40
+                  },
+                  "path": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 1024
+                  }
+                },
+                "required": [
+                  "category",
+                  "path"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "schema_version",
+              "installation_id",
+              "source_id",
+              "cursor",
+              "limit"
+            ],
+            "additionalProperties": false
+          },
+          "output_schema": {
+            "type": "object",
+            "properties": {
+              "schema_version": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 1
+              },
+              "installation_id": {
+                "type": "string",
+                "minLength": 8,
+                "maxLength": 128
+              },
+              "source_id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 40
+              },
+              "state": {
+                "type": "string",
+                "enum": [
+                  "ok",
+                  "absent",
+                  "denied",
+                  "unsupported",
+                  "app_closed",
+                  "reader_missing",
+                  "reader_outdated",
+                  "web_remote_off",
+                  "installation_changed",
+                  "cursor_reset"
+                ],
+                "maxLength": 32
+              },
+              "entries": {
+                "type": "array",
+                "maxItems": 256,
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "native_id": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 512
+                    },
+                    "kind": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 40
+                    },
+                    "name": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 160
+                    },
+                    "modified_at": {
+                      "type": "string",
+                      "maxLength": 40
+                    },
+                    "facts": {
+                      "type": "array",
+                      "maxItems": 8,
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 40
+                          },
+                          "value": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 160
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "value"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "description": {
+                      "type": "object",
+                      "properties": {
+                        "text": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 500
+                        },
+                        "source": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 60
+                        }
+                      },
+                      "required": [
+                        "text",
+                        "source"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "native_id",
+                    "kind",
+                    "name",
+                    "facts"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "next_cursor": {
+                "type": "string",
+                "maxLength": 512
+              },
+              "coverage": {
+                "type": "object",
+                "properties": {
+                  "visited": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 1000000
+                  },
+                  "skipped": {
+                    "type": "array",
+                    "maxItems": 8,
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "reason": {
+                          "type": "string",
+                          "enum": [
+                            "symlink",
+                            "outside_source",
+                            "unreadable",
+                            "unsupported_name",
+                            "too_large",
+                            "hidden",
+                            "external_registration",
+                            "depth_limit"
+                          ],
+                          "maxLength": 32
+                        },
+                        "count": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 1000000
+                        }
+                      },
+                      "required": [
+                        "reason",
+                        "count"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                "required": [
+                  "visited",
+                  "skipped"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "schema_version",
+              "installation_id",
+              "source_id",
+              "state",
+              "entries",
+              "next_cursor",
+              "coverage"
+            ],
+            "additionalProperties": false
+          },
+          "max_output_bytes": 262144,
+          "timeout_class": "normal",
+          "policy": "read_only",
+          "scopes": []
         }
       ]
     }
@@ -3374,6 +3784,13 @@
       "capabilities": [
         "reaper-live-control"
       ]
+    },
+    {
+      "id": "reaper-studio",
+      "version": 1,
+      "manifest": "blueprints/reaper-studio/template.json",
+      "skeleton": "blueprints/reaper-studio/workspace",
+      "capabilities": []
     }
   ],
   "requires_host_features": [
@@ -3382,11 +3799,92 @@
     "setup_quests_v2",
     "template_group_requirements_v1",
     "blueprint_inputs_v1",
-    "home_profile_v1"
+    "home_profile_v1",
+    "resource_workspaces_v1"
   ],
   "home_profile_facts": {
     "service_id": "reaper-service",
     "operation": "profile.read"
+  },
+  "resource_catalog": {
+    "schema_version": 1,
+    "id": "reaper-studio",
+    "version": 1,
+    "blueprint_id": "reaper-studio",
+    "service_id": "reaper-service",
+    "sources_operation": "studio.sources.read",
+    "inventory_operation": "studio.inventory.read",
+    "categories": [
+      {
+        "id": "templates",
+        "label": "Templates",
+        "description": "Project and track templates in your REAPER resource folder and folders you add.",
+        "kinds": [
+          {
+            "id": "project_template",
+            "label": "Project template"
+          },
+          {
+            "id": "track_template",
+            "label": "Track template"
+          }
+        ],
+        "facts": [],
+        "profile_row": "templates",
+        "owner_folders": true
+      },
+      {
+        "id": "scripts",
+        "label": "Scripts",
+        "description": "Lua, EEL and Python scripts in REAPER's Scripts folder, Ori's script library and folders you add.",
+        "kinds": [
+          {
+            "id": "script",
+            "label": "Script"
+          }
+        ],
+        "facts": [
+          {
+            "id": "language",
+            "label": "Language"
+          },
+          {
+            "id": "registration",
+            "label": "Registered in REAPER"
+          },
+          {
+            "id": "package",
+            "label": "Package"
+          }
+        ],
+        "owner_folders": true
+      },
+      {
+        "id": "audio_plugins",
+        "label": "Audio Plugins",
+        "description": "Effects and instruments REAPER reports. Being listed does not mean licensed, loaded or tested.",
+        "kinds": [
+          {
+            "id": "effect",
+            "label": "Effect"
+          },
+          {
+            "id": "instrument",
+            "label": "Instrument"
+          }
+        ],
+        "facts": [
+          {
+            "id": "format",
+            "label": "Format"
+          },
+          {
+            "id": "vendor",
+            "label": "Vendor"
+          }
+        ]
+      }
+    ]
   },
   "setup_quests": [
     {
