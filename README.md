@@ -246,7 +246,7 @@ through the reviewed existing-project flow; its files stay in place and grouping
 still grants no filesystem or runtime permission.
 
 The `v0.11.0` release artifact is 9,392,066 bytes with SHA-256
-`0a5cfc78a0011fb84a853182c3981585f71063cc847db031f68df067ea9109dc`.
+`54207279a082f44f26aba7f2c49a21f494237410a0df386f0faec177a0e87ecf`.
 The tag-triggered release workflow rebuilds and verifies those exact bytes before
 publishing the manifest's `v0.11.0` release URL. Ori's reviewed floor update is a
 separate host release step; existing installed plugins and reviewed pins are not
@@ -266,7 +266,7 @@ See [quest migration](docs/setup-quest-migration.md) for the ownership/resume
 test, validation boundaries, and remaining rollout steps.
 The older [v0.5.0 record](docs/release-v0.5.0.md) describes that historical release.
 
-The build pins Go 1.26.9, disables VCS stamping, uses `-trimpath`, and clears the
+The build pins Go 1.26.10, disables VCS stamping, uses `-trimpath`, and clears the
 build ID; repeating it from unchanged Go source produces identical bytes across
 maintainer machines and release-metadata commits. Install by Git URL or local path through Ori's Plugins UI or
 `POST /api/plugins/install`, review the complete trust disclosure, confirm, and

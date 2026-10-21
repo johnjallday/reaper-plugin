@@ -80,10 +80,17 @@
   `studio_url`, with the observation time kept, listed never meaning licensed,
   loaded, working or tested, nothing applied, run or installed, and annotations
   saved only by the owner.
+- The release binary is built with Go **1.26.10** instead of 1.26.9:
+  `govulncheck` on the 1.26.9 binary reports the Go standard-library advisory
+  GO-2026-6809 (`crypto/x509`, distrust of compromised intermediate
+  certificates), fixed in 1.26.10. CI and the tag-driven release workflow run
+  that scan after packaging, so no release could be cut from 1.26.9. The pin
+  lives in `go.mod`, in `scripts/build-local-artifact.sh` and in the README,
+  held together by `TestReleaseBuildPinsTheModulePatchToolchain`.
 - New dependency `golang.org/x/text` (NFC normalisation of ids and names).
   Plugin/service version: **0.11.0**; protocol **1**; quest version **4**;
   macOS arm64 only. Deterministic release artifact: **9,392,066 bytes**;
-  SHA-256 `0a5cfc78a0011fb84a853182c3981585f71063cc847db031f68df067ea9109dc`.
+  SHA-256 `54207279a082f44f26aba7f2c49a21f494237410a0df386f0faec177a0e87ecf`.
 - Works with Music Project Management **v0.1.0** or newer for songs, as before;
   REAPER Studio needs **v0.4.0** or newer.
 
