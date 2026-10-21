@@ -1,5 +1,71 @@
 # Release notes
 
+## 0.11.0 — REAPER Studio resource catalog
+
+- New blueprint **`reaper-studio`** v1 with team **`reaper-studio-team`** v1
+  (`workspace_kind: "resource"`): a resource workspace a Music Production Home
+  attaches beside its songs. It declares one role, the REAPER Studio Assistant
+  (orchestrator, skill `reaper-studio-catalog`), a group requirement that only
+  attaches to an existing Home (`existing_only`, no default Home name), and a
+  skeleton with a README and no project file. It declares no project entry,
+  inputs, starter tasks, quest, runtime requirements, wizard or standalone
+  composition. `reaper-song` (v10, `reaper-song-team` v1) is byte-identical.
+- New top-level **`resource_catalog`** declaration `reaper-studio` (schema 1,
+  version 1): categories **Templates** (project and track templates; the Home
+  profile's templates row), **Scripts** (facts Language, Registered in REAPER,
+  Package) and **Audio Plugins** (kinds Effect and Instrument; facts Format and
+  Vendor). The words are inert; Ori renders the owner view from them.
+- Two read-only, machine-level service operations with closed schemas:
+  **`studio.sources.read`** (`fast`, 32 KiB) reports the installation (a stable
+  `inst_…` id from the resource folder's canonical path and file identity,
+  label, `per_user` or `portable` layout, version) and the five fixed sources
+  `project_templates`, `track_templates`, `reaper_scripts`, `ori_scripts`
+  (file) and `audio_plugins` (live) with their state now: `ready`, `absent`,
+  `denied`, `unsupported`, `app_closed`, `reader_missing`, `reader_outdated`
+  or `web_remote_off`. **`studio.inventory.read`** (`normal`, 256 KiB) lists one
+  source page by page with opaque `after:` cursors, at most `limit` (1–256)
+  entries and never more than the declared bytes, with per-page coverage counts
+  (`symlink`, `hidden`, `unreadable`, `unsupported_name`, `too_large`,
+  `depth_limit`, `external_registration`) that Ori sums.
+- Reading looks, it does not touch: folders are opened one real directory at a
+  time, no link is followed, nothing is created or opened for writing, no
+  script runs, no template is applied and no plugin is loaded. Script facts come
+  only from inspected metadata: `reaper-kb.ini` `SCR` rows matched by script
+  path (`Yes`/`No`, omitted when the file was not read), ReaPack remotes in
+  `reapack.ini` for the package, and a tagged `@description`, Ori frontmatter
+  or EEL `desc:` header line for the description. Anything else is left for Ori
+  to show as Unknown.
+- The plugin list is **live** (spike, recorded in
+  `scripts/spikes/reaper-studio/findings.md`): REAPER's own `EnumInstalledFX`
+  through a new canonical read-only inspector on the audited no-undo runner
+  path, which left transport, selection, the open project, its change count,
+  dirty state and undo history unchanged in the spike, while the ordinary runner
+  path advanced the change count. Entries carry format and vendor when REAPER
+  names them; ids are namespaced by format and never carry a folder. A closed
+  REAPER reports `app_closed`.
+- The runner gains **`EnumInstalledFX`** in its read-only allowlist (Go and
+  Lua) and writes **`runner.version`** (`2`) beside `runner.id` on every run.
+  A runner from an earlier release reports `reader_outdated` (and the audited
+  path refuses the read with the same status) until live-control setup updates
+  it; a recorded runner that does not answer reports `reader_missing`. The
+  catalog itself installs, stages and registers nothing.
+- New required host feature **`resource_workspaces_v1`** (7 of the 8 allowed),
+  advertised by the first Ori release with REAPER Studio support. An Ori
+  without it refuses 0.11.0 whole and keeps 0.10.1. REAPER Studio also needs
+  Music Project Management **0.4.0**, which appends the attachment to the Home;
+  with Music 0.3.0 the Home does not offer a Studio and songs keep working.
+- New portable skill **`reaper-studio-catalog`**: lookups through Ori's
+  `resource_catalog_search` and `resource_catalog_detail`, cited by
+  `studio_url`, with the observation time kept, listed never meaning licensed,
+  loaded, working or tested, nothing applied, run or installed, and annotations
+  saved only by the owner.
+- New dependency `golang.org/x/text` (NFC normalisation of ids and names).
+  Plugin/service version: **0.11.0**; protocol **1**; quest version **4**;
+  macOS arm64 only. Deterministic release artifact: **9,375,458 bytes**;
+  SHA-256 `c1c8c926b2ff1cdc62232d73c95683181c2fa4b336310aa7fe52f64c1861e66a`.
+- Works with Music Project Management **v0.1.0** or newer for songs, as before;
+  REAPER Studio needs **v0.4.0** or newer.
+
 ## 0.10.1 — Go 1.26.9 toolchain
 
 - The release binary is built with Go **1.26.9** instead of 1.25.13. The Go
