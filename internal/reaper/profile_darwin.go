@@ -66,27 +66,6 @@ func (p *platformProbe) openHome() *os.Root {
 	return root
 }
 
-// openRealPath opens elements below parent one at a time, each a real
-// directory. It returns nil when any of them is missing, is a link or cannot
-// be opened.
-func openRealPath(parent *os.Root, elements ...string) *os.Root {
-	current, owned := parent, false
-	for _, element := range elements {
-		next, _, ok := openRealDir(current, element)
-		if owned {
-			closeRoot(current)
-		}
-		if !ok {
-			return nil
-		}
-		current, owned = next, true
-	}
-	if !owned {
-		return nil
-	}
-	return current
-}
-
 // openSystemApplications opens the system Applications folder, a fixed
 // location that must itself be a real directory.
 func (p *platformProbe) openSystemApplications() *os.Root {

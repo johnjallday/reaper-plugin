@@ -252,7 +252,8 @@ func (w *studioWalker) emit(dir *os.Root, name, relative string, info os.FileInf
 // extension. A name that cannot be shown as one plain line, or an id over the
 // bound, makes the file unsupported.
 func studioFileEntry(spec studioSourceSpec, name, relative string, info os.FileInfo) (StudioEntry, bool) {
-	if !utf8.ValidString(relative) || len(relative) > maxStudioNativeIDBytes || !studioPlainText(relative) {
+	kind, ok := spec.kindOf(name)
+	if !ok || !utf8.ValidString(relative) || len(relative) > maxStudioNativeIDBytes || !studioPlainText(relative) {
 		return StudioEntry{}, false
 	}
 	stem := strings.TrimSpace(name[:len(name)-len(filepath.Ext(name))])
@@ -260,7 +261,7 @@ func studioFileEntry(spec studioSourceSpec, name, relative string, info os.FileI
 	if !profileLine(stem, maxStudioNameChars) {
 		return StudioEntry{}, false
 	}
-	entry := StudioEntry{NativeID: relative, Kind: spec.Kind, Name: stem, Facts: []StudioFact{}}
+	entry := StudioEntry{NativeID: relative, Kind: kind, Name: stem, Facts: []StudioFact{}}
 	if modified := info.ModTime().UTC(); modified.Year() >= 1970 && modified.Year() <= 9998 {
 		entry.ModifiedAt = modified.Format(time.RFC3339)
 	}
@@ -279,13 +280,8 @@ func studioPlainText(value string) bool {
 }
 
 func (spec studioSourceSpec) matches(name string) bool {
-	extension := strings.ToLower(filepath.Ext(name))
-	for _, candidate := range spec.Extensions {
-		if extension == candidate {
-			return true
-		}
-	}
-	return false
+	_, ok := spec.kindOf(name)
+	return ok
 }
 
 // readStudioDirectoryNames lists the names in an opened folder in NFC order,

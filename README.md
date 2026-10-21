@@ -133,12 +133,32 @@ and facts, and two read-only, machine-level operations:
   (`~/Ori Scripts/reaper`) are file sources; `audio_plugins` is live. It looks
   and does not read: an absent folder is `absent`, never created, and no link
   is followed.
+- **Owner-added folders** (contract §4.5): the Templates and Scripts categories
+  declare `owner_folders`, so the owner can add folders of their own on the
+  Studio page (for example `~/Music/Templates Archive`). Ori sends them in
+  `studio.sources.read` as `folders: [{id, category, path}]` (at most 8, the
+  canonical path, `id` = `folder_` + 16 hex of SHA-256(category ‖ 0 ‖ path)),
+  and the plugin answers each one once, as sent, as a `file` source labelled
+  with the folder's name at its `~` location, with state `ready`, `absent`,
+  `denied` or `unsupported` (a linked folder) from a presence look. A
+  `folder_` page of `studio.inventory.read` carries `folder: {category, path}`
+  and is read with the same walker, kinds by extension (`.rpp`,
+  `.rtracktemplate`; `.lua`, `.eel`, `.py`), facts and skips as the fixed
+  sources, with ids relative to the folder; a page whose folder is missing or
+  is not the folder its id names is `unsupported`. The plugin never answers a
+  folder it was not given, and its own source ids never start with `folder_`.
 - `studio.inventory.read` lists one source page by page (`limit` 1–256, opaque
   `after:` cursors, at most 256 KiB per page, every skipped item counted on
   exactly one page). File sources are walked depth-first through the opened
   folder; scripts carry their language, their registration (from
-  `reaper-kb.ini` rows matched by script path), their ReaPack package when
-  `reapack.ini` names the repository, and a tagged header description. The
+  `reaper-kb.ini` rows matched by script path, by absolute path for the
+  library and owner folders), their ReaPack package when `reapack.ini` names
+  the repository (REAPER's Scripts folder only), and a tagged header
+  description. A registration row that points outside REAPER's Scripts folder
+  and the Ori library is counted as `external_registration` on the Scripts
+  source's first page, including a row that points into an owner folder: that
+  page is not told the owner's folders, and the folder's own page reports the
+  script as registered. The
   plugin list is read live from REAPER's own `EnumInstalledFX` through a new
   canonical read-only inspector on the audited no-undo runner path, which
   preserves transport, selection, the open project, its change count and its

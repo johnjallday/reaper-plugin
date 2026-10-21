@@ -6,9 +6,10 @@ description: Answer questions about a REAPER Studio catalog (project and track t
 # REAPER Studio catalog (lookups only)
 
 A REAPER Studio is a resource workspace attached to a Music Production Home. It
-holds a **catalog**: what Ori observed in the owner's REAPER resource folders
-and in REAPER's own plugin list during an inspection the owner started, plus
-the owner's own tags, favourites and notes. You read that catalog through two
+holds a **catalog**: what Ori observed in the owner's REAPER resource folders,
+in folders the owner added to the Studio themselves, and in REAPER's own plugin
+list during an inspection the owner started, plus the owner's own tags,
+favourites and notes. You read that catalog through two
 tools Ori offers you when you are a role in that Home's Studio or in one of its
 song projects:
 

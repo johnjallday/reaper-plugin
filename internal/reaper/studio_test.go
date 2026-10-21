@@ -225,13 +225,30 @@ func TestStudioCursorRoundTripsAndRefusesWhatItCannotHonour(t *testing.T) {
 	}
 }
 
+// resolvedTempDir is a temporary folder by its canonical path, the way Ori
+// sends an owner folder (links resolved; on macOS the temporary root is one).
+func resolvedTempDir(t *testing.T) string {
+	t.Helper()
+	resolved, err := filepath.EvalSymlinks(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	return resolved
+}
+
 // scriptsFixture is a REAPER resource folder with a Scripts tree, a keyboard
-// configuration registering some of them, and a ReaPack remote list.
+// configuration registering some of them, and a ReaPack remote list. The
+// home folder beside it holds the Ori library and, for the owner-folder tests,
+// a Music/Scripts Archive folder with one script registered by absolute path.
 func scriptsFixture(t *testing.T) (resource string, roots func() *studioRoots) {
 	t.Helper()
 	resource = t.TempDir()
-	library := filepath.Join(t.TempDir(), "Ori Scripts", "reaper")
+	home := resolvedTempDir(t)
+	library := filepath.Join(home, "Ori Scripts", "reaper")
+	archive := filepath.Join(home, "Music", "Scripts Archive")
 	scripts := filepath.Join(resource, "Scripts")
+	writeStudioFile(t, filepath.Join(archive, "archived.lua"), "-- @description Archived helper.\nreturn 1\n")
+	writeStudioFile(t, filepath.Join(archive, "Old", "legacy.eel"), "desc:Legacy\n")
 	writeStudioFile(t, filepath.Join(scripts, "Cockos", "lyrics.lua"), "-- @description Shows the lyrics of the current item.\n-- @author Cockos\nlocal x = 1\n")
 	writeStudioFile(t, filepath.Join(scripts, "Vocals", "lyrics.lua"), "-- lyrics helper\nlocal x = 1\n")
 	writeStudioFile(t, filepath.Join(scripts, "ReaTeam Scripts", "Items", "Split at grid.eel"), "desc:Split items at grid\n// @version 1.0\n")
@@ -247,6 +264,7 @@ func scriptsFixture(t *testing.T) (resource string, roots func() *studioRoots) {
 		`SCR 4 0 RS2222222222222222222222222222222222222222 "Custom: mine.lua" "` + filepath.Join(library, "mine.lua") + `"`,
 		`SCR 4 0 RS3333333333333333333333333333333333333333 "Custom: elsewhere.lua" /Volumes/Other/elsewhere.lua`,
 		`SCR 4 0 RS4444444444444444444444444444444444444444 "Custom: gone.lua" /Users/nobody/gone.lua`,
+		`SCR 4 0 RS5555555555555555555555555555555555555555 "Custom: archived.lua" "` + filepath.Join(archive, "archived.lua") + `"`,
 		"KEY 1 65 40044 0",
 	}, "\n") + "\n"
 	writeStudioFile(t, filepath.Join(resource, "reaper-kb.ini"), kb)
@@ -261,13 +279,18 @@ func scriptsFixture(t *testing.T) (resource string, roots func() *studioRoots) {
 			t.Fatal(err)
 		}
 		return &studioRoots{
-			supported: true, installed: true, version: "7.80.0_fixture", layout: StudioLayoutPerUser,
+			supported: true, installed: true, version: "7.80.0_fixture", layout: StudioLayoutPerUser, home: home,
 			resource: resourceRoot, resourceState: StudioStateReady, resourcePath: resource, resourceDisplay: "~/Library/Application Support/REAPER",
 			identity: resource, dev: 1, ino: 2, hasIdentity: true,
 			library: libraryRoot, libraryState: StudioStateReady, libraryPath: library, libraryDisplay: "~/Ori Scripts/reaper",
 		}
 	}
 	return resource, roots
+}
+
+// ownerFolder is an owner folder as Ori sends it, with the id Ori derives.
+func ownerFolder(category, path string) StudioFolderInput {
+	return StudioFolderInput{ID: studioFolderID(category, path), Category: category, Path: path}
 }
 
 func studioFacts(entry StudioEntry) map[string]string {
@@ -316,10 +339,12 @@ func TestStudioScriptFactsComeOnlyFromInspectedMetadata(t *testing.T) {
 	if demo.Description == nil || demo.Description.Text != "Created from the surface." || studioFacts(demo)[StudioFactRegistration] != studioRegisteredNo {
 		t.Fatalf("ori-demo.lua = %+v", demo)
 	}
-	// Two rows point outside both sources; they are counted once, on the
-	// first page of REAPER's own Scripts source, and never followed.
-	// Four folders, five scripts, readme.txt and the Items folder are visited.
-	if !reflect.DeepEqual(result.Coverage.Skipped, []StudioSkip{{Reason: studioSkipExternalRegistration, Count: 2}}) || result.Coverage.Visited != 11 {
+	// Three rows point outside both fixed sources (one of them into a folder
+	// the owner may have added, which this page is not told about); they are
+	// counted once, on the first page of REAPER's own Scripts source, and
+	// never followed. Four folders, five scripts, readme.txt and the Items
+	// folder are visited.
+	if !reflect.DeepEqual(result.Coverage.Skipped, []StudioSkip{{Reason: studioSkipExternalRegistration, Count: 3}}) || result.Coverage.Visited != 11 {
 		t.Fatalf("coverage = %+v", result.Coverage)
 	}
 	for _, entry := range result.Entries {
@@ -429,6 +454,11 @@ func TestStudioSourcesReportPresenceWithoutReading(t *testing.T) {
 		states["reaper_scripts"].State != StudioStateReady || states["ori_scripts"].State != StudioStateReady || states["audio_plugins"].State != StudioStateWebRemoteOff {
 		t.Fatalf("sources = %+v", result.Sources)
 	}
+	for _, source := range result.Sources {
+		if isStudioFolderSource(source.ID) {
+			t.Fatalf("a fixed source id uses the owner folder prefix, or a folder nobody sent was answered: %+v", source)
+		}
+	}
 	if states["track_templates"].Detail == "" || states["audio_plugins"].Detail == "" || states["project_templates"].Detail != "" {
 		t.Fatalf("details = %+v", result.Sources)
 	}
@@ -451,6 +481,226 @@ func TestStudioSourcesReportPresenceWithoutReading(t *testing.T) {
 		t.Fatal("another folder identity has the same installation id")
 	}
 	other.Close()
+}
+
+// An owner folder (contract §4.5) is one more file source of its category:
+// answered once in sources.read exactly as it was sent, with the folder's name
+// and its ~ location, and read in inventory.read with the same walker, kinds by
+// extension, facts and skips as the fixed sources. A folder that was never
+// sent never appears, and a page whose folder is missing or is not the one its
+// id names is unsupported.
+func TestStudioOwnerFoldersAreReadLikeTheFixedSources(t *testing.T) {
+	_, roots := scriptsFixture(t)
+	home := roots().home
+	archive := filepath.Join(home, "Music", "Templates Archive")
+	writeStudioFile(t, filepath.Join(archive, "Saturday Residency.RPP"), "<REAPER_PROJECT\n>\n")
+	writeStudioFile(t, filepath.Join(archive, "Live", "Drum room.RPP"), "<REAPER_PROJECT\n>\n")
+	writeStudioFile(t, filepath.Join(archive, "Live", "Drum bus.RTrackTemplate"), "<TRACK\n>\n")
+	writeStudioFile(t, filepath.Join(archive, "Live", ".DS_Store"), "")
+	writeStudioFile(t, filepath.Join(archive, "notes.txt"), "not a template\n")
+	if err := os.Symlink(filepath.Join(archive, "Saturday Residency.RPP"), filepath.Join(archive, "Alias.RPP")); err != nil {
+		t.Fatal(err)
+	}
+	linked := filepath.Join(home, "Music", "Linked Archive")
+	if err := os.Symlink(archive, linked); err != nil {
+		t.Fatal(err)
+	}
+	outside := filepath.Join(resolvedTempDir(t), "Elsewhere")
+	writeStudioFile(t, filepath.Join(outside, "Remote.RPP"), "<REAPER_PROJECT\n>\n")
+
+	templates := ownerFolder(StudioCategoryTemplates, archive)
+	scripts := ownerFolder(StudioCategoryScripts, filepath.Join(home, "Music", "Scripts Archive"))
+	absent := ownerFolder(StudioCategoryTemplates, filepath.Join(home, "Music", "Gone"))
+	symlinked := ownerFolder(StudioCategoryTemplates, linked)
+	elsewhere := ownerFolder(StudioCategoryTemplates, outside)
+	plugins := ownerFolder(StudioCategoryAudioPlugins, archive)
+	mismatched := StudioFolderInput{ID: studioFolderID(StudioCategoryScripts, archive), Category: StudioCategoryTemplates, Path: archive}
+	relative := StudioFolderInput{ID: studioFolderID(StudioCategoryTemplates, "Music/Templates Archive"), Category: StudioCategoryTemplates, Path: "Music/Templates Archive"}
+	probe := clientProbe{web: WebRemoteObservation{State: ProbeMissing}}
+	service := &Service{studio: studioProbeStub{build: roots}, probes: ProbeSet{WebRemote: probe, Transport: probe, Runner: runnerProbeStub{observation: RunnerObservation{State: ProbeMissing}}}}
+
+	folders := []StudioFolderInput{templates, scripts, absent, symlinked, elsewhere, plugins, mismatched, relative}
+	result, err := service.StudioSources(context.Background(), StudioSourcesInput{SchemaVersion: 1, Folders: folders})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result.Sources) != 5+len(folders) {
+		t.Fatalf("sources = %d, want the five fixed ones and every folder once", len(result.Sources))
+	}
+	byID := map[string]StudioSource{}
+	for _, source := range result.Sources[5:] {
+		byID[source.ID] = source
+	}
+	for index, folder := range folders {
+		source := result.Sources[5+index]
+		if source.ID != folder.ID || source.Category != folder.Category || source.Access != StudioAccessFile || !profileLine(source.Label, maxStudioSourceLabelChars) || !profileLine(source.Location, maxStudioLocationChars) {
+			t.Fatalf("folder %d answered as %+v, sent %+v", index, source, folder)
+		}
+	}
+	want := map[string]string{
+		templates.ID: StudioStateReady, scripts.ID: StudioStateReady, absent.ID: StudioStateAbsent, symlinked.ID: StudioStateUnsupported,
+		elsewhere.ID: StudioStateReady, plugins.ID: StudioStateUnsupported, mismatched.ID: StudioStateUnsupported, relative.ID: StudioStateUnsupported,
+	}
+	for id, state := range want {
+		if byID[id].State != state {
+			t.Errorf("folder %s = %+v, want %s", id, byID[id], state)
+		}
+		if state != StudioStateReady && byID[id].Detail == "" {
+			t.Errorf("folder %s has no detail: %+v", id, byID[id])
+		}
+	}
+	if byID[templates.ID].Label != "Templates Archive" || byID[templates.ID].Location != "~/Music/Templates Archive" || byID[elsewhere.ID].Location != filepath.ToSlash(outside) {
+		t.Fatalf("folder words = %+v, %+v", byID[templates.ID], byID[elsewhere.ID])
+	}
+	if _, err := os.Lstat(absent.Path); !os.IsNotExist(err) {
+		t.Fatal("answering an absent folder created it")
+	}
+	encoded, err := json.Marshal(result)
+	if err != nil || len(encoded) > maxStudioSourcesOutputBytes {
+		t.Fatalf("sources answer with eight folders is %d bytes, %v", len(encoded), err)
+	}
+	// Nine folders, a repeated folder, a malformed id and an unbounded path
+	// are not what the closed schema admits.
+	for name, input := range map[string]StudioSourcesInput{
+		"nine folders":  {SchemaVersion: 1, Folders: append(slices.Clone(folders), ownerFolder(StudioCategoryTemplates, filepath.Join(home, "Nine")))},
+		"repeated":      {SchemaVersion: 1, Folders: []StudioFolderInput{templates, templates}},
+		"malformed id":  {SchemaVersion: 1, Folders: []StudioFolderInput{{ID: "folder_XYZ", Category: StudioCategoryTemplates, Path: archive}}},
+		"foreign id":    {SchemaVersion: 1, Folders: []StudioFolderInput{{ID: "project_templates_____", Category: StudioCategoryTemplates, Path: archive}}},
+		"path too long": {SchemaVersion: 1, Folders: []StudioFolderInput{{ID: templates.ID, Category: StudioCategoryTemplates, Path: "/" + strings.Repeat("a", maxStudioFolderPathChars)}}},
+	} {
+		if _, err := service.StudioSources(context.Background(), input); err == nil {
+			t.Errorf("%s: request was accepted", name)
+		}
+	}
+
+	// The folder's pages: kinds by extension within the category, ids relative
+	// to the folder, the link and the hidden file counted, the other file
+	// looked at, nothing followed.
+	installation := roots().InstallationID()
+	read := func(input StudioInventoryInput) StudioInventoryResult {
+		t.Helper()
+		result, err := service.StudioInventory(context.Background(), input)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return result
+	}
+	ref := &StudioFolderRef{Category: templates.Category, Path: templates.Path}
+	page := read(StudioInventoryInput{SchemaVersion: 1, InstallationID: installation, SourceID: templates.ID, Limit: 256, Folder: ref})
+	if page.State != StudioStateOK || !slices.Equal(studioIDs(page.Entries), []string{"Live/Drum bus.RTrackTemplate", "Live/Drum room.RPP", "Saturday Residency.RPP"}) ||
+		page.Entries[0].Kind != StudioKindTrackTemplate || page.Entries[1].Kind != StudioKindProjectTemplate || page.Entries[0].Name != "Drum bus" || len(page.Entries[1].Facts) != 0 {
+		t.Fatalf("folder page = %+v", page)
+	}
+	// Alias.RPP, Live, .DS_Store, two entries, Saturday Residency, notes.txt.
+	if !reflect.DeepEqual(page.Coverage, StudioCoverage{Visited: 7, Skipped: []StudioSkip{{Reason: studioSkipHidden, Count: 1}, {Reason: studioSkipSymlink, Count: 1}}}) {
+		t.Fatalf("folder coverage = %+v", page.Coverage)
+	}
+	first := read(StudioInventoryInput{SchemaVersion: 1, InstallationID: installation, SourceID: templates.ID, Limit: 2, Folder: ref})
+	second := read(StudioInventoryInput{SchemaVersion: 1, InstallationID: installation, SourceID: templates.ID, Cursor: first.NextCursor, Limit: 2, Folder: ref})
+	if first.NextCursor == "" || second.NextCursor != "" || !reflect.DeepEqual(append(first.Entries, second.Entries...), page.Entries) || first.Coverage.Visited+second.Coverage.Visited != page.Coverage.Visited {
+		t.Fatalf("folder pages = %+v / %+v", first, second)
+	}
+
+	// A scripts folder carries the script facts: language, registration by
+	// absolute row, no package (ReaPack installs under Scripts only), and the
+	// tagged header. The library's and REAPER's rows are not confused with it.
+	scriptPage := read(StudioInventoryInput{SchemaVersion: 1, InstallationID: installation, SourceID: scripts.ID, Limit: 256, Folder: &StudioFolderRef{Category: scripts.Category, Path: scripts.Path}})
+	if scriptPage.State != StudioStateOK || !slices.Equal(studioIDs(scriptPage.Entries), []string{"Old/legacy.eel", "archived.lua"}) || len(scriptPage.Coverage.Skipped) != 0 {
+		t.Fatalf("scripts folder page = %+v", scriptPage)
+	}
+	archived, legacy := scriptPage.Entries[1], scriptPage.Entries[0]
+	if facts := studioFacts(archived); facts[StudioFactLanguage] != "Lua" || facts[StudioFactRegistration] != studioRegisteredYes || facts[StudioFactPackage] != "" || archived.Kind != StudioKindScript ||
+		archived.Description == nil || archived.Description.Text != "Archived helper." {
+		t.Fatalf("archived.lua = %+v", archived)
+	}
+	if facts := studioFacts(legacy); facts[StudioFactLanguage] != "EEL" || facts[StudioFactRegistration] != studioRegisteredNo || legacy.Description == nil || legacy.Description.Text != "Legacy" {
+		t.Fatalf("legacy.eel = %+v", legacy)
+	}
+
+	// What a folder page must refuse, each with state unsupported and nothing
+	// read: no folder, another source's folder, a folder that is not its id's,
+	// a category without owner folders, a link, and a folder beside a fixed
+	// source id.
+	for name, input := range map[string]StudioInventoryInput{
+		"missing folder":      {SchemaVersion: 1, InstallationID: installation, SourceID: templates.ID, Limit: 1},
+		"other folder":        {SchemaVersion: 1, InstallationID: installation, SourceID: templates.ID, Limit: 1, Folder: &StudioFolderRef{Category: scripts.Category, Path: scripts.Path}},
+		"other category":      {SchemaVersion: 1, InstallationID: installation, SourceID: templates.ID, Limit: 1, Folder: &StudioFolderRef{Category: StudioCategoryScripts, Path: archive}},
+		"audio plugins":       {SchemaVersion: 1, InstallationID: installation, SourceID: plugins.ID, Limit: 1, Folder: &StudioFolderRef{Category: plugins.Category, Path: plugins.Path}},
+		"linked folder":       {SchemaVersion: 1, InstallationID: installation, SourceID: symlinked.ID, Limit: 1, Folder: &StudioFolderRef{Category: symlinked.Category, Path: symlinked.Path}},
+		"relative path":       {SchemaVersion: 1, InstallationID: installation, SourceID: relative.ID, Limit: 1, Folder: &StudioFolderRef{Category: relative.Category, Path: relative.Path}},
+		"folder on a fixed":   {SchemaVersion: 1, InstallationID: installation, SourceID: "project_templates", Limit: 1, Folder: ref},
+		"folder never added":  {SchemaVersion: 1, InstallationID: installation, SourceID: "folder_0000000000000000", Limit: 1, Folder: ref},
+		"folder id too short": {SchemaVersion: 1, InstallationID: installation, SourceID: "folder_abc", Limit: 1, Folder: ref},
+	} {
+		got := read(input)
+		if got.State != StudioStateUnsupported || len(got.Entries) != 0 || got.NextCursor != "" {
+			t.Errorf("%s = %+v", name, got)
+		}
+	}
+	if got := read(StudioInventoryInput{SchemaVersion: 1, InstallationID: installation, SourceID: absent.ID, Limit: 1, Folder: &StudioFolderRef{Category: absent.Category, Path: absent.Path}}); got.State != StudioStateAbsent {
+		t.Fatalf("absent folder page = %+v", got)
+	}
+	if _, err := os.Lstat(absent.Path); !os.IsNotExist(err) {
+		t.Fatal("reading an absent folder created it")
+	}
+	if got := read(StudioInventoryInput{SchemaVersion: 1, InstallationID: "inst_0000000000000000", SourceID: templates.ID, Limit: 1, Folder: ref}); got.State != StudioStateInstallationChanged {
+		t.Fatalf("folder page of another installation = %+v", got)
+	}
+	if _, err := service.StudioInventory(context.Background(), StudioInventoryInput{SchemaVersion: 1, InstallationID: installation, SourceID: templates.ID, Limit: 1, Folder: &StudioFolderRef{Category: "", Path: archive}}); err == nil {
+		t.Fatal("a folder without a category was accepted")
+	}
+	// Without a platform, a folder is unsupported like every other source.
+	none := &Service{}
+	result, err = none.StudioSources(context.Background(), StudioSourcesInput{SchemaVersion: 1, Folders: []StudioFolderInput{templates}})
+	if err != nil || len(result.Sources) != 6 || result.Sources[5].ID != templates.ID || result.Sources[5].State != StudioStateUnsupported {
+		t.Fatalf("folder without a platform = %+v, %v", result, err)
+	}
+}
+
+func TestStudioFolderIDIsTheContractDigest(t *testing.T) {
+	if got := studioFolderID("templates", "/Users/me/Music/Templates Archive"); got != "folder_96e14ca9ccd35869" {
+		t.Fatalf("folder id = %s", got)
+	}
+	if studioFolderID("templates", "/Users/me/a") == studioFolderID("scripts", "/Users/me/a") || studioFolderID("templates", "/a/b") == studioFolderID("templates", "/a/c") {
+		t.Fatal("ids do not separate category and path")
+	}
+	for _, id := range []string{"folder_96e14ca9ccd35869", "folder_0000000000000000"} {
+		if !studioFolderIDShape(id) {
+			t.Errorf("%s is not an owner folder id", id)
+		}
+	}
+	for _, id := range []string{"folder_96E14CA9CCD35869", "folder_96e14ca9ccd3586", "folder_96e14ca9ccd358690", "folders_96e14ca9ccd3586", "project_templates", ""} {
+		if studioFolderIDShape(id) {
+			t.Errorf("%q passed as an owner folder id", id)
+		}
+	}
+	for _, spec := range studioSourceSpecs {
+		if isStudioFolderSource(spec.ID) {
+			t.Errorf("fixed source %s uses the owner folder prefix", spec.ID)
+		}
+	}
+	for _, path := range []string{"/Users/me/Music", "/Volumes/Archive/Templates"} {
+		if !studioValidFolderPath(path) {
+			t.Errorf("%q is not accepted", path)
+		}
+	}
+	for _, path := range []string{"", "/", "Music", "/Users/me/", "/Users/me/../me", "/Users/me/./Music", "/Users/me\n/Music", " /Users/me", "/" + strings.Repeat("a", maxStudioFolderPathChars)} {
+		if studioValidFolderPath(path) {
+			t.Errorf("%q was accepted as a canonical folder path", path)
+		}
+	}
+	if got := studioFolderLabel("/Users/me/Music/" + strings.Repeat("x", 70)); len([]rune(got)) != maxStudioSourceLabelChars {
+		t.Fatalf("long folder name was not clipped: %q", got)
+	}
+	if got := studioFolderLabel("/Users/me/Music/‎‎"); got != "Folder" {
+		t.Fatalf("a name with nothing visible was shown: %q", got)
+	}
+	if got := studioDisplayPath("/Users/me/Music/Archive", "/Users/me"); got != "~/Music/Archive" {
+		t.Fatalf("display path = %q", got)
+	}
+	if got := studioDisplayPath("/Users/meow/Music", "/Users/me"); got != "/Users/meow/Music" {
+		t.Fatalf("another user's folder was shortened: %q", got)
+	}
 }
 
 // The live source's state ladder: platform, installation, Web Remote, a
@@ -558,6 +808,30 @@ func TestStudioBoundsAreTheOnesTheManifestDeclares(t *testing.T) {
 				schema.Properties.Installation.Properties.ID.MinLength != minStudioInstallationIDChars || schema.Properties.Installation.Properties.ID.MaxLength != maxStudioInstallationIDChars {
 				t.Errorf("sources bounds differ: %+v", schema)
 			}
+			var input struct {
+				Properties struct {
+					Folders struct {
+						MaxItems int `json:"maxItems"`
+						Items    struct {
+							Properties struct {
+								ID       text `json:"id"`
+								Category text `json:"category"`
+								Path     text `json:"path"`
+							} `json:"properties"`
+						} `json:"items"`
+					} `json:"folders"`
+				} `json:"properties"`
+				Required []string `json:"required"`
+			}
+			if err := json.Unmarshal(operation.InputSchema, &input); err != nil {
+				t.Fatal(err)
+			}
+			folders := input.Properties.Folders
+			if folders.MaxItems != maxStudioOwnerFolders || slices.Contains(input.Required, "folders") ||
+				folders.Items.Properties.ID.MinLength != len(studioFolderSourcePrefix)+studioFolderIDHexChars || folders.Items.Properties.ID.MaxLength != len(studioFolderSourcePrefix)+studioFolderIDHexChars ||
+				folders.Items.Properties.Category.MaxLength != maxStudioSourceIDChars || folders.Items.Properties.Path.MaxLength != maxStudioFolderPathChars {
+				t.Errorf("sources folder bounds differ: %+v", input)
+			}
 			for _, state := range []string{StudioStateReady, StudioStateAbsent, StudioStateDenied, StudioStateUnsupported, StudioStateAppClosed, StudioStateReaderMissing, StudioStateReaderOutdated, StudioStateWebRemoteOff} {
 				if !slices.Contains(schema.Properties.Sources.Items.Properties.State.Enum, state) {
 					t.Errorf("source state %q is not declared", state)
@@ -582,6 +856,26 @@ func TestStudioBoundsAreTheOnesTheManifestDeclares(t *testing.T) {
 			}
 			if input.Properties.Cursor.MaxLength != maxStudioCursorBytes || input.Properties.Limit.Maximum != maxStudioPageEntries || input.Properties.Limit.Minimum != 1 {
 				t.Errorf("inventory input bounds differ: %+v", input)
+			}
+			var folderInput struct {
+				Properties struct {
+					Folder struct {
+						Required   []string `json:"required"`
+						Properties struct {
+							Category text `json:"category"`
+							Path     text `json:"path"`
+						} `json:"properties"`
+					} `json:"folder"`
+				} `json:"properties"`
+				Required []string `json:"required"`
+			}
+			if err := json.Unmarshal(operation.InputSchema, &folderInput); err != nil {
+				t.Fatal(err)
+			}
+			folder := folderInput.Properties.Folder
+			if !slices.Equal(folder.Required, []string{"category", "path"}) || slices.Contains(folderInput.Required, "folder") ||
+				folder.Properties.Category.MaxLength != maxStudioSourceIDChars || folder.Properties.Path.MaxLength != maxStudioFolderPathChars || folder.Properties.Path.MinLength != 1 {
+				t.Errorf("inventory folder bounds differ: %+v", folderInput)
 			}
 			var output struct {
 				Properties struct {
@@ -664,8 +958,47 @@ func TestStudioInventoryVectorsDecodeAsThisServicesShapes(t *testing.T) {
 		t.Fatalf("the vector's cursor %q is not this service's cursor for %q", valid.NextCursor, valid.Entries[2].NativeID)
 	}
 	var request StudioInventoryInput
-	if err := decodeStrictTidyJSON(studioVector(t, "inventory.request.valid.json"), 4096, &request); err != nil || validateStudioInventoryInput(request) != nil {
+	if err := decodeStrictTidyJSON(studioVector(t, "inventory.request.valid.json"), 4096, &request); err != nil || validateStudioInventoryInput(request) != nil || request.Folder != nil {
 		t.Fatalf("inventory.request.valid.json: %v", err)
+	}
+	if _, ok := studioInventorySource(request); !ok {
+		t.Fatalf("the vector's source %q is not one this service reads", request.SourceID)
+	}
+
+	// The owner folder vectors (§4.5): the folder travels in the sources
+	// input, comes back as one file source of its category with the same id,
+	// and names itself on its inventory pages, where its id is the digest of
+	// its category and path.
+	var sourcesRequest StudioSourcesInput
+	if err := decodeStrictTidyJSON(studioVector(t, "sources.request.valid.json"), 4096, &sourcesRequest); err != nil || validateStudioSourcesInput(sourcesRequest) != nil || len(sourcesRequest.Folders) != 1 {
+		t.Fatalf("sources.request.valid.json: %v (%+v)", err, sourcesRequest)
+	}
+	folder := sourcesRequest.Folders[0]
+	if folder.ID != studioFolderID(folder.Category, folder.Path) || folder.ID != "folder_96e14ca9ccd35869" {
+		t.Fatalf("the vector's folder id %q is not this service's digest %q", folder.ID, studioFolderID(folder.Category, folder.Path))
+	}
+	spec, problem, _ := studioOwnerFolderSpec(folder)
+	if problem != "" || spec.Label != "Templates Archive" || spec.Category != StudioCategoryTemplates || spec.Kinds[".rpp"] != StudioKindProjectTemplate || spec.Kinds[".rtracktemplate"] != StudioKindTrackTemplate {
+		t.Fatalf("the vector's folder reads as %+v (%s)", spec, problem)
+	}
+	if location := (&studioRoots{home: "/Users/me"}).Location(spec); location != "~/Music/Templates Archive" {
+		t.Fatalf("location = %q", location)
+	}
+	var folderSources StudioSourcesResult
+	if err := decodeStrictTidyJSON(studioVector(t, "sources.folder.valid.json"), maxStudioSourcesOutputBytes, &folderSources); err != nil || len(folderSources.Sources) != 2 {
+		t.Fatalf("sources.folder.valid.json: %v", err)
+	}
+	if answered := folderSources.Sources[1]; answered.ID != folder.ID || answered.Category != folder.Category || answered.Access != StudioAccessFile ||
+		answered.Label != spec.Label || answered.Location != "~/Music/Templates Archive" || answered.State != StudioStateReady {
+		t.Fatalf("vector folder source %+v is not how this service answers %+v", answered, folder)
+	}
+	var folderRequest StudioInventoryInput
+	if err := decodeStrictTidyJSON(studioVector(t, "inventory.request.folder.valid.json"), 4096, &folderRequest); err != nil || validateStudioInventoryInput(folderRequest) != nil || folderRequest.Folder == nil {
+		t.Fatalf("inventory.request.folder.valid.json: %v", err)
+	}
+	pageSpec, ok := studioInventorySource(folderRequest)
+	if !ok || pageSpec.ID != folder.ID || !pageSpec.Owner || pageSpec.Path != folder.Path || folderRequest.Folder.Category != folder.Category {
+		t.Fatalf("the vector's folder page reads as %+v, %v", pageSpec, ok)
 	}
 	var sources StudioSourcesResult
 	if err := decodeStrictTidyJSON(studioVector(t, "sources.valid.json"), maxStudioSourcesOutputBytes, &sources); err != nil || len(sources.Sources) != 5 {

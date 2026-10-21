@@ -3371,6 +3371,36 @@
                 "type": "integer",
                 "minimum": 1,
                 "maximum": 1
+              },
+              "folders": {
+                "type": "array",
+                "maxItems": 8,
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "minLength": 23,
+                      "maxLength": 23
+                    },
+                    "category": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 40
+                    },
+                    "path": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 1024
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "category",
+                    "path"
+                  ],
+                  "additionalProperties": false
+                }
               }
             },
             "required": [
@@ -3529,6 +3559,26 @@
                 "type": "integer",
                 "minimum": 1,
                 "maximum": 256
+              },
+              "folder": {
+                "type": "object",
+                "properties": {
+                  "category": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 40
+                  },
+                  "path": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 1024
+                  }
+                },
+                "required": [
+                  "category",
+                  "path"
+                ],
+                "additionalProperties": false
               }
             },
             "required": [
@@ -3768,7 +3818,7 @@
       {
         "id": "templates",
         "label": "Templates",
-        "description": "Project and track templates in your REAPER resource folder.",
+        "description": "Project and track templates in your REAPER resource folder and folders you add.",
         "kinds": [
           {
             "id": "project_template",
@@ -3780,12 +3830,13 @@
           }
         ],
         "facts": [],
-        "profile_row": "templates"
+        "profile_row": "templates",
+        "owner_folders": true
       },
       {
         "id": "scripts",
         "label": "Scripts",
-        "description": "Lua, EEL and Python scripts in REAPER's Scripts folder and Ori's script library.",
+        "description": "Lua, EEL and Python scripts in REAPER's Scripts folder, Ori's script library and folders you add.",
         "kinds": [
           {
             "id": "script",
@@ -3805,7 +3856,8 @@
             "id": "package",
             "label": "Package"
           }
-        ]
+        ],
+        "owner_folders": true
       },
       {
         "id": "audio_plugins",

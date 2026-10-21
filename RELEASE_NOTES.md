@@ -14,7 +14,9 @@
   version 1): categories **Templates** (project and track templates; the Home
   profile's templates row), **Scripts** (facts Language, Registered in REAPER,
   Package) and **Audio Plugins** (kinds Effect and Instrument; facts Format and
-  Vendor). The words are inert; Ori renders the owner view from them.
+  Vendor). Templates and Scripts declare **`owner_folders`**, so the owner can
+  add folders of their own to them. The words are inert; Ori renders the owner
+  view from them.
 - Two read-only, machine-level service operations with closed schemas:
   **`studio.sources.read`** (`fast`, 32 KiB) reports the installation (a stable
   `inst_…` id from the resource folder's canonical path and file identity,
@@ -27,6 +29,25 @@
   entries and never more than the declared bytes, with per-page coverage counts
   (`symlink`, `hidden`, `unreadable`, `unsupported_name`, `too_large`,
   `depth_limit`, `external_registration`) that Ori sums.
+- **Owner-added folders** (contract §4.5, amended 2026-10-21 before release):
+  `studio.sources.read` takes `folders: [{id, category, path}]` (0–8; the
+  canonical path Ori checked; `id` = `folder_` + 16 hex of
+  SHA-256(category ‖ 0 ‖ path)) and answers every folder once, as sent, as a
+  `file` source labelled with the folder's name at its `~` location, in state
+  `ready`, `absent`, `denied` or `unsupported` (a linked folder, a category
+  without owner folders, a path that is not canonical, or an id that is not
+  the digest of its category and path) from a presence look that creates and
+  follows nothing. A `folder_` page of `studio.inventory.read` carries
+  `folder: {category, path}` and is read exactly like the fixed file sources
+  of that category (walker, bounds, cursors, skips; `.rpp` and
+  `.rtracktemplate` in templates, `.lua`, `.eel` and `.py` in scripts; script
+  language, registration by absolute `reaper-kb.ini` row and header
+  description, no package), with ids relative to the folder. A page whose
+  folder is missing, is not the one its id names, or sits beside a fixed
+  source id is `unsupported`. A folder that was not sent is never answered,
+  and the plugin's own ids never start with `folder_`. A registration row that
+  points into an owner folder is still counted as `external_registration` on
+  the Scripts source's first page, which is not told the owner's folders.
 - Reading looks, it does not touch: folders are opened one real directory at a
   time, no link is followed, nothing is created or opened for writing, no
   script runs, no template is applied and no plugin is loaded. Script facts come

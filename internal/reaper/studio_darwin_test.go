@@ -61,6 +61,72 @@ func TestOpenStudioResolvesTheInstallationAndItsFoldersWithoutCreatingThem(t *te
 	}
 }
 
+// An owner folder under the home is opened one real directory at a time from
+// the root of the file system, shown with ~ against the resolved home, and
+// read with the fixed sources' walker; a link in its place is unsupported.
+func TestOpenStudioReadsAnOwnerFolderByItsCanonicalPath(t *testing.T) {
+	machine := newProfileMachine(t)
+	machine.install(machine.system, "7.80")
+	home, err := filepath.EvalSymlinks(machine.home)
+	if err != nil {
+		t.Fatal(err)
+	}
+	archive := filepath.Join(home, "Music", "Templates Archive")
+	writeTemplate(t, archive, "Saturday Residency.RPP")
+	writeTemplate(t, filepath.Join(archive, "Live"), "Drum room.RPP")
+	if err := os.Symlink(archive, filepath.Join(home, "Music", "Linked")); err != nil {
+		t.Fatal(err)
+	}
+	roots := machine.probe.OpenStudio(context.Background())
+	defer roots.Close()
+	if roots.home != home {
+		t.Fatalf("home = %q, want the resolved %q", roots.home, home)
+	}
+	spec, problem, _ := studioOwnerFolderSpec(StudioFolderInput{ID: studioFolderID(StudioCategoryTemplates, archive), Category: StudioCategoryTemplates, Path: archive})
+	if problem != "" {
+		t.Fatal(problem)
+	}
+	if location := roots.Location(spec); location != "~/Music/Templates Archive" {
+		t.Fatalf("location = %q", location)
+	}
+	if state, detail := roots.FolderState(spec); state != StudioStateReady || detail != "" {
+		t.Fatalf("state = %s %q", state, detail)
+	}
+	dir := roots.OpenSource(spec)
+	if dir == nil {
+		t.Fatal("the folder did not open")
+	}
+	defer closeRoot(dir)
+	if filepath.Clean(dir.Name()) != archive {
+		t.Fatalf("opened %q, want %q", dir.Name(), archive)
+	}
+	page, err := walkStudioSource(context.Background(), dir, spec, "", 256, 1<<20, nil)
+	if err != nil || len(page.entries) != 2 || page.entries[0].NativeID != "Live/Drum room.RPP" || page.entries[1].Name != "Saturday Residency" || page.entries[1].Kind != StudioKindProjectTemplate {
+		t.Fatalf("folder walk = %+v, %v", page, err)
+	}
+	for name, folder := range map[string]string{
+		"absent": filepath.Join(home, "Music", "Gone"),
+		"linked": filepath.Join(home, "Music", "Linked"),
+		"file":   filepath.Join(archive, "Saturday Residency.RPP"),
+	} {
+		spec, problem, _ := studioOwnerFolderSpec(StudioFolderInput{ID: studioFolderID(StudioCategoryTemplates, folder), Category: StudioCategoryTemplates, Path: folder})
+		if problem != "" {
+			t.Fatal(problem)
+		}
+		state, detail := roots.FolderState(spec)
+		want := StudioStateUnsupported
+		if name == "absent" {
+			want = StudioStateAbsent
+		}
+		if state != want || detail == "" || roots.OpenSource(spec) != nil {
+			t.Errorf("%s folder = %s %q", name, state, detail)
+		}
+	}
+	if _, err := os.Lstat(filepath.Join(home, "Music", "Gone")); !os.IsNotExist(err) {
+		t.Fatal("looking created the absent folder")
+	}
+}
+
 func TestOpenStudioWithoutTheApplicationStillSeesTheFolders(t *testing.T) {
 	machine := newProfileMachine(t)
 	writeTemplate(t, filepath.Join(machine.userResource(), "ProjectTemplates"), "Old.RPP")

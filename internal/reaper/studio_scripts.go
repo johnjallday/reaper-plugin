@@ -23,8 +23,11 @@ import (
 //     reapack.ini, omitted otherwise;
 //   - description, from a tagged header line within the first 8 KiB.
 //
-// Nothing here runs a script. A registration row that points outside every
-// source is counted as external_registration and never followed.
+// Nothing here runs a script. A registration row that points outside REAPER's
+// Scripts folder and the Ori library is counted as external_registration on
+// the Scripts source's first page and never followed. That page is not told
+// the owner's folders (§4.5), so a row that points into one is still counted
+// there; the folder's own page reports the script as registered.
 
 const (
 	maxStudioHeaderBytes    = 8192
@@ -58,7 +61,9 @@ func newStudioScriptFacts(roots *studioRoots, spec studioSourceSpec, dir *os.Roo
 	facts := &studioScriptFacts{spec: spec, sourcePath: filepath.Clean(dir.Name())}
 	if roots.resource != nil && roots.resourceState == StudioStateReady {
 		facts.loadRegistrations(roots)
-		if !spec.Library {
+		// ReaPack installs under REAPER's Scripts folder only, so the package
+		// fact is backed there and nowhere else.
+		if spec.reaperScripts() {
 			facts.loadRemotes(roots.resource)
 		}
 	}
@@ -134,7 +139,9 @@ func (f *studioScriptFacts) registered(relative string) bool {
 	if !f.registrationsInspected {
 		return false
 	}
-	if !f.spec.Library {
+	// Relative rows are relative to REAPER's Scripts folder; every other
+	// source, the library and an owner folder, is matched by absolute path.
+	if f.spec.reaperScripts() {
 		if _, ok := f.relativeRows[studioPathKey(relative)]; ok {
 			return true
 		}

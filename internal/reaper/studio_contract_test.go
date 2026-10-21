@@ -79,9 +79,34 @@ func TestStudioResourceCatalogDeclarationIsTheContractVector(t *testing.T) {
 		ServiceID          string `json:"service_id"`
 		SourcesOperation   string `json:"sources_operation"`
 		InventoryOperation string `json:"inventory_operation"`
+		Categories         []struct {
+			ID           string `json:"id"`
+			OwnerFolders bool   `json:"owner_folders"`
+			Kinds        []struct {
+				ID string `json:"id"`
+			} `json:"kinds"`
+		} `json:"categories"`
 	}
 	if err := json.Unmarshal(raw, &declaration); err != nil {
 		t.Fatal(err)
+	}
+	// The categories that take the owner's own folders (§3.4, §4.5) are the
+	// ones this service reads as folders, with the kinds their files list as;
+	// the live category never declares it.
+	for _, category := range declaration.Categories {
+		kinds, reads := studioOwnerFolderKinds[category.ID]
+		if category.OwnerFolders != reads {
+			t.Errorf("category %s declares owner_folders=%v but the service reads folders of it: %v", category.ID, category.OwnerFolders, reads)
+		}
+		for _, kind := range kinds {
+			if !slices.ContainsFunc(category.Kinds, func(declared struct {
+				ID string `json:"id"`
+			}) bool {
+				return declared.ID == kind
+			}) {
+				t.Errorf("folder kind %s is not declared for %s", kind, category.ID)
+			}
+		}
 	}
 	var services []struct {
 		ID         string            `json:"id"`

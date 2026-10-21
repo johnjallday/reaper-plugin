@@ -7,9 +7,12 @@ import (
 	"encoding/json"
 	"errors"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"unicode"
+
+	"golang.org/x/text/unicode/norm"
 )
 
 // The REAPER Studio catalog (Ori contract reaper-studio v1, §4) is two
@@ -75,7 +78,17 @@ const (
 	minStudioInstallationIDChars = 8
 	maxStudioInstallationIDChars = 128
 	maxStudioSourceIDChars       = 40
+	maxStudioSourceLabelChars    = 60
+	maxStudioLocationChars       = 512
 	studioInstallationIDPrefix   = "inst_"
+
+	// Owner-added folders (contract §4.5): Ori sends at most eight per
+	// computer, each named folder_ + 16 hex digits of
+	// SHA-256(category ‖ 0x00 ‖ canonical path).
+	studioFolderSourcePrefix = "folder_"
+	studioFolderIDHexChars   = 16
+	maxStudioOwnerFolders    = 8
+	maxStudioFolderPathChars = 1024
 )
 
 // Coverage reasons a page may report (contract §4.2).
@@ -90,8 +103,25 @@ const (
 	studioSkipDepthLimit           = "depth_limit"
 )
 
+// StudioFolderInput is one folder the owner added to a category, as Ori sends
+// it in studio.sources.read (contract §4.5): its folder_ id, the category and
+// the canonical absolute path Ori checked when the folder was added.
+type StudioFolderInput struct {
+	ID       string `json:"id"`
+	Category string `json:"category"`
+	Path     string `json:"path"`
+}
+
 type StudioSourcesInput struct {
-	SchemaVersion int `json:"schema_version"`
+	SchemaVersion int                 `json:"schema_version"`
+	Folders       []StudioFolderInput `json:"folders,omitempty"`
+}
+
+// StudioFolderRef names the owner folder an inventory page reads. It is
+// present exactly when the page's source_id is a folder_ id.
+type StudioFolderRef struct {
+	Category string `json:"category"`
+	Path     string `json:"path"`
 }
 
 type StudioInstallation struct {
@@ -119,11 +149,12 @@ type StudioSourcesResult struct {
 }
 
 type StudioInventoryInput struct {
-	SchemaVersion  int    `json:"schema_version"`
-	InstallationID string `json:"installation_id"`
-	SourceID       string `json:"source_id"`
-	Cursor         string `json:"cursor"`
-	Limit          int    `json:"limit"`
+	SchemaVersion  int              `json:"schema_version"`
+	InstallationID string           `json:"installation_id"`
+	SourceID       string           `json:"source_id"`
+	Cursor         string           `json:"cursor"`
+	Limit          int              `json:"limit"`
+	Folder         *StudioFolderRef `json:"folder,omitempty"`
 }
 
 type StudioFact struct {
@@ -165,29 +196,44 @@ type StudioInventoryResult struct {
 	Coverage       StudioCoverage `json:"coverage"`
 }
 
-// studioSourceSpec is one of the five fixed v1 sources (contract §4.1).
+// studioSourceSpec is one source: one of the five fixed v1 sources (contract
+// §4.1) or a folder the owner added to a category (§4.5).
 type studioSourceSpec struct {
 	ID       string
 	Category string
 	Label    string
 	Access   string
 	// Folder names the sub-folder of the REAPER resource folder a file source
-	// lives in. The Ori script library lives outside it (Library).
-	Folder     string
-	Library    bool
-	Kind       string
-	Extensions []string
+	// lives in. The Ori script library lives outside it (Library), and an
+	// owner folder is wherever its canonical Path says (Owner).
+	Folder  string
+	Library bool
+	Owner   bool
+	Path    string
+	// Kinds maps a lower-case file extension to the kind a file of it lists as.
+	Kinds map[string]string
 }
+
+var (
+	studioTemplateKinds = map[string]string{".rpp": StudioKindProjectTemplate, ".rtracktemplate": StudioKindTrackTemplate}
+	studioScriptKinds   = map[string]string{".lua": StudioKindScript, ".eel": StudioKindScript, ".py": StudioKindScript}
+	// studioOwnerFolderKinds are the categories that declare owner_folders
+	// (§3.4) with the kinds a folder of each lists by extension (§4.5).
+	studioOwnerFolderKinds = map[string]map[string]string{
+		StudioCategoryTemplates: studioTemplateKinds,
+		StudioCategoryScripts:   studioScriptKinds,
+	}
+)
 
 var studioSourceSpecs = []studioSourceSpec{
 	{ID: "project_templates", Category: StudioCategoryTemplates, Label: "Project templates", Access: StudioAccessFile,
-		Folder: "ProjectTemplates", Kind: StudioKindProjectTemplate, Extensions: []string{".rpp"}},
+		Folder: "ProjectTemplates", Kinds: map[string]string{".rpp": StudioKindProjectTemplate}},
 	{ID: "track_templates", Category: StudioCategoryTemplates, Label: "Track templates", Access: StudioAccessFile,
-		Folder: "TrackTemplates", Kind: StudioKindTrackTemplate, Extensions: []string{".rtracktemplate"}},
+		Folder: "TrackTemplates", Kinds: map[string]string{".rtracktemplate": StudioKindTrackTemplate}},
 	{ID: "reaper_scripts", Category: StudioCategoryScripts, Label: "REAPER Scripts", Access: StudioAccessFile,
-		Folder: "Scripts", Kind: StudioKindScript, Extensions: []string{".lua", ".eel", ".py"}},
+		Folder: "Scripts", Kinds: studioScriptKinds},
 	{ID: "ori_scripts", Category: StudioCategoryScripts, Label: "Ori script library", Access: StudioAccessFile,
-		Library: true, Kind: StudioKindScript, Extensions: []string{".lua", ".eel", ".py"}},
+		Library: true, Kinds: studioScriptKinds},
 	{ID: "audio_plugins", Category: StudioCategoryAudioPlugins, Label: "REAPER plugin list", Access: StudioAccessLive},
 }
 
@@ -200,6 +246,89 @@ func lookupStudioSource(id string) (studioSourceSpec, bool) {
 	return studioSourceSpec{}, false
 }
 
+// kindOf is the kind a file of this name lists as in the source, if any.
+func (spec studioSourceSpec) kindOf(name string) (string, bool) {
+	kind, ok := spec.Kinds[strings.ToLower(filepath.Ext(name))]
+	return kind, ok
+}
+
+// reaperScripts says the source is REAPER's own Scripts folder, the one
+// reaper-kb.ini's relative registration rows are relative to.
+func (spec studioSourceSpec) reaperScripts() bool {
+	return spec.Access == StudioAccessFile && !spec.Library && !spec.Owner && spec.Folder == "Scripts"
+}
+
+// studioFolderID is an owner folder's source id (contract §4.5): the same
+// category and canonical path always give the same id.
+func studioFolderID(category, path string) string {
+	sum := sha256.Sum256([]byte(category + "\x00" + path))
+	return studioFolderSourcePrefix + hex.EncodeToString(sum[:studioFolderIDHexChars/2])
+}
+
+func isStudioFolderSource(id string) bool {
+	return strings.HasPrefix(id, studioFolderSourcePrefix)
+}
+
+// studioFolderIDShape says an id has the shape of an owner folder id; whether
+// it names the folder it came with is checked against the digest.
+func studioFolderIDShape(id string) bool {
+	if !isStudioFolderSource(id) || len(id) != len(studioFolderSourcePrefix)+studioFolderIDHexChars {
+		return false
+	}
+	for i := len(studioFolderSourcePrefix); i < len(id); i++ {
+		if c := id[i]; (c < '0' || c > '9') && (c < 'a' || c > 'f') {
+			return false
+		}
+	}
+	return true
+}
+
+// studioValidFolderPath accepts the canonical absolute path of a folder: one
+// plain line within the declared bound, clean, with nothing left to resolve,
+// and not the root of the file system.
+func studioValidFolderPath(path string) bool {
+	return profileLine(path, maxStudioFolderPathChars) && filepath.IsAbs(path) && filepath.Clean(path) == path && path != string(filepath.Separator)
+}
+
+// studioOwnerFolderSpec is the source an owner folder reads as. problem is
+// the state the folder must report instead when it is not one this plugin
+// accepts: a category without owner folders, a path that is not canonical, or
+// an id that is not the digest of its category and path (contract §4.5).
+func studioOwnerFolderSpec(folder StudioFolderInput) (spec studioSourceSpec, problem, detail string) {
+	spec = studioSourceSpec{ID: folder.ID, Category: folder.Category, Access: StudioAccessFile, Owner: true, Path: folder.Path, Label: studioFolderLabel(folder.Path)}
+	kinds, ok := studioOwnerFolderKinds[folder.Category]
+	switch {
+	case !ok:
+		return spec, StudioStateUnsupported, "Folders can be added to templates and scripts only."
+	case !studioValidFolderPath(folder.Path):
+		return spec, StudioStateUnsupported, "The folder's path is not a canonical absolute path."
+	case !studioFolderIDShape(folder.ID) || studioFolderID(folder.Category, folder.Path) != folder.ID:
+		return spec, StudioStateUnsupported, "The folder's id does not name this category and path."
+	}
+	spec.Kinds = kinds
+	return spec, "", ""
+}
+
+// studioFolderLabel is an owner folder's label: its name, kept to one plain
+// line within the bound a source label has.
+func studioFolderLabel(path string) string {
+	return studioClipLine(filepath.Base(path), maxStudioSourceLabelChars, "Folder")
+}
+
+// studioClipLine keeps a value to one plain line within limit characters, in
+// NFC, cutting it when it is longer and falling back when nothing plain is
+// left.
+func studioClipLine(value string, limit int, fallback string) string {
+	value = strings.TrimSpace(norm.NFC.String(value))
+	if runes := []rune(value); len(runes) > limit {
+		value = strings.TrimSpace(string(runes[:limit]))
+	}
+	if !profileLine(value, limit) {
+		return fallback
+	}
+	return value
+}
+
 // studioRoots is what the platform probe opens for one read: the installation
 // facts and the two folders sources live in, each held open as a real
 // directory or marked with the state a source there must report. Close
@@ -209,6 +338,9 @@ type studioRoots struct {
 	installed bool
 	version   string
 	layout    string
+	// home is the user's home folder with links resolved, the way Ori
+	// resolves the paths it sends; locations are shortened against it.
+	home string
 
 	resource        *os.Root
 	resourceState   string
@@ -293,6 +425,12 @@ func (r *studioRoots) Location(spec studioSourceSpec) string {
 	switch {
 	case spec.Access == StudioAccessLive:
 		return "REAPER (running)"
+	case spec.Owner:
+		home := ""
+		if r != nil {
+			home = r.home
+		}
+		return studioClipLine(studioDisplayPath(spec.Path, home), maxStudioLocationChars, spec.Label)
 	case spec.Library:
 		if r != nil && r.libraryDisplay != "" {
 			return r.libraryDisplay
@@ -311,6 +449,11 @@ func (r *studioRoots) Location(spec studioSourceSpec) string {
 func (r *studioRoots) FolderState(spec studioSourceSpec) (state, detail string) {
 	if r == nil || !r.supported {
 		return StudioStateUnsupported, "Catalog sources can be read on macOS only."
+	}
+	if spec.Owner {
+		dir, state, detail := r.OpenOwnerFolder(spec)
+		closeRoot(dir)
+		return state, detail
 	}
 	if spec.Library {
 		return r.libraryState, studioFolderDetail(r.libraryState, "Ori Scripts/reaper")
@@ -362,6 +505,10 @@ func (r *studioRoots) OpenSource(spec studioSourceSpec) *os.Root {
 	if r == nil || spec.Access != StudioAccessFile {
 		return nil
 	}
+	if spec.Owner {
+		dir, _, _ := r.OpenOwnerFolder(spec)
+		return dir
+	}
 	if spec.Library {
 		if r.libraryState != StudioStateReady || r.library == nil {
 			return nil
@@ -376,6 +523,108 @@ func (r *studioRoots) OpenSource(spec studioSourceSpec) *os.Root {
 		return nil
 	}
 	return dir
+}
+
+// OpenOwnerFolder opens an owner folder as a real directory, one path element
+// at a time from the root of the file system, and says what it is right now:
+// ready (opened), absent (nothing of that name on the way), unsupported (a
+// link, or not a folder) or denied (there, not openable). Nothing is created
+// and no link is followed (contract §4.5).
+func (r *studioRoots) OpenOwnerFolder(spec studioSourceSpec) (dir *os.Root, state, detail string) {
+	if r == nil || !r.supported {
+		return nil, StudioStateUnsupported, "Catalog sources can be read on macOS only."
+	}
+	if !spec.Owner || !studioValidFolderPath(spec.Path) {
+		return nil, StudioStateUnsupported, "The folder's path is not a canonical absolute path."
+	}
+	top, err := os.OpenRoot(string(filepath.Separator))
+	if err != nil {
+		return nil, StudioStateDenied, "The folder could not be opened."
+	}
+	defer closeRoot(top)
+	elements := strings.Split(strings.TrimPrefix(spec.Path, string(filepath.Separator)), string(filepath.Separator))
+	dir, state = openStudioFolder(top, elements...)
+	switch state {
+	case StudioStateReady:
+		return dir, state, ""
+	case StudioStateAbsent:
+		return nil, state, "There is no folder at this location now."
+	case StudioStateUnsupported:
+		return nil, state, "The folder, or a folder on the way to it, is a link or not a folder; links are not followed."
+	}
+	return nil, StudioStateDenied, "The folder could not be opened."
+}
+
+// openStudioFolder opens elements below parent one at a time and says what the
+// last one is: ready (opened), absent (nothing of that name), unsupported (a
+// link or another type) or denied (there, not openable).
+func openStudioFolder(parent *os.Root, elements ...string) (*os.Root, string) {
+	if parent == nil || len(elements) == 0 {
+		return nil, StudioStateDenied
+	}
+	ancestor := openRealPath(parent, elements[:len(elements)-1]...)
+	if len(elements) > 1 {
+		if ancestor == nil {
+			return nil, studioMissingParentState(parent, elements[:len(elements)-1])
+		}
+		defer closeRoot(ancestor)
+	} else {
+		ancestor = parent
+	}
+	last := elements[len(elements)-1]
+	info, err := ancestor.Lstat(last)
+	switch {
+	case err != nil && os.IsNotExist(err):
+		return nil, StudioStateAbsent
+	case err != nil:
+		return nil, StudioStateDenied
+	case info.Mode()&os.ModeSymlink != 0, !info.IsDir():
+		return nil, StudioStateUnsupported
+	}
+	dir, _, ok := openRealDir(ancestor, last)
+	if !ok {
+		return nil, StudioStateDenied
+	}
+	return dir, StudioStateReady
+}
+
+// studioMissingParentState tells an absent parent folder from one that could
+// not be used, walking the elements again without opening the last one.
+func studioMissingParentState(parent *os.Root, elements []string) string {
+	current, owned := parent, false
+	defer func() {
+		if owned {
+			closeRoot(current)
+		}
+	}()
+	for _, element := range elements {
+		info, err := current.Lstat(element)
+		switch {
+		case err != nil && os.IsNotExist(err):
+			return StudioStateAbsent
+		case err != nil:
+			return StudioStateDenied
+		case info.Mode()&os.ModeSymlink != 0, !info.IsDir():
+			return StudioStateUnsupported
+		}
+		next, _, ok := openRealDir(current, element)
+		if !ok {
+			return StudioStateDenied
+		}
+		if owned {
+			closeRoot(current)
+		}
+		current, owned = next, true
+	}
+	return StudioStateDenied
+}
+
+// studioDisplayPath shows a path with "~" for the home folder.
+func studioDisplayPath(path, home string) string {
+	if home != "" && (path == home || strings.HasPrefix(path, home+string(filepath.Separator))) {
+		return "~" + filepath.ToSlash(strings.TrimPrefix(path, home))
+	}
+	return filepath.ToSlash(path)
 }
 
 // reopenRoot gives the caller its own handle on an already opened real
@@ -410,12 +659,12 @@ type StudioProbe interface {
 // not read: every state comes from a presence check or from the probes that
 // already report REAPER's availability.
 func (s *Service) StudioSources(ctx context.Context, input StudioSourcesInput) (StudioSourcesResult, error) {
-	if input.SchemaVersion != StudioSchemaVersion {
-		return StudioSourcesResult{}, errors.New("studio sources request is invalid")
+	if err := validateStudioSourcesInput(input); err != nil {
+		return StudioSourcesResult{}, err
 	}
 	roots := s.openStudio(ctx)
 	defer roots.Close()
-	result := StudioSourcesResult{SchemaVersion: StudioSchemaVersion, Installation: roots.Installation(), Sources: make([]StudioSource, 0, len(studioSourceSpecs))}
+	result := StudioSourcesResult{SchemaVersion: StudioSchemaVersion, Installation: roots.Installation(), Sources: make([]StudioSource, 0, len(studioSourceSpecs)+len(input.Folders))}
 	for _, spec := range studioSourceSpecs {
 		source := StudioSource{ID: spec.ID, Category: spec.Category, Label: spec.Label, Location: roots.Location(spec), Access: spec.Access}
 		if spec.Access == StudioAccessLive {
@@ -426,7 +675,43 @@ func (s *Service) StudioSources(ctx context.Context, input StudioSourcesInput) (
 		source.Detail = studioDetail(source.Detail)
 		result.Sources = append(result.Sources, source)
 	}
+	// Every folder Ori sent is answered once, as it was sent, and no other
+	// folder_ source exists (contract §4.5).
+	for _, folder := range input.Folders {
+		spec, state, detail := studioOwnerFolderSpec(folder)
+		if state == "" {
+			state, detail = roots.FolderState(spec)
+		}
+		result.Sources = append(result.Sources, StudioSource{
+			ID: folder.ID, Category: folder.Category, Label: spec.Label, Location: roots.Location(spec), Access: StudioAccessFile,
+			State: state, Detail: studioDetail(detail),
+		})
+	}
 	return result, nil
+}
+
+// validateStudioSourcesInput refuses what the closed input schema refuses, and
+// a folder sent twice, which no answer could report once.
+func validateStudioSourcesInput(input StudioSourcesInput) error {
+	invalid := errors.New("studio sources request is invalid")
+	if input.SchemaVersion != StudioSchemaVersion || len(input.Folders) > maxStudioOwnerFolders {
+		return invalid
+	}
+	seen := make(map[string]struct{}, len(input.Folders))
+	for _, folder := range input.Folders {
+		if _, repeated := seen[folder.ID]; repeated || !studioFolderIDShape(folder.ID) || !studioFolderRefShape(StudioFolderRef{Category: folder.Category, Path: folder.Path}) {
+			return invalid
+		}
+		seen[folder.ID] = struct{}{}
+	}
+	return nil
+}
+
+// studioFolderRefShape is the closed schema's own bound on a folder: a
+// category and a path of the declared lengths. Whether they are a folder this
+// plugin reads is answered in the state, not refused.
+func studioFolderRefShape(folder StudioFolderRef) bool {
+	return folder.Category != "" && len(folder.Category) <= maxStudioSourceIDChars && folder.Path != "" && len(folder.Path) <= maxStudioFolderPathChars
 }
 
 func (s *Service) openStudio(ctx context.Context) *studioRoots {
@@ -488,7 +773,7 @@ func (s *Service) StudioInventory(ctx context.Context, input StudioInventoryInpu
 		result.State = StudioStateInstallationChanged
 		return result, nil
 	}
-	spec, ok := lookupStudioSource(input.SourceID)
+	spec, ok := studioInventorySource(input)
 	if !ok {
 		result.State = StudioStateUnsupported
 		return result, nil
@@ -521,16 +806,35 @@ func (s *Service) StudioInventory(ctx context.Context, input StudioInventoryInpu
 	result.Coverage = page.coverage
 	// Registration rows that point outside every source are REAPER's own
 	// Scripts source's business: counted once, on its first page.
-	if cursor == "" && !spec.Library && facts != nil && facts.external > 0 {
+	if cursor == "" && spec.reaperScripts() && facts != nil && facts.external > 0 {
 		result.Coverage.Skipped = append(result.Coverage.Skipped, StudioSkip{Reason: studioSkipExternalRegistration, Count: facts.external})
 	}
 	return result, nil
 }
 
+// studioInventorySource is the source a page reads. A folder_ id reads the
+// owner folder named beside it, and only when that folder is the one the id
+// is the digest of; any other id is one of the fixed sources and carries no
+// folder (contract §4.2, §4.5). Anything else is unsupported.
+func studioInventorySource(input StudioInventoryInput) (studioSourceSpec, bool) {
+	if isStudioFolderSource(input.SourceID) {
+		if input.Folder == nil {
+			return studioSourceSpec{}, false
+		}
+		spec, problem, _ := studioOwnerFolderSpec(StudioFolderInput{ID: input.SourceID, Category: input.Folder.Category, Path: input.Folder.Path})
+		return spec, problem == ""
+	}
+	if input.Folder != nil {
+		return studioSourceSpec{}, false
+	}
+	return lookupStudioSource(input.SourceID)
+}
+
 func validateStudioInventoryInput(input StudioInventoryInput) error {
 	if input.SchemaVersion != StudioSchemaVersion || len(input.InstallationID) < minStudioInstallationIDChars || len(input.InstallationID) > maxStudioInstallationIDChars ||
 		!strings.HasPrefix(input.InstallationID, studioInstallationIDPrefix) || input.SourceID == "" || len(input.SourceID) > maxStudioSourceIDChars ||
-		len(input.Cursor) > maxStudioCursorBytes || input.Limit < 1 || input.Limit > maxStudioPageEntries {
+		len(input.Cursor) > maxStudioCursorBytes || input.Limit < 1 || input.Limit > maxStudioPageEntries ||
+		(input.Folder != nil && !studioFolderRefShape(*input.Folder)) {
 		return errors.New("studio inventory request is invalid")
 	}
 	return nil

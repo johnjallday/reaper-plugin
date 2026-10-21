@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -221,5 +223,56 @@ func TestPrivateServiceConformsToMCPStdioAndDeclaredHealthOperation(t *testing.T
 	}
 	if _, result, err = call("studio.inventory.read", map[string]any{"schema_version": 1, "installation_id": installationID, "source_id": "project_templates", "cursor": "", "limit": 0}); err == nil && !result.IsError {
 		t.Fatal("an out-of-range limit was accepted")
+	}
+
+	// A folder the owner added (contract §4.5) travels by its canonical path
+	// and comes back as one more file source, read by the same walker.
+	resolvedHome, err := filepath.EvalSymlinks(fixture)
+	if err != nil {
+		t.Fatal(err)
+	}
+	archive := filepath.Join(resolvedHome, "Music", "Templates Archive")
+	if err := os.MkdirAll(filepath.Join(archive, "Live"), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(archive, "Live", "Drum room.RPP"), []byte("<REAPER_PROJECT\n>\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	digest := sha256.Sum256([]byte("templates\x00" + archive))
+	folderID := "folder_" + hex.EncodeToString(digest[:8])
+	folder := map[string]any{"id": folderID, "category": "templates", "path": archive}
+	sources, result, err = call("studio.sources.read", map[string]any{"schema_version": 1, "folders": []any{folder}})
+	if err != nil || result.IsError {
+		t.Fatalf("studio.sources.read with a folder = %+v, %v", result, err)
+	}
+	listed, _ = sources["sources"].([]any)
+	var answered map[string]any
+	for _, item := range listed {
+		source, _ := item.(map[string]any)
+		if source["id"] == folderID {
+			answered = source
+		}
+	}
+	if len(listed) != 6 || answered == nil || answered["category"] != "templates" || answered["access"] != "file" || answered["state"] != "ready" ||
+		answered["label"] != "Templates Archive" || answered["location"] != "~/Music/Templates Archive" {
+		t.Fatalf("folder source = %#v among %d sources", answered, len(listed))
+	}
+	inventory, result, err = call("studio.inventory.read", map[string]any{
+		"schema_version": 1, "installation_id": installationID, "source_id": folderID, "cursor": "", "limit": 256,
+		"folder": map[string]any{"category": "templates", "path": archive},
+	})
+	if err != nil || result.IsError {
+		t.Fatalf("studio.inventory.read of a folder = %+v, %v", result, err)
+	}
+	entries, _ = inventory["entries"].([]any)
+	entry, _ := entries[0].(map[string]any)
+	if inventory["state"] != "ok" || len(entries) != 1 || entry["native_id"] != "Live/Drum room.RPP" || entry["kind"] != "project_template" {
+		t.Fatalf("folder inventory = %#v", inventory)
+	}
+	inventory, result, err = call("studio.inventory.read", map[string]any{
+		"schema_version": 1, "installation_id": installationID, "source_id": folderID, "cursor": "", "limit": 256,
+	})
+	if err != nil || result.IsError || inventory["state"] != "unsupported" {
+		t.Fatalf("a folder page without its folder = %#v, %+v, %v", inventory, result, err)
 	}
 }

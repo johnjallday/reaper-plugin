@@ -321,6 +321,27 @@ func openRealDir(parent *os.Root, element string) (dir *os.Root, exists, ok bool
 	return child, true, true
 }
 
+// openRealPath opens elements below parent one at a time, each a real
+// directory. It returns nil when any of them is missing, is a link or cannot
+// be opened.
+func openRealPath(parent *os.Root, elements ...string) *os.Root {
+	current, owned := parent, false
+	for _, element := range elements {
+		next, _, ok := openRealDir(current, element)
+		if owned {
+			closeRoot(current)
+		}
+		if !ok {
+			return nil
+		}
+		current, owned = next, true
+	}
+	if !owned {
+		return nil
+	}
+	return current
+}
+
 // regularFileIn says a regular file of that name sits directly in dir. A
 // symbolic link is not one, whatever it points at. The file is not opened.
 func regularFileIn(dir *os.Root, name string) bool {
