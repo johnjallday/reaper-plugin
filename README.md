@@ -245,8 +245,8 @@ restaffed. Connect a fresh external `.rpp` folder
 through the reviewed existing-project flow; its files stay in place and grouping
 still grants no filesystem or runtime permission.
 
-The `v0.11.0` release artifact is 9,375,458 bytes with SHA-256
-`c1c8c926b2ff1cdc62232d73c95683181c2fa4b336310aa7fe52f64c1861e66a`.
+The `v0.11.0` release artifact is 9,392,066 bytes with SHA-256
+`0a5cfc78a0011fb84a853182c3981585f71063cc847db031f68df067ea9109dc`.
 The tag-triggered release workflow rebuilds and verifies those exact bytes before
 publishing the manifest's `v0.11.0` release URL. Ori's reviewed floor update is a
 separate host release step; existing installed plugins and reviewed pins are not

@@ -82,8 +82,8 @@
   saved only by the owner.
 - New dependency `golang.org/x/text` (NFC normalisation of ids and names).
   Plugin/service version: **0.11.0**; protocol **1**; quest version **4**;
-  macOS arm64 only. Deterministic release artifact: **9,375,458 bytes**;
-  SHA-256 `c1c8c926b2ff1cdc62232d73c95683181c2fa4b336310aa7fe52f64c1861e66a`.
+  macOS arm64 only. Deterministic release artifact: **9,392,066 bytes**;
+  SHA-256 `0a5cfc78a0011fb84a853182c3981585f71063cc847db031f68df067ea9109dc`.
 - Works with Music Project Management **v0.1.0** or newer for songs, as before;
   REAPER Studio needs **v0.4.0** or newer.
 

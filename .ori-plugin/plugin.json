@@ -227,8 +227,8 @@
             "kind": "https",
             "url": "https://github.com/johnjallday/reaper-plugin/releases/download/v0.11.0/reaper-plugin_v0.11.0_darwin_arm64"
           },
-          "sha256": "c1c8c926b2ff1cdc62232d73c95683181c2fa4b336310aa7fe52f64c1861e66a",
-          "size": 9375458
+          "sha256": "0a5cfc78a0011fb84a853182c3981585f71063cc847db031f68df067ea9109dc",
+          "size": 9392066
         }
       ],
       "operations": [
