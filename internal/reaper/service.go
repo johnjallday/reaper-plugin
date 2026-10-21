@@ -21,6 +21,8 @@ type Service struct {
 	runner    *Runner
 	runtime   *RuntimeProvider
 	profile   ProfileProbe
+	studio    StudioProbe
+	probes    ProbeSet
 	mu        sync.Mutex
 	last      OperationResult
 	plans     map[string]PendingPlan
@@ -39,6 +41,7 @@ func NewService(manager *Manager, probes ProbeSet, roots RunnerRootResolver) *Se
 	return &Service{
 		manager: manager, client: client, catalog: catalog, library: library,
 		runner: NewRunner(roots, probes, client), runtime: NewRuntimeProvider(manager, probes), profile: probes.Profile,
+		studio: probes.Studio, probes: probes,
 		plans: make(map[string]PendingPlan), undos: make(map[string]TrackEdit), proposals: make(map[string]ScriptProposal),
 	}
 }

@@ -18,6 +18,13 @@ const (
 
 	readOnlyInspectorHeader = "-- ori-runner-mode: read-only-inspector-v1\n"
 	tidyApplierHeader       = "-- ori-runner-mode: tidy-applier-v1\n"
+
+	// runnerVersion is the version the embedded Lua runner writes to
+	// runner.version on every run (TestRunnerLuaWritesItsVersion holds the two
+	// together). Version 2 (0.11.0) added EnumInstalledFX to the read-only
+	// allowlist, which the Studio plugin-list reader needs.
+	runnerVersion             = 2
+	studioReaderRunnerVersion = 2
 )
 
 var (
@@ -35,6 +42,7 @@ var (
 		"CountProjectMarkers":        {},
 		"CountTrackMediaItems":       {},
 		"CountTracks":                {},
+		"EnumInstalledFX":            {},
 		"EnumProjectMarkers3":        {},
 		"EnumProjects":               {},
 		"GetAppVersion":              {},

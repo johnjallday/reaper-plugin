@@ -198,7 +198,27 @@ func (p *platformProbe) DetectRunner(context.Context) RunnerObservation {
 	if !validRunnerCommandID(commandID) {
 		return RunnerObservation{State: ProbeInvalid, Root: root}
 	}
-	return RunnerObservation{State: ProbeReady, Root: root, CommandID: commandID}
+	return RunnerObservation{State: ProbeReady, Root: root, CommandID: commandID, Version: readRunnerVersion(root)}
+}
+
+// readRunnerVersion reads the version the installed runner wrote on its last
+// run. A runner from before 0.11.0 wrote none, which reads as 0; so does a file
+// that is not a short decimal number.
+func readRunnerVersion(root string) int {
+	path := filepath.Join(root, "runner.version")
+	info, err := os.Lstat(path) // #nosec G304 -- trusted canonical runner root
+	if err != nil || info.Mode()&os.ModeSymlink != 0 || !info.Mode().IsRegular() || info.Size() < 1 || info.Size() > maxRunnerVersionBytes {
+		return 0
+	}
+	data, err := os.ReadFile(path) // #nosec G304 -- trusted canonical runner root, bounded file checked above
+	if err != nil {
+		return 0
+	}
+	version, err := strconv.Atoi(strings.TrimSpace(string(data)))
+	if err != nil || version < 1 || version > maxRunnerVersion {
+		return 0
+	}
+	return version
 }
 
 func (p *platformProbe) CheckTransport(ctx context.Context, web WebRemoteObservation) LiveTransportObservation {

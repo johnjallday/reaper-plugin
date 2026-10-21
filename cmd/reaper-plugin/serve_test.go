@@ -48,7 +48,8 @@ func TestPrivateServiceConformsToMCPStdioAndDeclaredHealthOperation(t *testing.T
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	command := exec.CommandContext(ctx, "go", "run", ".", "serve") // #nosec G204 -- fixed test command/arguments
-	command.Env = append(os.Environ(), "REAPER_PLUGIN_HOME="+fixtureHome(t))
+	fixture := fixtureHome(t)
+	command.Env = append(os.Environ(), "REAPER_PLUGIN_HOME="+fixture)
 	client := sdkmcp.NewClient(&sdkmcp.Implementation{Name: "reaper-plugin-test", Version: "1"}, nil)
 	session, err := client.Connect(ctx, &sdkmcp.CommandTransport{Command: command}, nil)
 	if err != nil {
@@ -150,5 +151,75 @@ func TestPrivateServiceConformsToMCPStdioAndDeclaredHealthOperation(t *testing.T
 	}
 	if result, err = read(map[string]any{"include_templates": true, "folder": "/Users/me"}); err == nil && !result.IsError {
 		t.Fatalf("profile.read with an extra input was accepted: %#v", result.StructuredContent)
+	}
+
+	// The catalog operations are machine-level too. The sources answer names
+	// the fixture's folders; the inventory pages one of them.
+	call := func(name string, input map[string]any) (map[string]any, *sdkmcp.CallToolResult, error) {
+		result, err := session.CallTool(ctx, &sdkmcp.CallToolParams{
+			Name: name,
+			Arguments: map[string]any{
+				"protocol_version": 1, "operation_id": name,
+				"context": map[string]any{"workspace_id": "", "workspace_root": "", "project_entry": "", "plugin_data_root": "", "scopes": []string{}},
+				"input":   input,
+			},
+		})
+		if err != nil || result.IsError {
+			return nil, result, err
+		}
+		content, _ := result.StructuredContent.(map[string]any)
+		return content, result, nil
+	}
+	sources, result, err := call("studio.sources.read", map[string]any{"schema_version": 1})
+	if err != nil || result.IsError {
+		t.Fatalf("studio.sources.read = %+v, %v", result, err)
+	}
+	installation, _ := sources["installation"].(map[string]any)
+	installationID, _ := installation["id"].(string)
+	if sources["schema_version"] != float64(1) || len(installationID) < 8 || installation["layout"] == nil || installation["app_installed"] == nil {
+		t.Fatalf("installation = %#v", installation)
+	}
+	listed, _ := sources["sources"].([]any)
+	states := map[string]string{}
+	for _, item := range listed {
+		source, _ := item.(map[string]any)
+		id, _ := source["id"].(string)
+		state, _ := source["state"].(string)
+		states[id] = state
+	}
+	if len(states) != 5 || states["project_templates"] != "ready" || states["track_templates"] != "ready" || states["reaper_scripts"] != "absent" || states["ori_scripts"] != "absent" {
+		t.Fatalf("source states = %v", states)
+	}
+	if _, err := os.Lstat("/Applications/reaper.ini"); err != nil && states["audio_plugins"] != "web_remote_off" {
+		t.Fatalf("audio_plugins = %s with no Web Remote configured under the fixture home", states["audio_plugins"])
+	}
+	if _, err := os.Lstat(filepath.Join(fixture, "Library", "Application Support", "REAPER", "Scripts")); !os.IsNotExist(err) {
+		t.Fatal("reporting an absent source created its folder")
+	}
+
+	inventory, result, err := call("studio.inventory.read", map[string]any{
+		"schema_version": 1, "installation_id": installationID, "source_id": "project_templates", "cursor": "", "limit": 256,
+	})
+	if err != nil || result.IsError {
+		t.Fatalf("studio.inventory.read = %+v, %v", result, err)
+	}
+	entries, _ := inventory["entries"].([]any)
+	names := make([]string, 0, len(entries))
+	for _, item := range entries {
+		entry, _ := item.(map[string]any)
+		name, _ := entry["name"].(string)
+		facts, hasFacts := entry["facts"].([]any)
+		if !hasFacts || len(facts) != 0 || entry["kind"] != "project_template" {
+			t.Fatalf("entry = %#v", entry)
+		}
+		names = append(names, name)
+	}
+	coverage, _ := inventory["coverage"].(map[string]any)
+	if inventory["state"] != "ok" || inventory["installation_id"] != installationID || inventory["next_cursor"] != "" ||
+		len(names) != 2 || names[0] != "Band Session" || names[1] != "Vocal & Comp" || coverage["visited"] != float64(3) {
+		t.Fatalf("inventory = %#v", inventory)
+	}
+	if _, result, err = call("studio.inventory.read", map[string]any{"schema_version": 1, "installation_id": installationID, "source_id": "project_templates", "cursor": "", "limit": 0}); err == nil && !result.IsError {
+		t.Fatal("an out-of-range limit was accepted")
 	}
 }

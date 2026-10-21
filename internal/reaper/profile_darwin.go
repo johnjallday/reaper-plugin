@@ -49,12 +49,6 @@ func (p *platformProbe) ReadProfile(_ context.Context, includeTemplates bool) Pr
 	return result
 }
 
-func closeRoot(root *os.Root) {
-	if root != nil {
-		_ = root.Close()
-	}
-}
-
 // openHome opens the user's home directory. It is the one place taken as
 // given; everything below it is checked element by element.
 func (p *platformProbe) openHome() *os.Root {
