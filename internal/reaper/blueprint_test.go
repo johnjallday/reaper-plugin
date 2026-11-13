@@ -123,8 +123,9 @@ func TestReaperSongBlueprintV10ReferencesIndependentHomeAndDeclaresStandaloneCus
 	// missing either feature must refuse this contribution before registration.
 	// home_profile_v1 gates the `home_profile_facts` key the same way (0.10.0),
 	// and resource_workspaces_v1 gates the reaper-studio blueprint and the
-	// resource_catalog key (0.11.0).
-	if !slices.Equal(manifest.RequiresHostFeatures, []string{"independent_program_homes_v1", "specialist_setup_journey_v1", "setup_quests_v2", "template_group_requirements_v1", "blueprint_inputs_v1", "home_profile_v1", "resource_workspaces_v1"}) {
+	// resource_catalog key (0.11.0), and project_facts_v1 gates the
+	// project_facts key (0.12.0).
+	if !slices.Equal(manifest.RequiresHostFeatures, []string{"independent_program_homes_v1", "specialist_setup_journey_v1", "setup_quests_v2", "template_group_requirements_v1", "blueprint_inputs_v1", "home_profile_v1", "resource_workspaces_v1", "project_facts_v1"}) {
 		t.Fatalf("requires_host_features = %v", manifest.RequiresHostFeatures)
 	}
 	// reaper-song stays first; the Studio blueprint (TestStudioResourceCatalog

@@ -3771,6 +3771,181 @@
           "timeout_class": "normal",
           "policy": "read_only",
           "scopes": []
+        },
+        {
+          "id": "project.facts.read",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "schema_version": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 1
+              },
+              "names": {
+                "type": "boolean"
+              },
+              "max_file_bytes": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 33554432
+              },
+              "files": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 8,
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 7
+                    },
+                    "format": {
+                      "type": "string",
+                      "maxLength": 64
+                    },
+                    "path": {
+                      "type": "string",
+                      "maxLength": 4096
+                    },
+                    "size": {
+                      "type": "integer",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "format",
+                    "path",
+                    "size"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "schema_version",
+              "names",
+              "max_file_bytes",
+              "files"
+            ],
+            "additionalProperties": false
+          },
+          "output_schema": {
+            "type": "object",
+            "properties": {
+              "schema_version": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 1
+              },
+              "files": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 8,
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 7
+                    },
+                    "result": {
+                      "type": "string",
+                      "enum": [
+                        "read",
+                        "too_large",
+                        "unreadable",
+                        "failed"
+                      ],
+                      "maxLength": 16
+                    },
+                    "tempo_bpm": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 960
+                    },
+                    "tempo_varies": {
+                      "type": "boolean"
+                    },
+                    "length_seconds": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 360000
+                    },
+                    "track_count": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 10000
+                    },
+                    "tracks": {
+                      "type": "array",
+                      "maxItems": 128,
+                      "items": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 80
+                      }
+                    },
+                    "tracks_left_out": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 1048576
+                    },
+                    "markers": {
+                      "type": "array",
+                      "maxItems": 128,
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "name": {
+                            "type": "string",
+                            "maxLength": 80
+                          },
+                          "at": {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 360000
+                          },
+                          "end": {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 360000
+                          }
+                        },
+                        "required": [
+                          "at"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "markers_left_out": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 1048576
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "result"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "schema_version",
+              "files"
+            ],
+            "additionalProperties": false
+          },
+          "max_output_bytes": 262144,
+          "timeout_class": "long",
+          "policy": "read_only",
+          "scopes": []
         }
       ]
     }
@@ -3800,11 +3975,19 @@
     "template_group_requirements_v1",
     "blueprint_inputs_v1",
     "home_profile_v1",
-    "resource_workspaces_v1"
+    "resource_workspaces_v1",
+    "project_facts_v1"
   ],
   "home_profile_facts": {
     "service_id": "reaper-service",
     "operation": "profile.read"
+  },
+  "project_facts": {
+    "service_id": "reaper-service",
+    "operation": "project.facts.read",
+    "formats": [
+      "reaper"
+    ]
   },
   "resource_catalog": {
     "schema_version": 1,
