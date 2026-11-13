@@ -114,6 +114,45 @@ owned Home, an Ori build without `blueprint_inputs_v1` would reject the typed
 knows neither the `resource_catalog` key nor a resource team. Each condition
 therefore fails before partial registration; such a host keeps using 0.10.1.
 
+### Project facts for Ori (`project.facts.read`)
+
+0.12.0 moves reading song facts out of Ori and into the plugin. Ori used to
+parse `.rpp` files itself with this application's keywords written into it; it
+now calls one read-only service operation, `project.facts.read`, named in the
+manifest's top-level `project_facts` key with the format IDs it covers
+(`reaper`), and stops parsing project files. Ori still decides which folders
+are songs, which files to read and whether names may be read; it checks every
+value the plugin returns and saves the result. For the same file the plugin
+answers exactly what Ori's own reader answered.
+
+One call names up to eight files by absolute path, with the size Ori's listing
+saw, and says whether names were approved. For each file the answer is one of:
+
+- `read`, with `tempo_bpm` (the project's base tempo to one decimal, 0 when
+  unknown), `tempo_varies` (a tempo-map point differs from it at one decimal),
+  `length_seconds` (the latest end of any media item, to three decimals) and `track_count`
+  (top-level tracks, 0 when over 10,000);
+- only when names were approved, also `tracks` (track names) and `markers`
+  (markers, and regions with their `end`), in project order, each at most 128
+  entries and 12,288 bytes of escaped name text, with `tracks_left_out` and
+  `markers_left_out` counting what did not fit. A name is cleaned of control
+  and direction-changing characters, cut to 80 characters, and dropped when it
+  is shaped like a file path. With numbers only, no name of any kind is sent;
+- `too_large` (over the size Ori allows, or a line over 256 KiB), `unreadable`
+  (not a project REAPER saved: binary content, a wrong first line, a block left
+  open, nesting deeper than 64, or content after the project closed) or
+  `failed` (not opened or read, not a regular file, a size other than the
+  listed one, a relative path, or a format other than `reaper`; Ori tries a
+  failed file again later).
+
+It opens each named file and nothing else, by its path with `O_NOFOLLOW`, so a
+symbolic link is `failed` rather than followed; it opens no audio, no file the
+project refers to and no sibling. It needs no running REAPER, never touches Web
+Remote, writes nothing and logs no path or name. It is called by Ori itself
+and is not offered to agents. It needs the Ori release that advertises the
+host feature `project_facts_v1`; an Ori without it refuses this plugin version
+whole, before registration, and keeps the release it has.
+
 ### REAPER Studio resource catalog (`studio.sources.read`, `studio.inventory.read`)
 
 0.11.0 adds the plugin side of **REAPER Studio**, a resource workspace that a

@@ -23,10 +23,12 @@ private MCP stdio service Ori installs. Around it:
 | `protocol/workspace-surface-v1/` | Wire-contract fixtures shared with Ori |
 | `scripts/` | Artifact build, release packaging, verification, live smoke |
 
-The service only talks to REAPER's Web Remote on localhost and writes only
-under `~/.ori-reaper/`. Every new operation needs a declared input and output
-schema, policy and timeout class in the manifest; nothing reaches an agent
-without one.
+The service only talks to REAPER's Web Remote on localhost, writes only under
+`~/.ori-reaper/`, and reads project files only when Ori names them, read-only
+(`project.facts.read`: each named file by absolute path with `O_NOFOLLOW`,
+nothing beside it, no path or name logged). Every new operation needs a
+declared input and output schema, policy and timeout class in the manifest;
+nothing reaches an agent without one.
 
 ## Checkouts and worktrees
 
@@ -133,9 +135,11 @@ from here.
 - `requires_host_features` in the manifest must each exist as a constant in
   Ori's `internal/plugin/surface_descriptor.go`. Today:
   `independent_program_homes_v1`, `specialist_setup_journey_v1`,
-  `setup_quests_v2`, `template_group_requirements_v1`, `blueprint_inputs_v1`
-  and `home_profile_v1`. A new feature is an Ori change first; require it only
-  once an Ori release advertises it, and say which Ori version in the README.
+  `setup_quests_v2`, `template_group_requirements_v1`, `blueprint_inputs_v1`,
+  `home_profile_v1`, `resource_workspaces_v1` and `project_facts_v1`. That is
+  eight, the most Ori accepts, so a further feature needs one retired first. A
+  new feature is an Ori change first; require it only once an Ori release
+  advertises it, and say which Ori version in the README.
 - Ori's reviewed floor pins a minimum plugin version, a fallback commit, the
   `reaper-song` blueprint at a minimum version, protocol 1 and `darwin/arm64`.
   An older Ori keeps using the floor release, so a release must either stay
