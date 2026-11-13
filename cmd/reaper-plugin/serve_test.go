@@ -155,6 +155,71 @@ func TestPrivateServiceConformsToMCPStdioAndDeclaredHealthOperation(t *testing.T
 		t.Fatalf("profile.read with an extra input was accepted: %#v", result.StructuredContent)
 	}
 
+	// The project facts read is called by the host with an empty context too,
+	// needs no running REAPER and no Web Remote, and its answer crosses the
+	// service's own declared output shape.
+	songDir := t.TempDir()
+	song := filepath.Join(songDir, "Song.rpp")
+	project := "<REAPER_PROJECT 0.1 \"7.28\" 1\n  TEMPO 96 4 4\n  MARKER 1 4 Intro 0\n  <TRACK\n    NAME \"Lead Vox\"\n    <ITEM\n      POSITION 1\n      LENGTH 9.5\n    >\n  >\n>\n"
+	if err := os.WriteFile(song, []byte(project), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	readFacts := func(names bool, extra map[string]any) (*sdkmcp.CallToolResult, error) {
+		input := map[string]any{
+			"schema_version": 1, "names": names, "max_file_bytes": 33554432,
+			"files": []map[string]any{
+				{"id": 0, "format": "reaper", "path": song, "size": len(project)},
+				{"id": 1, "format": "reaper", "path": filepath.Join(songDir, "Gone.rpp"), "size": 10},
+			},
+		}
+		for key, value := range extra {
+			input[key] = value
+		}
+		return session.CallTool(ctx, &sdkmcp.CallToolParams{
+			Name: "project.facts.read",
+			Arguments: map[string]any{
+				"protocol_version": 1, "operation_id": "project.facts.read",
+				"context": map[string]any{"workspace_id": "", "workspace_root": "", "project_entry": "", "plugin_data_root": "", "scopes": []string{}}, "input": input,
+			},
+		})
+	}
+	result, err = readFacts(true, nil)
+	if err != nil || result.IsError {
+		t.Fatalf("project.facts.read = %+v, %v", result, err)
+	}
+	answer, _ := result.StructuredContent.(map[string]any)
+	entriesRead, _ := answer["files"].([]any)
+	if answer["schema_version"] != float64(1) || len(entriesRead) != 2 {
+		t.Fatalf("project facts = %#v", answer)
+	}
+	first, _ := entriesRead[0].(map[string]any)
+	second, _ := entriesRead[1].(map[string]any)
+	tracks, _ := first["tracks"].([]any)
+	markers, _ := first["markers"].([]any)
+	if first["result"] != "read" || first["tempo_bpm"] != float64(96) || first["length_seconds"] != 10.5 || first["track_count"] != float64(1) ||
+		len(tracks) != 1 || tracks[0] != "Lead Vox" || len(markers) != 1 || first["markers_left_out"] != float64(0) {
+		t.Fatalf("first file = %#v", first)
+	}
+	if len(second) != 2 || second["id"] != float64(1) || second["result"] != "failed" {
+		t.Fatalf("second file = %#v", second)
+	}
+	result, err = readFacts(false, nil)
+	if err != nil || result.IsError {
+		t.Fatalf("project.facts.read without names = %+v, %v", result, err)
+	}
+	answer, _ = result.StructuredContent.(map[string]any)
+	entriesRead, _ = answer["files"].([]any)
+	first, _ = entriesRead[0].(map[string]any)
+	if _, named := first["tracks"]; named || len(first) != 6 {
+		t.Fatalf("a numbers-only read named something: %#v", first)
+	}
+	if result, err = readFacts(true, map[string]any{"follow_links": true}); err == nil && !result.IsError {
+		t.Fatalf("project.facts.read with an extra input was accepted: %#v", result.StructuredContent)
+	}
+	if result, err = readFacts(true, map[string]any{"schema_version": 2}); err == nil && !result.IsError {
+		t.Fatalf("project.facts.read with schema_version 2 was accepted: %#v", result.StructuredContent)
+	}
+
 	// The catalog operations are machine-level too. The sources answer names
 	// the fixture's folders; the inventory pages one of them.
 	call := func(name string, input map[string]any) (map[string]any, *sdkmcp.CallToolResult, error) {
