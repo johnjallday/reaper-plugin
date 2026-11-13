@@ -32,6 +32,9 @@ func runService() int {
 	addTool(server, "studio.inventory.read", "List one page of one catalog source: templates, scripts, or REAPER's plugin list through the audited read-only inspector.", func(ctx context.Context, input reaper.Envelope[reaper.StudioInventoryInput]) (reaper.StudioInventoryResult, error) {
 		return service.StudioInventory(ctx, input.Input)
 	})
+	addTool(server, "project.facts.read", "Read tempo, length, track count and, only when asked, track names and markers from project files the host names, read-only.", func(ctx context.Context, input reaper.Envelope[reaper.ProjectFactsInput]) (reaper.ProjectFactsResult, error) {
+		return service.ProjectFacts(ctx, input.Input)
+	})
 	addTool(server, "runtime.prerequisites", "Check REAPER prerequisites.", func(ctx context.Context, input reaper.Envelope[reaper.EmptyInput]) (reaper.ReadyResult, error) {
 		return service.Runtime().Prerequisites(ctx, input.Context), nil
 	})

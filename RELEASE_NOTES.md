@@ -1,5 +1,48 @@
 # Release notes
 
+## 0.12.0 — Project facts for Ori
+
+- New read-only service operation **`project.facts.read`** (`long`, 256 KiB,
+  no scopes, closed schemas), named in the new top-level manifest key
+  **`project_facts`** (`service_id` `reaper-service`, `formats` `["reaper"]`).
+  Ori stops parsing project files itself and asks the plugin instead: it still
+  decides which folders are songs, which files to read and whether names may
+  be read, and checks and saves what comes back. For the same file the
+  plugin answers exactly what Ori's own reader answered; Ori checks that with a
+  parity test before removing its reader.
+- One call reads up to eight files named by absolute path and listed size. Each
+  gets exactly one answer: `read` with `tempo_bpm`, `tempo_varies`,
+  `length_seconds` and `track_count`, plus, only when names were approved,
+  `tracks`, `tracks_left_out`, `markers` (regions with `end`) and
+  `markers_left_out`, each list capped at 128 entries and 12,288 bytes of
+  escaped name text; or `too_large`, `unreadable` or `failed` with nothing
+  else. Eight files at every cap fit the declared output.
+- The reader is a pure function over the file's bytes with a fixed 64-deep
+  block stack and one line at a time (at most 256 KiB); nothing it holds grows
+  with the file except the capped name lists. Names are cleaned of invalid
+  UTF-8, control and direction-changing characters, cut to 80 characters, and
+  dropped when shaped like a file path (`Vox L/R` and `AC/DC` stay names).
+- Opening is narrow: the named path with `O_NOFOLLOW` and `O_NONBLOCK`, a
+  regular file whose size is the listed one, and nothing else (no audio, no
+  referenced file, no sibling). It needs no running REAPER, never touches Web
+  Remote, writes nothing and logs no path or name. It is called by Ori, not
+  offered to agents.
+- New required host feature **`project_facts_v1`** (8 of the 8 allowed). An Ori
+  without it refuses 0.12.0 whole and keeps the release it has. `reaper-song`
+  (v10, `reaper-song-team` v1), `reaper-studio` (v1), the `reaper_setup` quest
+  (v4), the surfaces and protocol **1** are unchanged.
+- The release binary is built with Go **1.26.11** instead of 1.26.10:
+  `govulncheck` on the 1.26.10 binary, including the published 0.11.0 bytes,
+  reports the Go standard-library advisory GO-2026-6859 (`net/http`, an HTTP/1
+  server crash from a `MaxBytesReader` header race), fixed in 1.26.11. CI and
+  the release workflow run that scan after packaging. The pin lives in
+  `go.mod`, in `scripts/build-local-artifact.sh` and in the README.
+- Plugin/service version: **0.12.0**; protocol **1**; quest version **4**;
+  macOS arm64 only. Deterministic release artifact: **9,459,650 bytes**; SHA-256
+  `29d2f5320f890a3067f674421d3239ce1debf4a0a46bd3baa379de1587c4c478`.
+- Works with Music Project Management **v0.1.0** or newer for songs, as before;
+  REAPER Studio needs **v0.4.0** or newer.
+
 ## 0.11.0 — REAPER Studio resource catalog
 
 - New blueprint **`reaper-studio`** v1 with team **`reaper-studio-team`** v1

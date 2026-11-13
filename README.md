@@ -98,21 +98,63 @@ declarations are read-only in Ori.
 
 ## Ori Workspace Surface development
 
-The first supported service artifact is **macOS arm64**. Version **0.11.0** uses
+The first supported service artifact is **macOS arm64**. Version **0.12.0** uses
 Workspace Surface protocol v1 and requires Music Project Management `v0.1.0` or
 newer (`v0.4.0` or newer for REAPER Studio) plus an Ori version that advertises
-`resource_workspaces_v1`, the one host feature 0.11.0 added: the first Ori
-release with REAPER Studio support. The required host features are
+`project_facts_v1`, the one host feature 0.12.0 added: the first Ori release
+that reads song facts through the plugin. The required host features are
 `independent_program_homes_v1`, `specialist_setup_journey_v1`,
 `setup_quests_v2`, `template_group_requirements_v1`, `blueprint_inputs_v1`,
-`home_profile_v1`, and `resource_workspaces_v1`. Older hosts must refuse this
+`home_profile_v1`, `resource_workspaces_v1`, and `project_facts_v1`, eight,
+the most Ori accepts. Older hosts must refuse this
 contract rather than ignore its ownership or placement rules. An Ori build
 without `independent_program_homes_v1` cannot safely resolve the separately
 owned Home, an Ori build without `blueprint_inputs_v1` would reject the typed
 `inputs` block, an Ori build without `home_profile_v1` does not know the
-`home_profile_facts` key, and an Ori build without `resource_workspaces_v1`
-knows neither the `resource_catalog` key nor a resource team. Each condition
-therefore fails before partial registration; such a host keeps using 0.10.1.
+`home_profile_facts` key, an Ori build without `resource_workspaces_v1`
+knows neither the `resource_catalog` key nor a resource team, and an Ori build
+without `project_facts_v1` does not know the `project_facts` key. Each
+condition therefore fails before partial registration; such a host keeps the
+release it has (0.11.0 for a host with REAPER Studio support, 0.10.1 before it).
+
+### Project facts for Ori (`project.facts.read`)
+
+0.12.0 moves reading song facts out of Ori and into the plugin. Ori used to
+parse `.rpp` files itself with this application's keywords written into it; it
+now calls one read-only service operation, `project.facts.read`, named in the
+manifest's top-level `project_facts` key with the format IDs it covers
+(`reaper`), and stops parsing project files. Ori still decides which folders
+are songs, which files to read and whether names may be read; it checks every
+value the plugin returns and saves the result. For the same file the plugin
+answers exactly what Ori's own reader answered.
+
+One call names up to eight files by absolute path, with the size Ori's listing
+saw, and says whether names were approved. For each file the answer is one of:
+
+- `read`, with `tempo_bpm` (the project's base tempo to one decimal, 0 when
+  unknown), `tempo_varies` (a tempo-map point differs from it at one decimal),
+  `length_seconds` (the latest end of any media item, to three decimals) and `track_count`
+  (top-level tracks, 0 when over 10,000);
+- only when names were approved, also `tracks` (track names) and `markers`
+  (markers, and regions with their `end`), in project order, each at most 128
+  entries and 12,288 bytes of escaped name text, with `tracks_left_out` and
+  `markers_left_out` counting what did not fit. A name is cleaned of control
+  and direction-changing characters, cut to 80 characters, and dropped when it
+  is shaped like a file path. With numbers only, no name of any kind is sent;
+- `too_large` (over the size Ori allows, or a line over 256 KiB), `unreadable`
+  (not a project REAPER saved: binary content, a wrong first line, a block left
+  open, nesting deeper than 64, or content after the project closed) or
+  `failed` (not opened or read, not a regular file, a size other than the
+  listed one, a relative path, or a format other than `reaper`; Ori tries a
+  failed file again later).
+
+It opens each named file and nothing else, by its path with `O_NOFOLLOW`, so a
+symbolic link is `failed` rather than followed; it opens no audio, no file the
+project refers to and no sibling. It needs no running REAPER, never touches Web
+Remote, writes nothing and logs no path or name. It is called by Ori itself
+and is not offered to agents. It needs the Ori release that advertises the
+host feature `project_facts_v1`; an Ori without it refuses this plugin version
+whole, before registration, and keeps the release it has.
 
 ### REAPER Studio resource catalog (`studio.sources.read`, `studio.inventory.read`)
 
@@ -245,10 +287,10 @@ restaffed. Connect a fresh external `.rpp` folder
 through the reviewed existing-project flow; its files stay in place and grouping
 still grants no filesystem or runtime permission.
 
-The `v0.11.0` release artifact is 9,392,066 bytes with SHA-256
-`54207279a082f44f26aba7f2c49a21f494237410a0df386f0faec177a0e87ecf`.
+The `v0.12.0` release artifact is 9,459,650 bytes with SHA-256
+`29d2f5320f890a3067f674421d3239ce1debf4a0a46bd3baa379de1587c4c478`.
 The tag-triggered release workflow rebuilds and verifies those exact bytes before
-publishing the manifest's `v0.11.0` release URL. Ori's reviewed floor update is a
+publishing the manifest's `v0.12.0` release URL. Ori's reviewed floor update is a
 separate host release step; existing installed plugins and reviewed pins are not
 rewritten merely because this release exists.
 Build and verify the artifact reproducibly with:
@@ -257,16 +299,16 @@ Build and verify the artifact reproducibly with:
 make artifact-local
 make test
 make test-ui
-make release-package VERSION=v0.11.0
+make release-package VERSION=v0.12.0
 ```
 
-Packaging is local and does not publish. Pushing the approved `v0.11.0` tag
+Packaging is local and does not publish. Pushing the approved `v0.12.0` tag
 triggers the release workflow and uploads the verified binary plus its checksum.
 See [quest migration](docs/setup-quest-migration.md) for the ownership/resume
 test, validation boundaries, and remaining rollout steps.
 The older [v0.5.0 record](docs/release-v0.5.0.md) describes that historical release.
 
-The build pins Go 1.26.10, disables VCS stamping, uses `-trimpath`, and clears the
+The build pins Go 1.26.11, disables VCS stamping, uses `-trimpath`, and clears the
 build ID; repeating it from unchanged Go source produces identical bytes across
 maintainer machines and release-metadata commits. Install by Git URL or local path through Ori's Plugins UI or
 `POST /api/plugins/install`, review the complete trust disclosure, confirm, and

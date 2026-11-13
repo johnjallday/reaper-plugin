@@ -172,9 +172,9 @@ func TestStudioResourceCatalogDeclarationIsTheContractVector(t *testing.T) {
 	if err := json.Unmarshal(manifest["requires_host_features"], &features); err != nil {
 		t.Fatal(err)
 	}
-	// 7 of the 8 allowed; resource_workspaces_v1 gates every Studio key, so an
+	// 8 of the 8 allowed; resource_workspaces_v1 gates every Studio key, so an
 	// older Ori refuses the whole contribution and keeps 0.10.1.
-	if !slices.Equal(features, []string{"independent_program_homes_v1", "specialist_setup_journey_v1", "setup_quests_v2", "template_group_requirements_v1", "blueprint_inputs_v1", "home_profile_v1", "resource_workspaces_v1"}) {
+	if !slices.Equal(features, []string{"independent_program_homes_v1", "specialist_setup_journey_v1", "setup_quests_v2", "template_group_requirements_v1", "blueprint_inputs_v1", "home_profile_v1", "resource_workspaces_v1", "project_facts_v1"}) {
 		t.Fatalf("requires_host_features = %v", features)
 	}
 }
