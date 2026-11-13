@@ -65,7 +65,7 @@ npx prettier --check 'ui/**/*.{js,css,html}'
 make fmt            # gofmt -w ./cmd ./internal
 ```
 
-CI (`ci.yml`, macOS 14, on every push and pull request) runs
+CI (`ci.yml`, macOS 15, on every push and pull request) runs
 `go test -race ./...`, `go vet ./...`, the UI tests, then
 `./scripts/package-release.sh v<manifest version>` and `govulncheck` on the
 built binary. Run the race tests and vet before opening a pull request. The
