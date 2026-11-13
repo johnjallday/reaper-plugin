@@ -98,21 +98,24 @@ declarations are read-only in Ori.
 
 ## Ori Workspace Surface development
 
-The first supported service artifact is **macOS arm64**. Version **0.11.0** uses
+The first supported service artifact is **macOS arm64**. Version **0.12.0** uses
 Workspace Surface protocol v1 and requires Music Project Management `v0.1.0` or
 newer (`v0.4.0` or newer for REAPER Studio) plus an Ori version that advertises
-`resource_workspaces_v1`, the one host feature 0.11.0 added: the first Ori
-release with REAPER Studio support. The required host features are
+`project_facts_v1`, the one host feature 0.12.0 added: the first Ori release
+that reads song facts through the plugin. The required host features are
 `independent_program_homes_v1`, `specialist_setup_journey_v1`,
 `setup_quests_v2`, `template_group_requirements_v1`, `blueprint_inputs_v1`,
-`home_profile_v1`, and `resource_workspaces_v1`. Older hosts must refuse this
+`home_profile_v1`, `resource_workspaces_v1`, and `project_facts_v1`, eight,
+the most Ori accepts. Older hosts must refuse this
 contract rather than ignore its ownership or placement rules. An Ori build
 without `independent_program_homes_v1` cannot safely resolve the separately
 owned Home, an Ori build without `blueprint_inputs_v1` would reject the typed
 `inputs` block, an Ori build without `home_profile_v1` does not know the
-`home_profile_facts` key, and an Ori build without `resource_workspaces_v1`
-knows neither the `resource_catalog` key nor a resource team. Each condition
-therefore fails before partial registration; such a host keeps using 0.10.1.
+`home_profile_facts` key, an Ori build without `resource_workspaces_v1`
+knows neither the `resource_catalog` key nor a resource team, and an Ori build
+without `project_facts_v1` does not know the `project_facts` key. Each
+condition therefore fails before partial registration; such a host keeps the
+release it has (0.11.0 for a host with REAPER Studio support, 0.10.1 before it).
 
 ### Project facts for Ori (`project.facts.read`)
 
@@ -284,10 +287,10 @@ restaffed. Connect a fresh external `.rpp` folder
 through the reviewed existing-project flow; its files stay in place and grouping
 still grants no filesystem or runtime permission.
 
-The `v0.11.0` release artifact is 9,392,066 bytes with SHA-256
-`54207279a082f44f26aba7f2c49a21f494237410a0df386f0faec177a0e87ecf`.
+The `v0.12.0` release artifact is 9,459,650 bytes with SHA-256
+`29d2f5320f890a3067f674421d3239ce1debf4a0a46bd3baa379de1587c4c478`.
 The tag-triggered release workflow rebuilds and verifies those exact bytes before
-publishing the manifest's `v0.11.0` release URL. Ori's reviewed floor update is a
+publishing the manifest's `v0.12.0` release URL. Ori's reviewed floor update is a
 separate host release step; existing installed plugins and reviewed pins are not
 rewritten merely because this release exists.
 Build and verify the artifact reproducibly with:
@@ -296,16 +299,16 @@ Build and verify the artifact reproducibly with:
 make artifact-local
 make test
 make test-ui
-make release-package VERSION=v0.11.0
+make release-package VERSION=v0.12.0
 ```
 
-Packaging is local and does not publish. Pushing the approved `v0.11.0` tag
+Packaging is local and does not publish. Pushing the approved `v0.12.0` tag
 triggers the release workflow and uploads the verified binary plus its checksum.
 See [quest migration](docs/setup-quest-migration.md) for the ownership/resume
 test, validation boundaries, and remaining rollout steps.
 The older [v0.5.0 record](docs/release-v0.5.0.md) describes that historical release.
 
-The build pins Go 1.26.10, disables VCS stamping, uses `-trimpath`, and clears the
+The build pins Go 1.26.11, disables VCS stamping, uses `-trimpath`, and clears the
 build ID; repeating it from unchanged Go source produces identical bytes across
 maintainer machines and release-metadata commits. Install by Git URL or local path through Ori's Plugins UI or
 `POST /api/plugins/install`, review the complete trust disclosure, confirm, and

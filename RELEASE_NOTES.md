@@ -31,6 +31,17 @@
   without it refuses 0.12.0 whole and keeps the release it has. `reaper-song`
   (v10, `reaper-song-team` v1), `reaper-studio` (v1), the `reaper_setup` quest
   (v4), the surfaces and protocol **1** are unchanged.
+- The release binary is built with Go **1.26.11** instead of 1.26.10:
+  `govulncheck` on the 1.26.10 binary, including the published 0.11.0 bytes,
+  reports the Go standard-library advisory GO-2026-6859 (`net/http`, an HTTP/1
+  server crash from a `MaxBytesReader` header race), fixed in 1.26.11. CI and
+  the release workflow run that scan after packaging. The pin lives in
+  `go.mod`, in `scripts/build-local-artifact.sh` and in the README.
+- Plugin/service version: **0.12.0**; protocol **1**; quest version **4**;
+  macOS arm64 only. Deterministic release artifact: **9,459,650 bytes**; SHA-256
+  `29d2f5320f890a3067f674421d3239ce1debf4a0a46bd3baa379de1587c4c478`.
+- Works with Music Project Management **v0.1.0** or newer for songs, as before;
+  REAPER Studio needs **v0.4.0** or newer.
 
 ## 0.11.0 — REAPER Studio resource catalog
 
