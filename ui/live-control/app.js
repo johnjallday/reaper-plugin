@@ -5,15 +5,12 @@ import {
   meaningfulStateKey,
   normalizePinnedState,
   planEditLabel,
-  promptChips as derivePromptChips,
   reorderPins,
 } from "./model.js";
 
 const sdk = createWorkspaceSurfaceSDK();
 const nodes = {
   status: document.querySelector("[data-status]"),
-  promptChips: document.querySelector("[data-prompt-chips]"),
-  askInput: document.querySelector("[data-ask-input]"),
   project: document.querySelector("[data-project]"),
   tempo: document.querySelector("[data-tempo]"),
   position: document.querySelector("[data-position]"),
@@ -63,23 +60,6 @@ function empty(container, message) {
       textContent: message,
     }),
   );
-}
-
-function renderPromptChips(state) {
-  if (!nodes.promptChips) return;
-  nodes.promptChips.replaceChildren();
-  derivePromptChips(state).forEach((prompt) => {
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = "quiet";
-    button.textContent = prompt;
-    button.addEventListener("click", () => {
-      if (!nodes.askInput) return;
-      nodes.askInput.value = prompt;
-      nodes.askInput.focus();
-    });
-    nodes.promptChips.append(button);
-  });
 }
 
 function showOutcomeToast(action) {
@@ -232,7 +212,6 @@ async function refreshState() {
     if (stateKey !== lastStateKey) {
       lastStateKey = stateKey;
       renderTracks(state.tracks, state.folder_depth_available);
-      renderPromptChips(state);
     }
     await loadPlan();
     await loadProposal();
@@ -859,23 +838,6 @@ document
       text(nodes.draftResult, `${error.code || "failed"} · ${error.message}`);
     }
   });
-document
-  .querySelector("[data-ask-form]")
-  ?.addEventListener("submit", (event) => {
-    event.preventDefault();
-    const context = String(
-      new FormData(event.currentTarget).get("context") || "",
-    ).trim();
-    if (!context) return;
-    void sdk.askOri(context.slice(0, 1000));
-  });
-document.querySelector("[data-ask]")?.addEventListener("click", () => {
-  if (!nodes.askInput) return;
-  if (!nodes.askInput.value)
-    nodes.askInput.value =
-      "Help me understand the current REAPER project and safe next action.";
-  nodes.askInput.focus();
-});
 document
   .querySelector("[data-setup]")
   ?.addEventListener("click", () => void sdk.openSetup());

@@ -97,33 +97,6 @@ button.danger {
   font-size: 0.75rem;
   white-space: nowrap;
 }
-.prompt-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-  padding-top: 1rem;
-}
-.prompt-chips button {
-  min-height: 34px;
-  font-size: 0.75rem;
-}
-.ask-composer {
-  display: grid;
-  gap: 0.35rem;
-  margin: 0.6rem 0 1rem;
-}
-.ask-composer label {
-  color: var(--muted);
-  font-size: 0.75rem;
-}
-.ask-composer div {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 0.5rem;
-}
-.ask-composer input {
-  min-width: 0;
-}
 .transport {
   display: flex;
   flex-wrap: wrap;
