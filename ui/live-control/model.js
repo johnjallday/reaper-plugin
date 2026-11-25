@@ -40,27 +40,6 @@ export function folderRows(tracks = [], depthAvailable = false) {
   });
 }
 
-export function promptChips(state = {}) {
-  const prompts = [];
-  const tracks = state.tracks || [];
-  const named = tracks.filter((track) =>
-    String(track.name || "").trim(),
-  ).length;
-  if (!state.connected) prompts.push("Help me restore REAPER live control.");
-  if (!state.track_count) prompts.push("Help me start a useful track layout.");
-  if (tracks.length > 0 && named === 0)
-    prompts.push("Help me name the unnamed tracks.");
-  if (named > 0 && named < tracks.length)
-    prompts.push("Help me organize the named and unnamed tracks.");
-  if (tracks.length > 0 && named === tracks.length)
-    prompts.push("Suggest a safe next step for this track layout.");
-  if (!String(state.project || "").trim())
-    prompts.push("Help me identify this untitled project.");
-  if (!state.track_editing_available)
-    prompts.push("Explain how to set up the trusted runner.");
-  return prompts.slice(0, 4);
-}
-
 export function planEditLabel(edit = {}) {
   const oldValue = edit.expected_name || "unnamed";
   const next =

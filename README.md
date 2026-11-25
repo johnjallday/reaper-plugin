@@ -98,7 +98,7 @@ declarations are read-only in Ori.
 
 ## Ori Workspace Surface development
 
-The first supported service artifact is **macOS arm64**. Version **0.12.0** uses
+The first supported service artifact is **macOS arm64**. Version **0.12.1** uses
 Workspace Surface protocol v1 and requires Music Project Management `v0.1.0` or
 newer (`v0.4.0` or newer for REAPER Studio) plus an Ori version that advertises
 `project_facts_v1`, the one host feature 0.12.0 added: the first Ori release
@@ -287,10 +287,10 @@ restaffed. Connect a fresh external `.rpp` folder
 through the reviewed existing-project flow; its files stay in place and grouping
 still grants no filesystem or runtime permission.
 
-The `v0.12.0` release artifact is 9,459,650 bytes with SHA-256
-`29d2f5320f890a3067f674421d3239ce1debf4a0a46bd3baa379de1587c4c478`.
+The `v0.12.1` release artifact is 9,459,650 bytes with SHA-256
+`5be4328ab818f4dfeba9cc8187d147dfaa0628c37bbf48221f39555b0dbd6877`.
 The tag-triggered release workflow rebuilds and verifies those exact bytes before
-publishing the manifest's `v0.12.0` release URL. Ori's reviewed floor update is a
+publishing the manifest's `v0.12.1` release URL. Ori's reviewed floor update is a
 separate host release step; existing installed plugins and reviewed pins are not
 rewritten merely because this release exists.
 Build and verify the artifact reproducibly with:
@@ -299,10 +299,10 @@ Build and verify the artifact reproducibly with:
 make artifact-local
 make test
 make test-ui
-make release-package VERSION=v0.12.0
+make release-package VERSION=v0.12.1
 ```
 
-Packaging is local and does not publish. Pushing the approved `v0.12.0` tag
+Packaging is local and does not publish. Pushing the approved `v0.12.1` tag
 triggers the release workflow and uploads the verified binary plus its checksum.
 See [quest migration](docs/setup-quest-migration.md) for the ownership/resume
 test, validation boundaries, and remaining rollout steps.

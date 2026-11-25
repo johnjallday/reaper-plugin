@@ -1,5 +1,35 @@
 # Release notes
 
+## 0.12.1 — Ask Ori retired
+
+- Live Control no longer shows an Ask Ori entry. Ori retired its Ask Ori
+  persona (Help answers product questions, the Personal Assistant handles
+  cross-workspace work, and each workspace's own manager handles that
+  workspace's work); its host refuses the Workspace Surface `ask_ori` intent
+  (`intent_retired`) and no longer advertises `features.ask_ori`, so the entry
+  did nothing. The Ask Ori composer, its footer button and the suggested
+  question chips that only filled it are removed. Nothing replaces them: chat
+  about the project stays in the containing Ori workspace.
+- Manifest: both surfaces (`live-control` and `project-tidy`) drop the
+  optional **`host_intents.ask_ori`** declaration. Ori's schema still accepts
+  and ignores that key, so older releases keep mounting. Both vendored
+  Workspace Surface SDK copies drop `askOri()`, as Ori's host SDK did.
+- The `protocol/workspace-surface-v1/` fixtures mirror Ori: neither
+  contribution declares `host_intents.ask_ori`, and the bridge transcript
+  advertises `features.ask_ori: false` and sends no `ori.surface.host.ask_ori`
+  request. The protocol stays **1**.
+- Every other control, operation, confirmation, setup and close path is
+  unchanged. No new operation, manifest key or host feature: manifest schema
+  **1**, `reaper-song` **v10** (`reaper-song-team` v1), `reaper-studio` v1,
+  the `reaper_setup` quest (schema 1, version **4**) and the eight required
+  host features of 0.12.0. No workspace, project or Home is migrated. Ori
+  raises its reviewed floor to 0.12.1 separately, once this release exists.
+- Plugin/service version: **0.12.1**; protocol **1**; quest version **4**;
+  macOS arm64 only. Deterministic release artifact: **9,459,650 bytes**;
+  SHA-256 `5be4328ab818f4dfeba9cc8187d147dfaa0628c37bbf48221f39555b0dbd6877`.
+- Works with Music Project Management **v0.1.0** or newer for songs, as before;
+  REAPER Studio needs **v0.4.0** or newer.
+
 ## 0.12.0 — Project facts for Ori
 
 - New read-only service operation **`project.facts.read`** (`long`, 256 KiB,
